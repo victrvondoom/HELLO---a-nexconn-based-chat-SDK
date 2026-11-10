@@ -66,10 +66,10 @@ try {
     const box = attendee.page.getByLabel('Message to HELLO');
     await box.fill('The microphone is not working, and there are too many people in Room 3.');
     await attendee.page.getByRole('button', { name: 'Send message' }).click();
-    await attendee.page.getByText(/matches an open report in Room 3/).first().waitFor();
+    await attendee.page.getByText(/Added to 2 open reports|Added to the open report/).first().waitFor();
     const thread = await attendee.page.getByRole('log', { name: 'Messages' }).innerText();
-    assert.match(thread, /matches an open report in Room 3/);
-    assert.match(thread, /Alternatives with free seats/);
+    assert.match(thread, /Added to (2 open reports|the open report)/);
+    assert.match(thread, /sessions with free seats are listed below/);
   });
 
   await step('the reply is an action card with a link to the existing incident', async () => {
@@ -80,7 +80,7 @@ try {
 
   await step('the conversation survives a reload (answer is stored, not client state)', async () => {
     await attendee.page.reload();
-    await attendee.page.getByText(/matches an open report in Room 3/).first().waitFor();
+    await attendee.page.getByText(/Added to (2 open reports|the open report)/).first().waitFor();
   });
 
   await step('the approval is shown as pending, not as done', async () => {
@@ -118,9 +118,11 @@ try {
   await step('organiser approves the room move and sees the executed result', async () => {
     await signInAs(organiser.page, 'Nadia (demo organiser)');
     await organiser.page.goto(`${BASE}/events/${EVENT}/operations`);
-    // The approval asks for confirmation in a dialog. Accept it explicitly.
-    organiser.page.once('dialog', (dialog) => dialog.accept());
     await organiser.page.getByRole('button', { name: 'Approve and execute' }).first().click();
+    // Approval asks for confirmation in the app's own dialog, then executes.
+    const dialog = organiser.page.getByRole('dialog', { name: 'Approve and execute this change?' });
+    await dialog.waitFor();
+    await dialog.getByRole('button', { name: 'Approve and execute' }).click();
     await organiser.page.getByText(/moved to Room 4/).first().waitFor();
   });
 

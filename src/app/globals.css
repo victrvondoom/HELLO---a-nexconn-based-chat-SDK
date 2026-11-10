@@ -33,8 +33,16 @@
   --focus: #1d4ed8;
   --demo-bg: #fff8e6;
   --demo-border: #e0b458;
-  --shadow-1: 0 1px 2px rgba(20, 20, 18, 0.05);
-  --shadow-2: 0 6px 20px rgba(20, 20, 18, 0.08);
+  --ink-rgb: 20 20 18;
+  --hl: rgba(255, 255, 255, 0.75);
+  --well: #eeeee9;
+  /* Elevation levels. e0 is flat on the canvas, e1 is a raised card, e2 a lifted control, e3 a floating layer, e4 a modal. */
+  --e1: 0 1px 0 var(--hl) inset, 0 1px 2px rgb(var(--ink-rgb) / 0.06);
+  --e2: 0 0 0 1px rgb(var(--ink-rgb) / 0.04), 0 2px 4px rgb(var(--ink-rgb) / 0.05), 0 10px 20px -8px rgb(var(--ink-rgb) / 0.14);
+  --e3: 0 0 0 1px rgb(var(--ink-rgb) / 0.05), 0 8px 14px -4px rgb(var(--ink-rgb) / 0.12), 0 28px 56px -16px rgb(var(--ink-rgb) / 0.26);
+  --e4: 0 0 0 1px rgb(var(--ink-rgb) / 0.06), 0 16px 28px -8px rgb(var(--ink-rgb) / 0.22), 0 48px 96px -24px rgb(var(--ink-rgb) / 0.4);
+  --shadow-1: var(--e1);
+  --shadow-2: var(--e2);
 
   --s-1: 4px;
   --s-2: 8px;
@@ -79,8 +87,11 @@
     --focus: #93c5fd;
     --demo-bg: #2a2310;
     --demo-border: #7c5f1f;
-    --shadow-1: none;
-    --shadow-2: 0 8px 24px rgba(0, 0, 0, 0.4);
+    --ink-rgb: 0 0 0;
+    --hl: rgba(255, 255, 255, 0.05);
+    --well: #0e0e0d;
+    --shadow-1: var(--e1);
+    --shadow-2: var(--e2);
   }
 }
 
@@ -108,8 +119,11 @@
   --focus: #93c5fd;
   --demo-bg: #2a2310;
   --demo-border: #7c5f1f;
-  --shadow-1: none;
-  --shadow-2: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --ink-rgb: 0 0 0;
+  --hl: rgba(255, 255, 255, 0.05);
+  --well: #0e0e0d;
+  --shadow-1: var(--e1);
+  --shadow-2: var(--e2);
 }
 
 *,
@@ -231,8 +245,9 @@ p {
   gap: var(--s-1);
   padding: var(--s-5) var(--s-3);
   background: var(--surface);
-  border-right: 1px solid var(--border);
   overflow-y: auto;
+  z-index: 6;
+  box-shadow: 1px 0 0 var(--border), 10px 0 24px -20px rgb(var(--ink-rgb) / 0.45);
 }
 
 .workspace {
@@ -247,11 +262,11 @@ p {
   justify-content: space-between;
   gap: var(--s-4);
   padding: var(--s-3) var(--s-6);
-  border-bottom: 1px solid var(--border);
   background: var(--surface);
   position: sticky;
   top: 0;
   z-index: 5;
+  box-shadow: 0 1px 0 var(--border), var(--e1);
 }
 
 .topbar__event {
@@ -415,7 +430,18 @@ p {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
-  box-shadow: var(--shadow-1);
+  box-shadow: var(--e1);
+  transition: box-shadow 180ms ease, transform 180ms ease, border-color 180ms ease;
+}
+
+.card--raised {
+  box-shadow: var(--e2);
+}
+
+.card--interactive:hover {
+  box-shadow: var(--e3);
+  transform: translateY(-2px);
+  border-color: var(--border-strong);
 }
 
 .card__head {
@@ -605,34 +631,47 @@ textarea {
   padding: 10px 16px;
   min-height: 40px;
   cursor: pointer;
-  transition: background 120ms ease, transform 60ms ease;
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.2) inset, 0 1px 2px rgb(var(--ink-rgb) / 0.25);
+  transition: background 120ms ease, transform 120ms ease, box-shadow 160ms ease;
 }
 
 .button:hover {
   background: var(--accent-hover);
   text-decoration: none;
   color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.2) inset, 0 6px 14px -4px rgb(var(--ink-rgb) / 0.3);
 }
 
 .button:active {
   transform: translateY(1px);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.1) inset;
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
 }
 
 .button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
+  box-shadow: none;
 }
 
 .button--ghost {
   background: var(--surface);
   color: var(--text);
   border-color: var(--border-strong);
+  box-shadow: var(--e1);
 }
 
 .button--ghost:hover {
-  background: var(--surface-3);
+  background: var(--surface);
   color: var(--text);
+  border-color: var(--text-3);
+  box-shadow: var(--e2);
 }
 
 .button--danger {
@@ -642,6 +681,20 @@ textarea {
 .button--danger:hover {
   background: var(--danger);
   filter: brightness(1.08);
+}
+
+.button--quiet-danger {
+  color: var(--danger);
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+.button--quiet-danger:hover {
+  color: var(--danger);
+  background: var(--danger-soft);
+  border-color: transparent;
+  box-shadow: none;
 }
 
 .button--sm {
@@ -679,8 +732,8 @@ textarea {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  background: var(--surface-2);
-  border-right: 1px solid var(--border);
+  background: var(--well);
+  box-shadow: inset 0 8px 16px -12px rgb(var(--ink-rgb) / 0.3), inset 0 -8px 16px -12px rgb(var(--ink-rgb) / 0.2);
 }
 
 .thread__scroll {
@@ -693,9 +746,11 @@ textarea {
 }
 
 .thread__composer {
-  border-top: 1px solid var(--border);
   background: var(--surface);
   padding: var(--s-3) var(--s-6) var(--s-4);
+  box-shadow: 0 -1px 0 var(--border), 0 -12px 24px -18px rgb(var(--ink-rgb) / 0.35);
+  position: relative;
+  z-index: 2;
 }
 
 .day-divider {
@@ -802,7 +857,14 @@ textarea {
   border-left: 3px solid var(--border-strong);
   border-radius: var(--r-md);
   background: var(--surface);
+  box-shadow: var(--e1);
   font-size: 13.5px;
+  transition: box-shadow 180ms ease, transform 180ms ease;
+}
+
+.ocard:hover {
+  box-shadow: var(--e2);
+  transform: translateY(-1px);
 }
 
 .ocard--incident {
@@ -858,12 +920,13 @@ textarea {
   border: 1px solid var(--border-strong);
   border-radius: var(--r-lg);
   background: var(--surface);
-  transition: border-color 120ms ease, box-shadow 120ms ease;
+  box-shadow: var(--e2);
+  transition: border-color 120ms ease, box-shadow 160ms ease;
 }
 
 .composer:focus-within {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
+  box-shadow: 0 0 0 3px var(--accent-soft), var(--e3);
 }
 
 .composer textarea {
@@ -1386,4 +1449,221 @@ tbody tr:last-child td {
     transition: none !important;
     animation: none !important;
   }
+}
+
+
+/* =============================================================================
+   Floating layers: toasts (e3) and modal dialog (e4)
+   ============================================================================= */
+
+.toast-region {
+  position: fixed;
+  right: var(--s-6);
+  bottom: var(--s-6);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  width: min(380px, calc(100vw - 32px));
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: start;
+  gap: var(--s-3);
+  padding: 12px 12px 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: var(--e3);
+  font-size: 14px;
+  color: var(--text);
+  animation: toast-in 220ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.toast__dot {
+  width: 8px;
+  height: 8px;
+  margin-top: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.toast--error .toast__dot {
+  background: var(--danger);
+}
+
+.toast--info .toast__dot {
+  background: var(--text-3);
+}
+
+.toast__close {
+  font: inherit;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--text-3);
+  background: none;
+  border: none;
+  padding: 0 2px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.toast__close:hover {
+  color: var(--text);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.dialog {
+  border: none;
+  padding: 0;
+  background: transparent;
+  color: var(--text);
+  max-width: min(440px, calc(100vw - 32px));
+  width: 100%;
+}
+
+.dialog::backdrop {
+  background: rgb(var(--ink-rgb) / 0.42);
+  backdrop-filter: blur(2px);
+}
+
+.dialog[open] {
+  animation: dialog-in 200ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.dialog__inner {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--e4);
+  padding: var(--s-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.dialog__inner h2 {
+  font-size: 17px;
+}
+
+.dialog__inner p {
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--s-2);
+  margin-top: var(--s-2);
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* =============================================================================
+   Loading placeholders
+   ============================================================================= */
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-3);
+  border-radius: var(--r-sm);
+}
+
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgb(var(--ink-rgb) / 0.05), transparent);
+  transform: translateX(-100%);
+  animation: skeleton-sweep 1.4s ease-in-out infinite;
+}
+
+@keyframes skeleton-sweep {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.list-reset {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* =============================================================================
+   Landing: the product visual sits on its own plane, with a restrained perspective.
+   ============================================================================= */
+
+.flow-stage {
+  perspective: 1400px;
+}
+
+.flow-stage .flow {
+  transform: rotateY(-7deg) rotateX(3deg);
+  transform-origin: 80% 50%;
+  transition: transform 500ms cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 300ms ease;
+  box-shadow: var(--e3);
+}
+
+.flow-stage:hover .flow {
+  transform: rotateY(-3deg) rotateX(1.5deg);
+  box-shadow: var(--e4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flow-stage .flow,
+  .flow-stage:hover .flow {
+    transform: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .flow-stage .flow,
+  .flow-stage:hover .flow {
+    transform: none;
+  }
+}
+
+/* Status pages (404, error) */
+.status-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: var(--s-3);
+  max-width: 560px;
+  margin: 0 auto;
+  padding: var(--s-8) var(--s-6);
+}
+
+.status-page h1 {
+  font-size: 28px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
 }

@@ -302,22 +302,30 @@ async function handleReports(
     }
   }
 
+  // The reply states what HELLO did in plain sentences. Detail lives in the cards under it.
+  const attachedOutcomes = outcomes.filter((o) => o.attached);
+  const newOutcomes = outcomes.filter((o) => !o.attached && o.status !== 'NEEDS_INFORMATION');
+  const needRoom = outcomes.filter((o) => o.status === 'NEEDS_INFORMATION');
   const lines: string[] = [];
-  for (const o of outcomes) {
-    const where = roomName ? ` in ${roomName}` : '';
-    if (o.attached) {
-      lines.push(`This matches an open report${where} ("${o.title}"), so I added your report to it instead of opening a duplicate. Match confidence ${o.matchConfidence?.toFixed(2) ?? '—'}.`);
-    } else if (o.status === 'NEEDS_INFORMATION') {
-      lines.push(`I logged "${o.title}", but I need to know which room this is in before operations can act on it.`);
-    } else {
-      lines.push(`I logged "${o.title}" and passed it to the operations team. You will be told when its status changes.`);
-    }
+  if (attachedOutcomes.length === 1 && attachedOutcomes[0]) {
+    lines.push(`Added to the open report "${attachedOutcomes[0].title}".`);
+  } else if (attachedOutcomes.length > 1) {
+    lines.push(`Added to ${attachedOutcomes.length} open reports.`);
+  }
+  for (const o of newOutcomes) {
+    lines.push(`Opened "${o.title}" for the operations team.`);
+  }
+  for (const o of needRoom) {
+    lines.push(`I need the room before operations can act on "${o.title}".`);
+  }
+  if (newOutcomes.length > 0) {
+    lines.push('You will be told when the status changes.');
   }
   if (alternatives && alternatives.recommendations.length > 0) {
-    lines.push(`Alternatives with free seats: ${alternatives.recommendations.map((r) => `${r.title} (${r.roomName}, ${formatUtc(r.startsAt)})`).join('; ')}.`);
+    lines.push(`${alternatives.recommendations.length} sessions with free seats are listed below.`);
   }
   if (linkedApprovalId) {
-    lines.push('A room change has been sent to an organiser for approval. Nothing has moved yet.');
+    lines.push('A room change is waiting for organiser approval. Nothing has moved yet.');
   }
 
   const clarifyingQuestion = missing.has('room') ? 'Which room is this in? For example "Room 3" or "Main Hall".' : null;

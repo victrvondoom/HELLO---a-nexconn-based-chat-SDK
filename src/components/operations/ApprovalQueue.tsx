@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { useFeedback } from '@/components/ui/Feedback';
 
 export interface ApprovalRow {
   id: string;
@@ -25,103 +26,120 @@ interface Props {
   nowMs: number;
 }
 
+function statusTone(row: ApprovalRow, expired: boolean): string {
+  if (expired) return 'badge';
+  if (row.status === 'APPROVED') return 'badge badge--success';
+  if (row.status === 'REJECTED') return 'badge badge--danger';
+  return 'badge badge--warning';
+}
+
 export function ApprovalQueue({ eventId, canDecide, viewerId, approvals, nowMs }: Props) {
   const router = useRouter();
+  const { toast, confirm } = useFeedback();
   const [busy, setBusy] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [reasons, setReasons] = useState<Record<string, string>>({});
 
   async function decide(row: ApprovalRow, decision: 'APPROVE' | 'REJECT') {
-    const reason = reasons[row.id] ?? '';
-    if (decision === 'REJECT' && reason.trim().length < 3) {
-      setError('Give a reason before rejecting a request.');
+    const reason = (reasons[row.id] ?? '').trim();
+    if (decision === 'REJECT' && reason.length < 3) {
+      toast('error', 'Give a reason of at least three characters before rejecting.');
       return;
     }
-    if (decision === 'APPROVE' && !window.confirm('Approve this change? HELLO will attempt it immediately and record the outcome.')) {
-      return;
+    if (decision === 'APPROVE') {
+      const ok = await confirm({
+        title: 'Approve and execute this change?',
+        body: 'HELLO will attempt the change immediately and record the outcome. A failed attempt is shown here and changes nothing.',
+        confirmLabel: 'Approve and execute',
+      });
+      if (!ok) return;
     }
     setBusy(row.id);
-    setError(null);
     try {
       const response = await fetch(`/api/events/${eventId}/approvals/${row.id}`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ decision, reason: reason.trim() || 'Approved', expectedVersion: row.version }),
+        body: JSON.stringify({ decision, reason: reason || 'Approved', expectedVersion: row.version }),
       });
-      const json = (await response.json()) as { ok: true } | { ok: false; error: { message: string } };
+      const json = (await response.json()) as { ok: true; data: { executionStatus: string; executionResult: string | null } } | { ok: false; error: { message: string } };
       if (!json.ok) {
-        setError(json.error.message);
+        toast('error', json.error.message);
+      } else if (decision === 'REJECT') {
+        toast('success', 'Request rejected. The requester has been told why.');
+      } else if (json.data.executionStatus === 'SUCCEEDED') {
+        toast('success', json.data.executionResult ?? 'Approved and executed.');
+      } else {
+        toast('error', `Approved, but execution failed: ${json.data.executionResult ?? 'unknown reason'}`);
       }
       router.refresh();
     } catch {
-      setError('The decision was not recorded because the connection failed. Nothing has changed; try again.');
+      toast('error', 'The decision was not recorded because the connection failed. Nothing has changed.');
     } finally {
       setBusy(null);
     }
   }
 
   if (approvals.length === 0) {
-    return <div className="empty">No approval requests.</div>;
+    return (
+      <div className="empty">
+        <strong>Nothing waiting for a decision</strong>
+        <span>Room changes and announcements appear here when someone asks for one.</span>
+      </div>
+    );
   }
 
   return (
-    <div className="stack">
-      {error ? (
-        <p role="alert" className="notice notice--error" style={{ margin: 0 }}>
-          {error}
-        </p>
-      ) : null}
+    <ul className="stack list-reset" style={{ gap: 12 }}>
       {approvals.map((row) => {
         const expired = row.status === 'PENDING' && nowMs >= row.expiresAt;
-        const ownRequest = row.requestedByUserId === viewerId;
+        const own = row.requestedByUserId === viewerId;
+        const canAct = row.status === 'PENDING' && !expired && canDecide && !own;
         return (
-          <article key={row.id} className="card card__body stack small" aria-label={`${row.actionType} request`}>
-            <div className="row" style={{ justifyContent: 'space-between' }}>
-              <strong>{row.actionType.replace(/_/g, ' ').toLowerCase()}</strong>
-              <span className={row.status === 'APPROVED' ? 'badge badge--success' : row.status === 'REJECTED' ? 'badge badge--danger' : 'badge badge--warning'}>
-                {expired ? 'Expired' : row.status.toLowerCase()}
-              </span>
-            </div>
-            <div className="muted">{row.justification}</div>
-            <div className="mono">{row.payloadSummary}</div>
-            {row.status === 'APPROVED' ? (
-              <div className={row.executionStatus === 'SUCCEEDED' ? 'notice notice--info' : 'notice notice--error'}>
-                Execution {row.executionStatus.toLowerCase().replace('_', ' ')}
-                {row.executionResult ? `: ${row.executionResult}` : ''}
+          <li key={row.id} className="card card--raised">
+            <article className="card__body stack" style={{ gap: 8 }} aria-label={`${row.actionType} request`}>
+              <div className="row" style={{ justifyContent: 'space-between' }}>
+                <strong>{row.actionType.replace(/_/g, ' ').toLowerCase()}</strong>
+                <span className={statusTone(row, expired)}>{expired ? 'expired' : row.status.toLowerCase()}</span>
               </div>
-            ) : null}
-            {row.status === 'REJECTED' && row.decisionReason ? <div className="muted">Rejected: {row.decisionReason}</div> : null}
-
-            {row.status === 'PENDING' && !expired && canDecide ? (
-              ownRequest ? (
-                <p className="small muted" style={{ margin: 0 }}>
-                  You requested this, so another organiser must decide it.
+              <p className="small muted">{row.justification}</p>
+              <p className="mono faint">{row.payloadSummary}</p>
+              {row.status === 'APPROVED' ? (
+                <p className={row.executionStatus === 'SUCCEEDED' ? 'notice notice--info small' : 'notice notice--error small'}>
+                  Execution {row.executionStatus === 'SUCCEEDED' ? 'succeeded' : 'failed'}
+                  {row.executionResult ? `: ${row.executionResult}` : ''}
                 </p>
-              ) : (
-                <div className="stack">
+              ) : null}
+              {row.status === 'REJECTED' && row.decisionReason ? (
+                <p className="small muted">Rejected: {row.decisionReason}</p>
+              ) : null}
+              {canAct ? (
+                <div className="stack" style={{ gap: 10, marginTop: 4 }}>
                   <div className="field">
                     <label htmlFor={`reason-${row.id}`}>Reason (required to reject)</label>
                     <input
                       id={`reason-${row.id}`}
                       value={reasons[row.id] ?? ''}
-                      onChange={(e) => { setReasons((prev) => ({ ...prev, [row.id]: e.target.value })); }}
+                      onChange={(e) => {
+                        setReasons((prev) => ({ ...prev, [row.id]: e.target.value }));
+                      }}
                       maxLength={500}
                     />
                   </div>
                   <div className="row">
                     <button type="button" className="button" disabled={busy !== null} onClick={() => void decide(row, 'APPROVE')}>
-                      Approve and execute
+                      {busy === row.id ? 'Working…' : 'Approve and execute'}
                     </button>
                     <button type="button" className="button button--ghost" disabled={busy !== null} onClick={() => void decide(row, 'REJECT')}>
                       Reject
                     </button>
                   </div>
                 </div>
-              )
-            ) : null}
-          </article>
+              ) : own && row.status === 'PENDING' ? (
+                <p className="small faint">You requested this, so another organiser must decide it.</p>
+              ) : null}
+            </article>
+          </li>
         );
       })}
-    </div>
+    </ul>
   );
 }

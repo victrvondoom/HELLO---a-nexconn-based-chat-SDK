@@ -49,7 +49,7 @@ export default function LandingPage() {
 
       <section className="hero" aria-labelledby="hero-title">
         <div>
-          <p className="eyebrow">AI-assisted event coordination</p>
+          <p className="eyebrow">Event coordination for physical events</p>
           <h1 id="hero-title" style={{ marginTop: 12 }}>
             One conversation. Everyone connected.
           </h1>
@@ -74,6 +74,7 @@ export default function LandingPage() {
           ) : null}
         </div>
 
+        <div className="flow-stage">
         <figure className="flow" id="how" aria-label="Example of a message becoming a workflow">
           <div className="flow__msg">The microphone in Room 3 has stopped working.</div>
           <div className="flow__step">
@@ -93,6 +94,7 @@ export default function LandingPage() {
             <span>Work is recorded step by step. The reporter is asked to confirm the fix.</span>
           </div>
         </figure>
+        </div>
       </section>
 
       <section className="features" aria-label="What HELLO does">

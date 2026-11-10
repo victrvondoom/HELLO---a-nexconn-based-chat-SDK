@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { ACTION_LABEL } from '@/domain/labels';
+import { useFeedback } from '@/components/ui/Feedback';
 
 interface Props {
   eventId: string;
@@ -13,21 +14,21 @@ interface Props {
   canClaim: boolean;
 }
 
-type ApiResult = { ok: true } | { ok: false; message: string };
+const DESTRUCTIVE = new Set(['CANCELLED']);
 
 /**
- * Buttons only offer transitions the server already said are allowed for this viewer.
- * The server repeats every check, so a stale page cannot force an illegal move.
+ * Only transitions the server already allowed for this viewer are offered. The server repeats every
+ * check, so a stale page cannot force an illegal move. Outcomes are reported with toasts, and
+ * anything irreversible asks first.
  */
 export function IncidentActions({ eventId, incidentId, version, status, allowedNext, canClaim }: Props) {
   const router = useRouter();
+  const { toast, confirm } = useFeedback();
   const [pending, setPending] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState('');
 
-  async function call(body: Record<string, unknown>, label: string): Promise<ApiResult> {
+  async function call(body: Record<string, unknown>, label: string, success: string): Promise<boolean> {
     setPending(label);
-    setError(null);
     try {
       const response = await fetch(`/api/events/${eventId}/incidents/${incidentId}`, {
         method: 'POST',
@@ -36,92 +37,109 @@ export function IncidentActions({ eventId, incidentId, version, status, allowedN
       });
       const json = (await response.json()) as { ok: true } | { ok: false; error: { message: string } };
       if (!json.ok) {
-        setError(json.error.message);
+        toast('error', json.error.message);
         router.refresh();
-        return { ok: false, message: json.error.message };
+        return false;
       }
+      toast('success', success);
       router.refresh();
-      return { ok: true };
+      return true;
     } catch {
-      const message = 'The change was not saved because the connection failed. Nothing has been changed; try again.';
-      setError(message);
-      return { ok: false, message };
+      toast('error', 'The change was not saved because the connection failed. Nothing has changed; try again.');
+      return false;
     } finally {
       setPending(null);
     }
   }
 
+  async function claim() {
+    await call({ action: 'claim', expectedVersion: version }, 'claim', 'You have claimed this incident.');
+  }
+
+  async function transition(to: string) {
+    if (DESTRUCTIVE.has(to)) {
+      const ok = await confirm({
+        title: 'Cancel this incident?',
+        body: 'Reporters will be told it was cancelled. You can reopen it later only from the reporter side.',
+        confirmLabel: 'Cancel incident',
+        tone: 'danger',
+      });
+      if (!ok) return;
+    }
+    const body: Record<string, unknown> = { action: 'transition', to, expectedVersion: version };
+    if (to === 'RESOLVED') body.resolutionNote = note.trim();
+    await call(body, to, `Moved to ${(ACTION_LABEL[to as keyof typeof ACTION_LABEL] ?? to).toLowerCase()}.`);
+  }
+
   const transitions = allowedNext.filter((s) => s !== 'ASSIGNED');
 
   return (
-    <div className="stack">
-      {error ? (
-        <p role="alert" className="notice notice--error" style={{ margin: 0 }}>
-          {error}
-        </p>
-      ) : null}
-
+    <div className="stack" style={{ gap: 12 }}>
       {canClaim ? (
         <button
           type="button"
           className="button"
           disabled={pending !== null}
-          onClick={() => void call({ action: 'claim', expectedVersion: version }, 'claim')}
+          onClick={() => void claim()}
         >
           {pending === 'claim' ? 'Claiming…' : 'Claim this incident'}
         </button>
       ) : null}
 
-      {transitions.length > 0 ? (
+      {transitions.includes('RESOLVED') ? (
+        <div className="stack" style={{ gap: 6 }}>
+          <label htmlFor="resolution-note" className="label">
+            What was done?
+          </label>
+          <textarea
+            id="resolution-note"
+            value={note}
+            onChange={(e) => {
+              setNote(e.target.value);
+            }}
+            maxLength={1000}
+            rows={3}
+            placeholder="For example: Replaced the lapel microphone and retested Room 3."
+            aria-describedby="resolution-help"
+          />
+          <span id="resolution-help" className="xs faint">
+            Required to mark resolved. The reporter sees this note.
+          </span>
+          <div>
+            <button
+              type="button"
+              className="button"
+              disabled={pending !== null || note.trim().length < 5}
+              onClick={() => void transition('RESOLVED')}
+            >
+              {pending === 'RESOLVED' ? 'Saving…' : 'Mark resolved'}
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {transitions.filter((t) => t !== 'RESOLVED').length > 0 ? (
         <div className="row">
-          {transitions.map((to) => {
-            if (to === 'RESOLVED') {
-              return (
-                <div key={to} className="stack" style={{ width: '100%' }}>
-                  <label htmlFor="resolution-note" className="small">
-                    What was done? (required)
-                  </label>
-                  <textarea
-                    id="resolution-note"
-                    value={note}
-                    onChange={(e) => { setNote(e.target.value); }}
-                    maxLength={1000}
-                    placeholder="For example: Replaced the lapel microphone and retested Room 3."
-                  />
-                  <button
-                    type="button"
-                    className="button"
-                    disabled={pending !== null || note.trim().length < 5}
-                    onClick={() => void call({ action: 'transition', to, expectedVersion: version, resolutionNote: note.trim() }, to)}
-                  >
-                    {pending === to ? 'Saving…' : ACTION_LABEL.RESOLVED ?? 'Mark resolved'}
-                  </button>
-                </div>
-              );
-            }
-            const danger = to === 'CANCELLED';
-            return (
+          {transitions
+            .filter((t) => t !== 'RESOLVED')
+            .map((to) => (
               <button
                 key={to}
                 type="button"
-                className={danger ? 'button button--danger' : 'button button--ghost'}
+                className={DESTRUCTIVE.has(to) ? 'button button--ghost button--quiet-danger' : 'button button--ghost'}
                 disabled={pending !== null}
-                onClick={() => {
-                  if (danger && !window.confirm('Cancel this incident? Reporters will be told it was cancelled.')) return;
-                  void call({ action: 'transition', to, expectedVersion: version }, to);
-                }}
+                onClick={() => void transition(to)}
               >
                 {pending === to ? 'Saving…' : (ACTION_LABEL[to as keyof typeof ACTION_LABEL] ?? to)}
               </button>
-            );
-          })}
+            ))}
         </div>
       ) : null}
 
       {!canClaim && transitions.length === 0 ? (
-        <p className="small muted" style={{ margin: 0 }}>
+        <p className="small muted">
           {status === 'CLOSED' || status === 'CANCELLED'
-            ? 'This incident is finished. Reporters can reopen it if the problem continues.'
+            ? 'This incident is finished. The reporter can reopen it if the problem continues.'
             : 'No actions are available to you for this incident right now.'}
         </p>
       ) : null}
