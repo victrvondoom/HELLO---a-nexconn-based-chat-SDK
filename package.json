@@ -1,0 +1,36 @@
+{
+  "name": "hello-event-coordination",
+  "version": "0.1.0",
+  "private": true,
+  "description": "HELLO — One conversation. Everyone connected. AI-assisted event coordination.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "npm run typecheck && npm run lint && npm run test && npm run build"
+  },
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "dependencies": {
+    "next": "^16.4.6",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "eslint": "^9.0.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "typescript": "^5.8.0",
+    "typescript-eslint": "^8.0.0",
+    "vitest": "^3.2.0"
+  }
+}
