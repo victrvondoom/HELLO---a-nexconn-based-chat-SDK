@@ -28,9 +28,11 @@ export interface HelloStore {
   getEvent(eventId: string): Promise<EventRecord | null>;
   getUser(userId: string): Promise<User | null>;
   listUsers(): Promise<User[]>;
+  updateUser(userId: string, patch: Partial<Pick<User, 'displayName' | 'interests' | 'discoverable' | 'accessibilityRequired'>>): Promise<User>;
 
   findMembership(eventId: string, userId: string): Promise<Membership | null>;
   listMemberships(eventId: string): Promise<Membership[]>;
+  updateMembership(membershipId: string, patch: Partial<Pick<Membership, 'availability' | 'zone' | 'skills'>>): Promise<Membership>;
 
   listRooms(eventId: string): Promise<Room[]>;
   getRoom(roomId: string): Promise<Room | null>;
@@ -69,6 +71,8 @@ export interface HelloStore {
   /** Inserts the notification only if its dedupe key is new for the event. Returns true if inserted. */
   insertNotificationIfNew(notification: Notification): Promise<boolean>;
   listNotifications(recipientUserId: string): Promise<Notification[]>;
+  /** Marks the recipient's notifications in an event as read. Returns how many changed. */
+  markNotificationsRead(recipientUserId: string, eventId: string, now: number): Promise<number>;
 
   upsertSignalPatterns(patterns: SignalPattern[]): Promise<void>;
   listSignalPatterns(eventId: string): Promise<SignalPattern[]>;

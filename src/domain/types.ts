@@ -229,6 +229,8 @@ export interface Notification {
   href: string;
   dedupeKey: string;
   createdAt: number;
+  /** Null until the recipient marks it read. */
+  readAt: number | null;
 }
 
 export interface SignalPattern {

@@ -4,6 +4,7 @@ import { parseStoredOutcome } from '@/lib/validation/outcome';
 import { ChatComposer } from '@/components/conversation/ChatComposer';
 import { OutcomeCards } from '@/components/conversation/OutcomeCards';
 import { ScrollToEnd } from '@/components/conversation/ScrollToEnd';
+import { LiveRefresh } from '@/components/workplace/LiveRefresh';
 import { Icon } from '@/components/ui/Icon';
 import { formatUtc, minutesAgo } from '@/components/ui/labels';
 import { IncidentBadge } from '@/components/incidents/IncidentBadge';
@@ -23,8 +24,16 @@ function initials(name: string): string {
     .join('');
 }
 
-export default async function ConversationPage({ params }: { params: Promise<{ eventId: string }> }) {
+export default async function ConversationPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ eventId: string }>;
+  searchParams: Promise<{ q?: string }>;
+}) {
   const { eventId } = await params;
+  const { q } = await searchParams;
+  const term = (q ?? '').trim().toLowerCase();
   const viewer = await loadEventViewer(eventId);
   const operational = viewer.can('incident.read.operational');
   const now = viewer.ctx.now();
@@ -32,6 +41,7 @@ export default async function ConversationPage({ params }: { params: Promise<{ e
   const all = await viewer.store.listMessages(eventId);
   const visible = all
     .filter((m) => operational || m.senderUserId === viewer.userId)
+    .filter((m) => term === '' || m.text.toLowerCase().includes(term))
     .sort((a, b) => a.createdAt - b.createdAt)
     .slice(-120);
 
@@ -48,15 +58,31 @@ export default async function ConversationPage({ params }: { params: Promise<{ e
   return (
     <div className="chat">
       <section className="thread" aria-label="Conversation">
+        <div className="thread__head">
+          <form role="search" method="get" className="row" style={{ flex: 1 }}>
+            <label htmlFor="thread-search" className="visually-hidden">Search this conversation</label>
+            <input id="thread-search" name="q" defaultValue={q ?? ''} placeholder="Search your conversation" />
+          </form>
+          <LiveRefresh seconds={8} />
+        </div>
         <div className="thread__scroll" role="log" aria-live="polite" aria-label="Messages">
           {visible.length === 0 ? (
             <div className="empty" style={{ margin: 'auto' }}>
+              {term ? (
+                <>
+                  <strong>No messages match “{q}”</strong>
+                  <span>Clear the search to see the whole conversation.</span>
+                </>
+              ) : (
+                <>
               <Icon name="conversation" size={22} />
               <strong>Tell HELLO what is happening.</strong>
               <span>
                 Describe a problem, ask for help, or ask a question in ordinary words. HELLO finds the room, the session
                 and the right team, and keeps you informed until it is resolved.
               </span>
+                </>
+              )}
             </div>
           ) : (
             visible.map((m) => {

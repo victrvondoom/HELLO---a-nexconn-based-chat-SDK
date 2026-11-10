@@ -42,6 +42,29 @@ accountable workflow.
 - **Honest data labels.** Every occupancy figure states whether it is live verified, administrator entered,
   attendee reported, or demo data.
 
+## Workplace features
+
+Everything on these screens is computed from current state when it is requested, and the live screens refresh
+themselves while the tab is visible. Nothing is a stored snapshot.
+
+- **Today**: the event home. Your open requests, next sessions, unread updates and the latest announcement. Staff
+  also see what is waiting on the team and what is assigned to them.
+- **Acknowledgement timers**: every incident has a target from its urgency (critical 5 min, high 10, medium 30, low 60).
+  Timers move from on track, to at risk, to overdue. The reporter sees the same target for their own report.
+- **Escalation check**: unclaimed work past its target is escalated through the normal lifecycle rules, recorded in the
+  timeline and the audit trail, and notified to operations. A second press changes nothing that is already escalated.
+- **Workflow rail**: each incident shows its stages (reported, triaged, assigned, in progress, resolved, confirmed),
+  derived from its status so it cannot disagree with the lifecycle.
+- **Team**: availability, skills, zone and load for each staff member, ordered so available people come first. Staff
+  set their own availability; off-shift people are not recommended for new work.
+- **Profile and privacy**: interests and discoverability are the only things people search uses. Turning discoverability
+  off removes you from search at once.
+- **Announcements**: proposed by a staff member, published only after a different organiser approves, through the same
+  approval and execution records as room changes.
+- **Notifications**: unread counts in the navigation, and mark-as-read.
+- **Audit trail**: organisers see every consequential action, filterable by action. Entries cannot be edited.
+- **Conversation search** and incident search and filters.
+
 ## Architecture
 
 ```
@@ -168,8 +191,8 @@ and it must never return actions. See [docs/ai-system.md](docs/ai-system.md).
 
 ```bash
 npm run dev         # development server
-npm test            # unit and integration tests (108)
-npm run test:e2e    # browser test of the judge flow (needs a running server, see below)
+npm test            # unit and integration tests (130)
+npm run test:e2e    # browser checks: judge flow (13) and workplace features (10); needs a running server
 npm run typecheck   # TypeScript
 npm run lint        # ESLint
 npm run build       # production build

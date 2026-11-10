@@ -2,9 +2,12 @@ import { loadEventViewer } from '@/lib/viewer';
 import { nexconnStatus } from '@/integrations/nexconn/status';
 import { DATA_SOURCE_LABEL } from '@/domain/labels';
 import { ROLE_LABEL } from '@/components/ui/labels';
+import { demoModeEnabled } from '@/lib/session';
+import { STAFF_ROLES } from '@/domain/types';
+import { ProfileForm } from '@/components/workplace/ProfileForm';
+import { AvailabilityControl } from '@/components/workplace/AvailabilityControl';
 import { SignOutButton } from '@/components/settings/SignOutButton';
 import { ResetDemoButton } from '@/components/settings/ResetDemoButton';
-import { demoModeEnabled } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,48 +15,80 @@ export default async function SettingsPage({ params }: { params: Promise<{ event
   const { eventId } = await params;
   const viewer = await loadEventViewer(eventId);
   const nexconn = nexconnStatus();
+  const isStaff = STAFF_ROLES.includes(viewer.membership.role);
 
   return (
-    <>
-      <h1>Settings</h1>
-      <section className="card card__body stack" aria-labelledby="account-heading">
-        <h2 id="account-heading">Account</h2>
-        <p style={{ margin: 0 }}>
-          {viewer.user?.displayName} · {ROLE_LABEL[viewer.membership.role]}
-        </p>
-        <p className="small muted" style={{ margin: 0 }}>
-          Discoverable in people search: {viewer.user?.discoverable ? 'yes' : 'no'}. Accessibility needs recorded:{' '}
-          {viewer.user?.accessibilityRequired ? 'yes' : 'no'}.
-        </p>
-        {demoModeEnabled() ? (
-          <div className="row">
-            <SignOutButton />
-            <ResetDemoButton eventId={eventId} />
-          </div>
-        ) : null}
-      </section>
-
-      <section className="card card__body stack" style={{ marginTop: 24 }} aria-labelledby="transport-heading">
-        <h2 id="transport-heading">Messaging transport</h2>
-        <div className={nexconn.state === 'NOT_CONFIGURED' ? 'notice notice--demo' : 'notice'} role="status">
-          <strong>{nexconn.state === 'NOT_CONFIGURED' ? 'Not connected to Nexconn' : 'Nexconn key configured'}</strong>
-          <p style={{ margin: '6px 0 0' }}>{nexconn.message}</p>
+    <div className="page">
+      <div className="page-header">
+        <div>
+          <h1>Profile and settings</h1>
+          <p>
+            {viewer.user?.displayName} · {ROLE_LABEL[viewer.membership.role]}
+          </p>
         </div>
-        <p className="small muted" style={{ margin: 0 }}>
-          The conversation here uses the local demo store. It is not an end-to-end messaging service. See docs/nexconn-integration.md for what is and is not implemented.
-        </p>
-      </section>
+      </div>
 
-      <section className="card card__body stack" style={{ marginTop: 24 }} aria-labelledby="data-heading">
-        <h2 id="data-heading">How to read a figure</h2>
-        <ul className="small" style={{ margin: 0, paddingLeft: 18 }}>
-          {Object.entries(DATA_SOURCE_LABEL).map(([key, label]) => (
-            <li key={key}>
-              <strong>{label}</strong>
-            </li>
-          ))}
-        </ul>
-      </section>
-    </>
+      <div className="split">
+        <div className="stack" style={{ gap: 20 }}>
+          <section className="card card__body stack" aria-labelledby="profile-heading">
+            <div>
+              <h2 id="profile-heading">Profile and privacy</h2>
+              <p className="small muted">These choices take effect immediately. You decide what others can see.</p>
+            </div>
+            {viewer.user ? (
+              <ProfileForm
+                initial={{
+                  displayName: viewer.user.displayName,
+                  interests: viewer.user.interests,
+                  discoverable: viewer.user.discoverable,
+                  accessibilityRequired: viewer.user.accessibilityRequired,
+                }}
+              />
+            ) : null}
+          </section>
+
+          {isStaff ? (
+            <section className="card card__body stack" aria-labelledby="availability-heading">
+              <div>
+                <h2 id="availability-heading">Your availability</h2>
+                <p className="small muted">
+                  Off-shift staff are never recommended for new work. Busy staff are ranked lower.
+                </p>
+              </div>
+              <AvailabilityControl eventId={eventId} current={viewer.membership.availability} />
+            </section>
+          ) : null}
+        </div>
+
+        <div className="stack" style={{ gap: 20 }}>
+          <section className="card card__body stack" aria-labelledby="transport-heading">
+            <h2 id="transport-heading">Messaging transport</h2>
+            <div className={nexconn.state === 'NOT_CONFIGURED' ? 'notice notice--demo' : 'notice'} role="status">
+              <strong>{nexconn.state === 'NOT_CONFIGURED' ? 'Not connected to Nexconn' : 'Nexconn key configured'}</strong>
+              <p style={{ marginTop: 6 }}>{nexconn.message}</p>
+            </div>
+          </section>
+
+          <section className="card card__body stack" aria-labelledby="data-heading">
+            <h2 id="data-heading">Reading a figure</h2>
+            <ul className="small" style={{ margin: 0, paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {Object.values(DATA_SOURCE_LABEL).map((label) => (
+                <li key={label}>{label}</li>
+              ))}
+            </ul>
+          </section>
+
+          {demoModeEnabled() ? (
+            <section className="card card__body stack" aria-labelledby="demo-heading">
+              <h2 id="demo-heading">Demo</h2>
+              <div className="row">
+                <SignOutButton />
+                <ResetDemoButton eventId={eventId} />
+              </div>
+            </section>
+          ) : null}
+        </div>
+      </div>
+    </div>
   );
 }

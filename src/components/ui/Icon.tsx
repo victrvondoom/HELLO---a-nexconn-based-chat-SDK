@@ -38,6 +38,16 @@ const PATHS: Record<IconName, ReactNode> = {
   check: <path d="M20 6 9 17l-5-5" />,
   arrow: <path d="M5 12h14M13 6l6 6-6 6" />,
   sparkle: <path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6" />,
+  megaphone: <path d="M3 11v2a1 1 0 0 0 1 1h3l5 4V6L7 10H4a1 1 0 0 0-1 1zM16 8.5a5 5 0 0 1 0 7M19 5.5a9 9 0 0 1 0 13" />,
+  team: (
+    <>
+      <circle cx="9" cy="8" r="3.5" />
+      <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
+      <path d="M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4-6" />
+    </>
+  ),
+  shield: <path d="M12 3 4 6v6c0 4.5 3.2 8 8 9 4.8-1 8-4.5 8-9V6z" />,
+  home: <path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z" />,
 };
 
 export type IconName =
@@ -50,7 +60,11 @@ export type IconName =
   | 'settings'
   | 'check'
   | 'arrow'
-  | 'sparkle';
+  | 'sparkle'
+  | 'megaphone'
+  | 'team'
+  | 'shield'
+  | 'home';
 
 export function Icon({ name, size = 16, label }: { name: IconName; size?: number; label?: string }) {
   return (

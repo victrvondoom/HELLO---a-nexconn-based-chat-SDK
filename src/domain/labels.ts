@@ -1,4 +1,4 @@
-import type { DataSource, IncidentStatus } from './types';
+import type { DataSource, IncidentCategory, IncidentStatus } from './types';
 
 /** Plain display text shared by server and client code. Kept free of service imports so client bundles stay small. */
 
@@ -35,4 +35,13 @@ export const ACTION_LABEL: Partial<Record<IncidentStatus, string>> = {
   CANCELLED: 'Cancel incident',
   CONFIRMED: 'Confirm it is fixed',
   REOPENED: 'Reopen',
+};
+
+export const CATEGORY_LABEL: Record<IncidentCategory, string> = {
+  AV: 'AV',
+  CAPACITY: 'Capacity',
+  ACCESSIBILITY: 'Accessibility',
+  FACILITIES: 'Facilities',
+  SCHEDULE: 'Schedule',
+  GENERAL: 'General',
 };

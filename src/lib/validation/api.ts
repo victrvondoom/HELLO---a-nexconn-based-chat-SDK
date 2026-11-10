@@ -34,3 +34,19 @@ export const SignalReviewBody = z.object({
 export const DemoSessionBody = z.object({
   userId: z.string().regex(/^u-[a-z0-9-]{1,40}$/),
 });
+
+export const ProfileBody = z.object({
+  displayName: z.string().trim().min(1).max(80),
+  interests: z.array(z.string().trim().min(1).max(60)).max(25),
+  discoverable: z.boolean(),
+  accessibilityRequired: z.boolean(),
+});
+
+export const AvailabilityBody = z.object({
+  availability: z.enum(['AVAILABLE', 'BUSY', 'OFF_SHIFT']),
+});
+
+export const AnnouncementBody = z.object({
+  title: z.string().trim().min(3).max(160),
+  body: z.string().trim().min(10).max(4000),
+});

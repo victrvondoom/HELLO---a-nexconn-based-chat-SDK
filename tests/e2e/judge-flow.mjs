@@ -94,7 +94,7 @@ try {
   await step('AV technician opens the incident and sees ranked staff', async () => {
     await signInAs(staff.page, 'Kiri (demo AV technician)');
     await staff.page.goto(`${BASE}/events/${EVENT}/incidents/inc-seed-av-r3`);
-    await staff.page.getByRole('heading', { name: 'Recommended staff' }).waitFor();
+    await staff.page.getByRole('heading', { name: 'Recommended for this work' }).waitFor();
     await staff.page.getByText('Kiri (demo AV technician)').first().waitFor();
   });
 

@@ -29,12 +29,13 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/0001_constraints_and_r
 | Signal intelligence | `tests/unit/signals-notifications.test.ts` | Distinct reporters, windows, confidence cap, determinism; notification dedupe. |
 | AI boundary | `tests/unit/intent.test.ts` | Judge sentences, schema validation, timeout, rate limit, provider error. |
 | Workflows | `tests/integration/workflows.test.ts` | Judge demonstration, concurrent claims, full lifecycle, reopening, isolation, approvals, signals, people, degradation. |
+| Browser (workplace) | `tests/e2e/features-flow.mjs` | 10 checks: live board, escalation, team, availability, audit access, consent, announcement approval chain, read state, search, workflow rail. |
 | Browser (judge flow) | `tests/e2e/judge-flow.mjs` | 13 checks: sign-in, two-concern report, persisted reply, claim, approval, phone overflow, access. |
 | Database | `supabase/tests/0001_constraints_and_rls.sql` | Constraints, append-only audit, RLS for strangers, attendees and organisers. |
 
 ## Verified results (this build)
 
-- `npx vitest run`: 9 files, 108 tests, all passing.
+- `npx vitest run`: 12 files, 130 tests, all passing (adds SLA rules, workflow rail, workplace workflows, stored conversation records).
 - `npm run test:e2e` against `next start` with demo mode: 13/13 browser checks passed, two consecutive runs, no server errors.
 - `npx tsc --noEmit`: no errors.
 - `npx eslint .`: no errors.

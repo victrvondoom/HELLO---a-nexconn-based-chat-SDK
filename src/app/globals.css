@@ -1667,3 +1667,234 @@ tbody tr:last-child td {
   line-height: 1.2;
   letter-spacing: -0.02em;
 }
+
+/* =============================================================================
+   Workplace: live indicator, segmented control, toggles, progress, workflow rail
+   ============================================================================= */
+
+.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--success);
+  white-space: nowrap;
+}
+
+.live__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 0 0 rgb(var(--ink-rgb) / 0.2);
+  animation: live-pulse 2.2s ease-out infinite;
+}
+
+@keyframes live-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--success) 45%, transparent);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 7px transparent;
+  }
+}
+
+.segmented {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  border-radius: var(--r-md);
+  background: var(--surface-3);
+  box-shadow: inset 0 1px 2px rgb(var(--ink-rgb) / 0.08);
+}
+
+.segmented__item {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 560;
+  color: var(--text-2);
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: background 140ms ease, box-shadow 140ms ease, color 140ms ease;
+}
+
+.segmented__item:hover:not(:disabled) {
+  color: var(--text);
+}
+
+.segmented__item.is-active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--e2);
+}
+
+.segmented__item:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.toggle {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: start;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  box-shadow: var(--e1);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.toggle input {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: var(--accent);
+  padding: 0;
+}
+
+.load {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-width: 120px;
+}
+
+.load__track {
+  flex: 1;
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  overflow: hidden;
+  box-shadow: inset 0 1px 1px rgb(var(--ink-rgb) / 0.08);
+}
+
+.load__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 400ms ease;
+}
+
+.load__fill.is-full {
+  background: var(--warning);
+}
+
+/* Workflow rail: the stages of an incident, derived from its status and timeline. */
+.rail {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.rail__step {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-3);
+  min-width: 0;
+}
+
+.rail__bar {
+  height: 4px;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+}
+
+.rail__step.is-done .rail__bar {
+  background: var(--accent);
+}
+
+.rail__step.is-current .rail__bar {
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.rail__step.is-current {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.rail__step.is-done {
+  color: var(--text-2);
+}
+
+.rail__step.is-blocked .rail__bar {
+  background: var(--danger);
+}
+
+@media (max-width: 900px) {
+  .rail {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.split-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+}
+
+.nav-link .nav-count {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 650;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--r-pill);
+  display: inline-grid;
+  place-items: center;
+  background: var(--accent);
+  color: #fff;
+}
+
+.list-divided > li + li {
+  border-top: 1px solid var(--border);
+}
+
+.list-divided > li {
+  padding: 12px 0;
+}
+
+.is-unread {
+  border-left: 3px solid var(--accent) !important;
+}
+
+.muted-row {
+  opacity: 0.7;
+}
+
+.chip--active {
+  background: var(--accent-soft);
+  border-color: transparent;
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+
+.thread__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-6);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.thread__head input {
+  max-width: 320px;
+}

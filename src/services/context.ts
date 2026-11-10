@@ -89,6 +89,7 @@ export async function notify(ctx: ServiceContext, input: NotifyInput): Promise<b
     href: input.href,
     dedupeKey: buildDedupeKey([input.kind, input.recipientUserId, ...input.dedupeParts]),
     createdAt: ctx.now(),
+    readAt: null,
   };
   return ctx.store.insertNotificationIfNew(notification);
 }

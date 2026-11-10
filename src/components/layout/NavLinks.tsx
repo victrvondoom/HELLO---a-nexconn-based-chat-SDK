@@ -8,9 +8,11 @@ export interface NavLinkItem {
   href: string;
   label: string;
   icon: IconName;
+  /** A live count shown beside the label. Omitted or zero shows nothing. */
+  count?: number;
 }
 
-/** Client island: only the active-state calculation needs the browser router. */
+/** Client island: only the active-state calculation and live counts need the browser. */
 export function NavLinks({ items }: { items: NavLinkItem[] }) {
   const pathname = usePathname();
   return (
@@ -21,6 +23,11 @@ export function NavLinks({ items }: { items: NavLinkItem[] }) {
           <Link key={item.href} className="nav-link" href={item.href} aria-current={current ? 'page' : undefined}>
             <Icon name={item.icon} />
             <span className="grow">{item.label}</span>
+            {item.count && item.count > 0 ? (
+              <span className="nav-count" aria-label={`${item.count} unread`}>
+                {item.count > 99 ? '99+' : item.count}
+              </span>
+            ) : null}
           </Link>
         );
       })}

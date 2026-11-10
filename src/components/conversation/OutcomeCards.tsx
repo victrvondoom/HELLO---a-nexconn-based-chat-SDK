@@ -1,11 +1,8 @@
 import Link from 'next/link';
 import type { ParsedOutcome } from '@/lib/validation/outcome';
-import { STATUS_LABEL } from '@/domain/labels';
+import { CATEGORY_LABEL, STATUS_LABEL } from '@/domain/labels';
 import { formatUtc } from '@/components/ui/labels';
 
-function categoryLabel(category: string): string {
-  return category === 'AV' ? 'AV' : category.charAt(0) + category.slice(1).toLowerCase();
-}
 import { IncidentBadge } from '@/components/incidents/IncidentBadge';
 
 /** Structured cards rendered under HELLO's reply. Everything shown is taken from the stored, validated outcome. */
@@ -27,7 +24,7 @@ export function OutcomeCards({ eventId, outcome }: { eventId: string; outcome: P
             <IncidentBadge status={i.status} />
           </div>
           <div className="ocard__meta">
-            {categoryLabel(i.category)} · urgency {i.urgency.toLowerCase()}
+            {CATEGORY_LABEL[i.category]} · urgency {i.urgency.toLowerCase()}
             {i.attached && i.matchConfidence !== null
               ? ` · matched an open report (confidence ${i.matchConfidence.toFixed(2)})`
               : ' · new incident'}

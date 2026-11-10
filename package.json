@@ -2,7 +2,7 @@
   "name": "hello-event-coordination",
   "version": "0.1.0",
   "private": true,
-  "description": "HELLO — One conversation. Everyone connected. AI-assisted event coordination.",
+  "description": "HELLO \u2014 One conversation. Everyone connected. AI-assisted event coordination.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -12,7 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "check": "npm run typecheck && npm run lint && npm run test && npm run build",
-    "test:e2e": "node tests/e2e/judge-flow.mjs"
+    "test:e2e": "node tests/e2e/judge-flow.mjs && node tests/e2e/features-flow.mjs"
   },
   "engines": {
     "node": ">=20.9.0"

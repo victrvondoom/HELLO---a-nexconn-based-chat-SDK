@@ -63,7 +63,14 @@ export class MemoryHelloStore implements HelloStore {
     incidents?: Incident[];
     reports?: IncidentReport[];
     timeline?: IncidentTimelineEntry[];
+    announcements?: Announcement[];
+    notifications?: Notification[];
   }): void {
+    for (const a of data.announcements ?? []) this.announcements.push(MemoryHelloStore.copy(a));
+    for (const n of data.notifications ?? []) {
+      this.notifications.push(MemoryHelloStore.copy(n));
+      this.notificationKeys.add(`${n.eventId}::${n.dedupeKey}`);
+    }
     for (const e of data.events) this.events.set(e.id, MemoryHelloStore.copy(e));
     for (const u of data.users) this.users.set(u.id, MemoryHelloStore.copy(u));
     for (const m of data.memberships) this.memberships.set(m.id, MemoryHelloStore.copy(m));
@@ -90,6 +97,16 @@ export class MemoryHelloStore implements HelloStore {
     return MemoryHelloStore.copyAll(this.users.values());
   }
 
+  async updateUser(userId: string, patch: Partial<Pick<User, 'displayName' | 'interests' | 'discoverable' | 'accessibilityRequired'>>): Promise<User> {
+    const current = this.users.get(userId);
+    if (!current) {
+      throw new DomainError('NOT_FOUND', 'User not found.');
+    }
+    const next = { ...current, ...patch };
+    this.users.set(userId, next);
+    return MemoryHelloStore.copy(next);
+  }
+
   async findMembership(eventId: string, userId: string): Promise<Membership | null> {
     for (const m of this.memberships.values()) {
       if (m.eventId === eventId && m.userId === userId) {
@@ -101,6 +118,16 @@ export class MemoryHelloStore implements HelloStore {
 
   async listMemberships(eventId: string): Promise<Membership[]> {
     return MemoryHelloStore.copyAll([...this.memberships.values()].filter((m) => m.eventId === eventId));
+  }
+
+  async updateMembership(membershipId: string, patch: Partial<Pick<Membership, 'availability' | 'zone' | 'skills'>>): Promise<Membership> {
+    const current = this.memberships.get(membershipId);
+    if (!current) {
+      throw new DomainError('NOT_FOUND', 'Membership not found.');
+    }
+    const next = { ...current, ...patch };
+    this.memberships.set(membershipId, next);
+    return MemoryHelloStore.copy(next);
   }
 
   // --- rooms & sessions ---
@@ -268,6 +295,18 @@ export class MemoryHelloStore implements HelloStore {
     this.notificationKeys.add(scoped);
     this.notifications.push(MemoryHelloStore.copy(notification));
     return true;
+  }
+
+  async markNotificationsRead(recipientUserId: string, eventId: string, now: number): Promise<number> {
+    let changed = 0;
+    this.notifications = this.notifications.map((n) => {
+      if (n.recipientUserId === recipientUserId && n.eventId === eventId && n.readAt === null) {
+        changed += 1;
+        return { ...n, readAt: now };
+      }
+      return n;
+    });
+    return changed;
   }
 
   async listNotifications(recipientUserId: string): Promise<Notification[]> {

@@ -1,5 +1,7 @@
 import type {
+  Announcement,
   ApprovalRequest,
+  Notification,
   EventRecord,
   Incident,
   IncidentReport,
@@ -40,6 +42,7 @@ export const DEMO_USERS = {
   opsMarco: 'u-ops-marco',
   organiserNadia: 'u-org-nadia',
   adminRami: 'u-adm-rami',
+  organiserOwen: 'u-org-owen',
 } as const;
 
 export function buildDemoData(): {
@@ -52,6 +55,8 @@ export function buildDemoData(): {
   reports: IncidentReport[];
   timeline: IncidentTimelineEntry[];
   approvals: ApprovalRequest[];
+  announcements: Announcement[];
+  notifications: Notification[];
 } {
   const now = DEMO_T0 + 3 * HOUR; // 12:00 UTC: the event is in progress
   const E = DEMO_EVENT_ID;
@@ -76,6 +81,7 @@ export function buildDemoData(): {
     { id: DEMO_USERS.opsMarco, displayName: 'Marco (demo access coordinator)', interests: [], discoverable: false, accessibilityRequired: false },
     { id: DEMO_USERS.organiserNadia, displayName: 'Nadia (demo organiser)', interests: [], discoverable: false, accessibilityRequired: false },
     { id: DEMO_USERS.adminRami, displayName: 'Rami (demo platform admin)', interests: [], discoverable: false, accessibilityRequired: false },
+    { id: DEMO_USERS.organiserOwen, displayName: 'Owen (demo organiser)', interests: [], discoverable: false, accessibilityRequired: false },
   ];
 
   const membership = (
@@ -102,6 +108,7 @@ export function buildDemoData(): {
     membership('m-lena', DEMO_USERS.opsLena, 'OPERATIONS_STAFF', ['AV', 'FACILITIES'], 'AVAILABLE', 'Main'),
     membership('m-marco', DEMO_USERS.opsMarco, 'OPERATIONS_STAFF', ['ACCESSIBILITY'], 'BUSY', 'Main'),
     membership('m-nadia', DEMO_USERS.organiserNadia, 'ORGANISER', [], 'AVAILABLE', 'Main'),
+    membership('m-owen', DEMO_USERS.organiserOwen, 'ORGANISER', [], 'AVAILABLE', 'Workshop'),
   ];
 
   // Occupancy here is demo data, labelled DEMO_SEED. HELLO has no sensor integration in this build.
@@ -167,7 +174,43 @@ export function buildDemoData(): {
     },
   ];
 
-  return { events, users, memberships, rooms, sessions, incidents, reports, timeline, approvals };
+  const announcements: Announcement[] = [
+    {
+      id: 'ann-seed-doors',
+      eventId: E,
+      title: 'Doors and registration',
+      body: 'Registration desks are open in the Main Hall foyer. Badges are required for every session room.',
+      publishedByUserId: DEMO_USERS.organiserNadia,
+      publishedAt: now - 3 * HOUR,
+    },
+  ];
+
+  const notifications: Notification[] = [
+    {
+      id: 'ntf-seed-ada-1',
+      eventId: E,
+      recipientUserId: DEMO_USERS.attendeeAda,
+      kind: 'INCIDENT_UPDATE',
+      body: 'Microphone crackling in Room 3: Triaged, waiting for an assignee.',
+      href: `/events/${E}/incidents/inc-seed-av-r3`,
+      dedupeKey: 'seed-ada-1',
+      createdAt: now - 7 * MIN,
+      readAt: null,
+    },
+    {
+      id: 'ntf-seed-ada-2',
+      eventId: E,
+      recipientUserId: DEMO_USERS.attendeeAda,
+      kind: 'INCIDENT_UPDATE',
+      body: 'Welcome to HELLO. Report problems in the conversation and you will hear back here.',
+      href: `/events/${E}/conversation`,
+      dedupeKey: 'seed-ada-2',
+      createdAt: now - 2 * HOUR,
+      readAt: now - 2 * HOUR + 5 * MIN,
+    },
+  ];
+
+  return { events, users, memberships, rooms, sessions, incidents, reports, timeline, approvals, announcements, notifications };
 }
 
 function incidentRecord(
@@ -248,6 +291,8 @@ export async function loadDemoEvent(store: MemoryHelloStore): Promise<void> {
     incidents: data.incidents,
     reports: data.reports,
     timeline: data.timeline,
+    announcements: data.announcements,
+    notifications: data.notifications,
   });
   for (const approval of data.approvals) {
     await store.insertApproval(approval);

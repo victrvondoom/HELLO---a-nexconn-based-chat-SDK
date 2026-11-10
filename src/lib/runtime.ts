@@ -14,7 +14,7 @@ export interface Runtime {
   store: MemoryHelloStore;
   ctx: ServiceContext;
   persistence: 'MEMORY_DEMO';
-  clock: 'FIXED_DEMO_CLOCK';
+  clock: 'LIVE_FROM_SEEDED_EVENT_TIME';
 }
 
 type GlobalWithRuntime = typeof globalThis & { __helloRuntime?: Promise<Runtime> };
@@ -23,12 +23,15 @@ const g = globalThis as GlobalWithRuntime;
 async function createRuntime(): Promise<Runtime> {
   const store = new MemoryHelloStore();
   await loadDemoEvent(store);
+  // The clock starts at the seeded event time and then advances in real time, so timers and
+  // "minutes ago" labels move. Tests use their own fixed clock; the demo never does.
+  const bootedAt = Date.now();
   const ctx = createContext(store, {
-    now: () => DEMO_NOW,
+    now: () => DEMO_NOW + (Date.now() - bootedAt),
     newId: (prefix) => `${prefix}_${crypto.randomUUID().slice(0, 12)}`,
     intentProvider: null,
   });
-  return { store, ctx, persistence: 'MEMORY_DEMO', clock: 'FIXED_DEMO_CLOCK' };
+  return { store, ctx, persistence: 'MEMORY_DEMO', clock: 'LIVE_FROM_SEEDED_EVENT_TIME' };
 }
 
 /** Returns the same runtime for the life of the process, including across dev hot-reloads. */

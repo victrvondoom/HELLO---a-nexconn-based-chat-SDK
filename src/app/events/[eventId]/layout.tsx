@@ -3,6 +3,7 @@ import { loadEventViewer } from '@/lib/viewer';
 import { EventNav } from '@/components/layout/EventNav';
 import { ROLE_LABEL } from '@/components/ui/labels';
 import { demoModeEnabled } from '@/lib/session';
+import { notificationFeed } from '@/services/workplace';
 
 export default async function EventLayout({
   children,
@@ -14,6 +15,7 @@ export default async function EventLayout({
   const { eventId } = await params;
   const viewer = await loadEventViewer(eventId);
   const roleLabel = ROLE_LABEL[viewer.membership.role];
+  const feed = await notificationFeed(viewer.ctx, eventId, viewer.userId);
   return (
     <div className="app">
       <EventNav
@@ -23,6 +25,8 @@ export default async function EventLayout({
         roleLabel={roleLabel}
         operational={viewer.can('incident.read.operational')}
         canApprove={viewer.can('approval.decide')}
+        canAudit={viewer.can('audit.read')}
+        unread={feed.unread}
       />
       <div className="workspace">
         <header className="topbar">
