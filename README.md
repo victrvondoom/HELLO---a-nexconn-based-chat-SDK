@@ -191,8 +191,9 @@ and it must never return actions. See [docs/ai-system.md](docs/ai-system.md).
 
 ```bash
 npm run dev         # development server
-npm test            # unit and integration tests (130)
-npm run test:e2e    # browser checks: judge flow (13) and workplace features (10); needs a running server
+npm test            # unit and integration tests (138)
+npm run test:e2e    # browser checks: judge flow (13), workplace features (10), workflow audit (22); needs a running server
+npm run test:routes # visits every page as every demo role and reports server and page errors
 npm run typecheck   # TypeScript
 npm run lint        # ESLint
 npm run build       # production build

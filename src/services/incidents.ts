@@ -565,3 +565,71 @@ export async function listIncidentsForViewer(
   }
   return rows.sort((a, b) => b.incident.updatedAt - a.incident.updatedAt);
 }
+
+/** How long an incident may wait for the reporter to name a room before a follow-up no longer applies. */
+export const AWAITING_ROOM_WINDOW_MS = 60 * 60 * 1000;
+
+/**
+ * Follow-up step: the reporter has an incident waiting for its room, and has now named one.
+ * The existing incident is completed and moved to triage as the reporter, so the work continues
+ * on the same record rather than a second one being opened.
+ */
+export async function supplyMissingRoom(
+  ctx: ServiceContext,
+  input: {
+    eventId: string;
+    reporterUserId: string;
+    roomId: string;
+    roomName: string;
+    text: string;
+    compatibleCategories: ReadonlySet<IncidentCategory>;
+  },
+): Promise<IngestResult | null> {
+  const now = ctx.now();
+  const candidate = (await ctx.store.listIncidents(input.eventId))
+    .filter(
+      (i) =>
+        i.status === 'NEEDS_INFORMATION' &&
+        i.roomId === null &&
+        i.createdByUserId === input.reporterUserId &&
+        now - i.createdAt <= AWAITING_ROOM_WINDOW_MS &&
+        (input.compatibleCategories.has(i.category) || i.category === 'GENERAL'),
+    )
+    .sort((a, b) => b.createdAt - a.createdAt)[0];
+  if (!candidate) return null;
+
+  assertTransition('NEEDS_INFORMATION', 'TRIAGED', ['REPORTER']);
+  const titled = await ctx.store.updateIncident(
+    candidate.id,
+    candidate.version,
+    { roomId: input.roomId, title: buildTitle(candidate.category, input.roomName, candidate.equipment) },
+    now,
+  );
+  const triaged = await ctx.store.updateIncident(candidate.id, titled.version, { status: 'TRIAGED' }, now);
+
+  const reportId = ctx.newId('rpt');
+  await ctx.store.insertReport({
+    id: reportId,
+    incidentId: candidate.id,
+    eventId: input.eventId,
+    reporterUserId: input.reporterUserId,
+    text: input.text,
+    createdAt: now,
+    matchConfidence: 1,
+    matchSignals: ['follow-up-room'],
+  });
+  await ctx.store.appendTimeline({
+    id: ctx.newId('tl'),
+    incidentId: candidate.id,
+    eventId: input.eventId,
+    type: 'STATUS_CHANGED',
+    actorUserId: input.reporterUserId,
+    fromStatus: 'NEEDS_INFORMATION',
+    toStatus: 'TRIAGED',
+    detail: `The reporter named the room: ${input.roomName}. Back in triage.`,
+    at: now,
+  });
+  await audit(ctx, input.eventId, input.reporterUserId, 'incident.room_supplied', 'incident', candidate.id, input.roomName);
+  await notifyOperations(ctx, triaged, input.reporterUserId, `Room supplied: ${triaged.title}`);
+  return { incident: triaged, attached: true, duplicate: null, reportId };
+}

@@ -58,8 +58,10 @@ const CATEGORY_RULES: ReadonlyArray<{ category: IncidentCategory; patterns: RegE
       /\btoilets?\b|\bbathroom\b|\brestrooms?\b/i,
       /\bwi-?fi\b|\binternet\b/i,
       /\btoo (hot|cold)\b|\bair ?con\w*\b|\btemperature\b/i,
-      /\bpower\b|\bplug\b|\belectric\w*\b|\bsocket\b/i,
-      /\bspill\w*\b|\bbroken\b|\bdirty\b|\bcleaning\b/i,
+      // "power" alone is common in session titles; only faults count.
+      /\blights?\b|\bflicker\w*|\bleak\w*|\bsmell\w*|\bnoisy\b|\bdark\b|\bno power\b|\bpower (cut|outage|failure|socket|point|cable|strip)\b|\bpower is (out|off)\b|\bplug\b|\belectric\w*\b|\bsocket\b/i,
+      // "broken" alone describes any fault, so it only counts with furniture or fittings.
+      /\bspill\w*\b|\bbroken (chair|table|door|window|lock|sink|tap)\b|\bdirty\b|\bcleaning\b/i,
     ],
   },
   {

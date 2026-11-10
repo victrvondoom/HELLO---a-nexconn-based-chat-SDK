@@ -100,15 +100,18 @@ try {
 
   await step('AV technician claims the incident and the status becomes Assigned', async () => {
     await staff.page.getByRole('button', { name: 'Claim this incident' }).click();
-    await staff.page.getByText('Assigned', { exact: false }).first().waitFor();
-    assert.equal(await staff.page.getByRole('button', { name: 'Claim this incident' }).count(), 0);
+    // The rail always shows the word "Assigned", so wait for the outcome itself: the toast, and the claim button going away.
+    await staff.page.getByText('You have claimed this incident.').waitFor();
+    await staff.page.getByRole('button', { name: 'Claim this incident' }).waitFor({ state: 'detached' });
+    await staff.page.getByRole('status').filter({ hasText: 'Assigned' }).first().waitFor({ timeout: 2000 }).catch(() => undefined);
+    assert.ok(await staff.page.locator('.rail__step.is-current', { hasText: 'Assigned' }).count(), 'rail should show Assigned as the current stage');
   });
 
   await step('a second person cannot claim the same incident', async () => {
     const lena = await newPage();
     await signInAs(lena.page, 'Lena (demo operations)');
     await lena.page.goto(`${BASE}/events/${EVENT}/incidents/inc-seed-av-r3`);
-    await lena.page.getByText('Assigned', { exact: false }).first().waitFor();
+    await lena.page.locator('.rail__step.is-current', { hasText: 'Assigned' }).waitFor();
     assert.equal(await lena.page.getByRole('button', { name: 'Claim this incident' }).count(), 0);
     await lena.context.close();
   });

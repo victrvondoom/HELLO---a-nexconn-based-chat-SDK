@@ -69,12 +69,18 @@ export class ProviderRateLimitError extends Error {
   }
 }
 
+/** Questions open with a question word or end with "?". They ask for information, unless they describe a problem. */
+const QUESTION_OPENING = /^\s*(when|where|what|who|whom|whose|which|how|is|are|was|were|does|do|did|can|could|will|would|should)\b/i;
 const PROBLEM_WORDS = /\b(not working|stopped|broken|doesn'?t work|can'?t|cannot|too many|overcrowd\w*|inaccessible|blocked|full|no way|dead|crackl\w*|faulty)\b/i;
 const ASSIST_WORDS = /\b(need|want|looking for)\b.{0,20}\b(volunteer|help|assistance|someone to help)\b|\bcan (someone|somebody) help\b/i;
 const STATUS_WORDS = /\b(reported|told|mentioned|earlier|minutes? ago|hours? ago)\b.*\b(anyone|someone|handling|status|still|update)\b|\bis anyone (handling|working)\b|\bstill (not|broken|no)\b/i;
 const SCHEDULE_WORDS = /\b(schedule|agenda|timetable|speaker says|says \d|overlap|clash|conflict)\b/i;
 const FIND_PERSON_WORDS = /\b(find|speak|talk|meet|connect)\b.{0,30}\b(someone|person|people|expert)\b|\bwho works on\b|\bsomeone (experienced|who knows|working on)\b/i;
 const CONSEQUENTIAL_WORDS = /\b(move|cancel|publish|announce|reassign|swap|replace)\b.{0,40}\b(session|room|announcement|staff|speaker)\b/i;
+
+function isQuestion(text: string): boolean {
+  return text.trimEnd().endsWith('?') || QUESTION_OPENING.test(text);
+}
 
 /**
  * Deterministic interpreter. Covers the scenarios HELLO must handle without a model.
@@ -102,6 +108,10 @@ export function interpretDeterministically(input: IntentInput): IntentResult {
     confidence = 0.8;
   } else if (ASSIST_WORDS.test(text)) {
     intent = 'REQUEST_ASSISTANCE';
+    confidence = 0.8;
+  } else if (isQuestion(text) && !PROBLEM_WORDS.test(text)) {
+    // A question about the schedule or a place is answered, not logged as a fault.
+    intent = 'ASK_QUESTION';
     confidence = 0.8;
   } else if (classification.category !== 'GENERAL' || PROBLEM_WORDS.test(text)) {
     intent = 'REPORT_INCIDENT';

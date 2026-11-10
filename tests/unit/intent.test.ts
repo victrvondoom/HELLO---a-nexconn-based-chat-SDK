@@ -67,6 +67,17 @@ describe('deterministic interpretation of the judge scenarios', () => {
     expect(r.intent).toBe('ASK_QUESTION');
   });
 
+  it('answers a question about a named session rather than logging it as a fault', () => {
+    const r = scenario('When does the Satellite Power Systems session start?');
+    expect(r.intent).toBe('ASK_QUESTION');
+    expect(r.category).toBeNull();
+  });
+
+  it('still treats a described power fault as a report', () => {
+    expect(scenario('The power is out in Room 2.').intent).toBe('REPORT_INCIDENT');
+    expect(scenario('The power is out in Room 2.').category).toBe('FACILITIES');
+  });
+
   it('flags requests to change published things as needing approval', () => {
     const r = scenario('Please move the Satellite Power Systems session to the Main Hall.');
     expect(r.intent).toBe('CONSEQUENTIAL_REQUEST');

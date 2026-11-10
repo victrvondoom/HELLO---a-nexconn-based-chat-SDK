@@ -1,5 +1,8 @@
 import Link from 'next/link';
 import { demoModeEnabled } from '@/lib/session';
+import { getRuntime } from '@/lib/runtime';
+import { DEMO_EVENT_ID } from '@/store/seed';
+import { slaFor } from '@/domain/incidents/sla';
 
 // Demo availability depends on runtime configuration, so this page must not be prerendered.
 export const dynamic = 'force-dynamic';
@@ -31,8 +34,29 @@ const FEATURES = [
   },
 ];
 
-export default function LandingPage() {
+async function liveFigures() {
+  const { store, ctx } = await getRuntime();
+  const now = ctx.now();
+  const [incidents, sessions, announcements, people] = await Promise.all([
+    store.listIncidents(DEMO_EVENT_ID),
+    store.listSessions(DEMO_EVENT_ID),
+    store.listAnnouncements(DEMO_EVENT_ID),
+    store.listMemberships(DEMO_EVENT_ID),
+  ]);
+  const open = incidents.filter((i) => !['CLOSED', 'CANCELLED', 'CONFIRMED'].includes(i.status));
+  return {
+    open: open.length,
+    overdue: open.filter((i) => slaFor(i, now).state === 'BREACHED').length,
+    running: sessions.filter((s) => s.startsAt <= now && s.endsAt > now).length,
+    announcements: announcements.length,
+    people: people.length,
+    clock: new Date(now).toISOString().slice(11, 16),
+  };
+}
+
+export default async function LandingPage() {
   const demo = demoModeEnabled();
+  const live = demo ? await liveFigures() : null;
   return (
     <div className="landing">
       <header className="landing__nav">
@@ -46,6 +70,20 @@ export default function LandingPage() {
           </Link>
         ) : null}
       </header>
+
+      {live ? (
+        <section className="live-strip" aria-label="Live figures from the demo event">
+          <span className="live">
+            <span className="live__dot" aria-hidden="true" />
+            Live demo · {live.clock} UTC
+          </span>
+          <span><strong>{live.open}</strong> open incidents</span>
+          <span><strong>{live.overdue}</strong> past their target</span>
+          <span><strong>{live.running}</strong> sessions running</span>
+          <span><strong>{live.announcements}</strong> announcements</span>
+          <span><strong>{live.people}</strong> people in the event</span>
+        </section>
+      ) : null}
 
       <section className="hero" aria-labelledby="hero-title">
         <div>

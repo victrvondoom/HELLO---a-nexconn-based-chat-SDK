@@ -1898,3 +1898,28 @@ tbody tr:last-child td {
 .thread__head input {
   max-width: 320px;
 }
+
+.live-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2) var(--s-6);
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: var(--s-3) var(--s-8);
+  font-size: 13.5px;
+  color: var(--text-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.live-strip strong {
+  color: var(--text);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 900px) {
+  .live-strip {
+    padding: var(--s-3) var(--s-4);
+  }
+}

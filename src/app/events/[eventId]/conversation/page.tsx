@@ -11,6 +11,7 @@ import { IncidentBadge } from '@/components/incidents/IncidentBadge';
 import { listIncidentsForViewer } from '@/services/incidents';
 import { getOperationsOverview } from '@/services/sessions';
 import { STATUS_LABEL } from '@/domain/labels';
+import { reporterAction } from '@/domain/incidents/workflow';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,8 +53,12 @@ export default async function ConversationPage({
     }
   }
 
-  const mine = (await listIncidentsForViewer(viewer.ctx, eventId, viewer.userId)).filter((r) => r.isMine).slice(0, 5);
+  const mineAll = (await listIncidentsForViewer(viewer.ctx, eventId, viewer.userId)).filter((r) => r.isMine);
+  const mine = mineAll.slice(0, 5);
   const rooms = operational ? await getOperationsOverview(viewer.ctx, eventId, viewer.userId) : [];
+  const waiting = mineAll
+    .map((r) => ({ incident: r.incident, action: reporterAction(r.incident.status) }))
+    .filter((w): w is { incident: (typeof mineAll)[number]['incident']; action: 'SUPPLY_ROOM' | 'CONFIRM_OR_REOPEN' } => w.action !== null);
 
   return (
     <div className="chat">
@@ -127,6 +132,26 @@ export default async function ConversationPage({
       </section>
 
       <aside className="context" aria-label="Context">
+        {waiting.length > 0 ? (
+          <section className="context__section" aria-labelledby="waiting-heading">
+            <h2 id="waiting-heading">Waiting on you</h2>
+            <ul className="list-reset stack" style={{ gap: 8 }}>
+              {waiting.map(({ incident, action }) => (
+                <li key={incident.id} className="ocard ocard--warn">
+                  <Link href={`/events/${eventId}/incidents/${incident.id}`} className="ocard__title" style={{ color: 'var(--text)' }}>
+                    {incident.title}
+                  </Link>
+                  <span className="ocard__meta">
+                    {action === 'SUPPLY_ROOM'
+                      ? 'Reply here with the room name, for example “Room 3”.'
+                      : 'The team says this is fixed. Confirm it, or reopen it if the problem continues.'}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+
         <section className="context__section">
           <h2>Your requests</h2>
           {mine.length === 0 ? (

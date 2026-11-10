@@ -9,7 +9,9 @@ import { actionLevel } from '../domain/approvals/rules';
 import type { PersonMatch } from './people';
 import { discoverPeople } from './people';
 import { recommendAlternatives } from './sessions';
-import { ingestReport, listIncidentsForViewer, recommendAssignees, STATUS_LABEL, ROOM_SCOPED } from './incidents';
+import { DATA_SOURCE_LABEL } from '../domain/labels';
+import { tokenise } from '../domain/incidents/classify';
+import { ingestReport, listIncidentsForViewer, recommendAssignees, STATUS_LABEL, ROOM_SCOPED, supplyMissingRoom } from './incidents';
 import { requestApproval, SYSTEM_ACTOR_ID, validatePayload } from './approvals';
 import { requireCapability, type ServiceContext } from './context';
 
@@ -157,9 +159,16 @@ export async function handleMessage(ctx: ServiceContext, input: SendMessageInput
       linkedApprovalId = handled.linkedApprovalId;
       break;
     }
-    case 'ASK_QUESTION':
-      outcome = await handleQuestion(ctx, input, room);
+    case 'ASK_QUESTION': {
+      const follow = room ? await roomFollowUpResponse(ctx, input, room, []) : null;
+      if (follow) {
+        outcome = follow.response;
+        linkedIncidentId = follow.linkedIncidentId;
+      } else {
+        outcome = await handleQuestion(ctx, input, room);
+      }
       break;
+    }
   }
 
   // The assistant's answer is stored with the message, so the conversation survives a reload and
@@ -230,6 +239,17 @@ async function handleReports(
   room: Room | null,
   operational: boolean,
 ): Promise<{ response: Outcome; linkedIncidentId: string | null; linkedApprovalId: string | null }> {
+  return handleReportsInner(ctx, input, result, classification, room, operational);
+}
+
+async function handleReportsInner(
+  ctx: ServiceContext,
+  input: SendMessageInput,
+  result: IntentResult,
+  classification: ReturnType<typeof classifyUtterance>,
+  room: Room | null,
+  operational: boolean,
+): Promise<{ response: Outcome; linkedIncidentId: string | null; linkedApprovalId: string | null }> {
   // A single message may raise several concerns, e.g. AV and CAPACITY. Each becomes its own incident.
   const wanted = new Set<IncidentCategory>();
   if (result.intent === 'SCHEDULE_CONFLICT') wanted.add('SCHEDULE');
@@ -238,6 +258,13 @@ async function handleReports(
   if (result.category && result.category !== 'GENERAL') wanted.add(result.category);
   if (wanted.size === 0) wanted.add('GENERAL');
   const categories = [...wanted].slice(0, 3);
+
+  // Follow-up: the reporter is answering "which room?" for an earlier report. Continue that report.
+  if (room) {
+    const concerns = [...wanted].filter((c) => c !== 'GENERAL');
+    const follow = await roomFollowUpResponse(ctx, input, room, concerns);
+    if (follow) return { response: follow.response, linkedIncidentId: follow.linkedIncidentId, linkedApprovalId: null };
+  }
 
   const outcomes: IncidentOutcome[] = [];
   const missing = new Set<string>();
@@ -346,6 +373,49 @@ async function handleReports(
     },
     linkedIncidentId: outcomes[0]?.incidentId ?? null,
     linkedApprovalId,
+  };
+}
+
+/**
+ * A message that names a room may be the answer to "which room?" for an earlier report. If the same
+ * person has such a report waiting, the answer continues it. A message that states no concern of its
+ * own can answer any waiting report; one that states a different concern does not.
+ */
+async function roomFollowUpResponse(
+  ctx: ServiceContext,
+  input: SendMessageInput,
+  room: Room,
+  concerns: readonly IncidentCategory[],
+): Promise<{ response: Outcome; linkedIncidentId: string } | null> {
+  const compatible: ReadonlySet<IncidentCategory> =
+    concerns.length === 0 ? new Set<IncidentCategory>(['AV', 'CAPACITY', 'ACCESSIBILITY', 'FACILITIES', 'SCHEDULE', 'GENERAL']) : new Set(concerns);
+  const followUp = await supplyMissingRoom(ctx, {
+    eventId: input.eventId,
+    reporterUserId: input.userId,
+    roomId: room.id,
+    roomName: room.name,
+    text: input.text.trim(),
+    compatibleCategories: compatible,
+  });
+  if (!followUp) return null;
+  return {
+    linkedIncidentId: followUp.incident.id,
+    response: {
+      ...emptyOutcome(`Thanks. I have added ${room.name} to "${followUp.incident.title}", and it is back with the operations team.`),
+      incidents: [
+        {
+          incidentId: followUp.incident.id,
+          title: followUp.incident.title,
+          category: followUp.incident.category,
+          status: followUp.incident.status,
+          urgency: followUp.incident.urgency,
+          attached: true,
+          matchConfidence: 1,
+          matchSignals: ['follow-up-room'],
+          reportId: followUp.reportId,
+        },
+      ],
+    },
   };
 }
 
@@ -538,18 +608,48 @@ async function handleConsequential(
 }
 
 async function handleQuestion(ctx: ServiceContext, input: SendMessageInput, room: Room | null): Promise<Outcome> {
-  if (room) {
-    const sessions = (await ctx.store.listSessions(input.eventId)).filter((s) => s.roomId === room.id);
-    if (sessions.length === 0) {
-      return emptyOutcome(`I have no sessions recorded for ${room.name}.`);
-    }
-    const lines = sessions
-      .sort((a, b) => a.startsAt - b.startsAt)
-      .map((s) => `${s.title}, ${formatUtc(s.startsAt)}–${formatUtc(s.endsAt)}`);
-    return emptyOutcome(`Sessions in ${room.name}: ${lines.join('; ')}.`);
+  const now = ctx.now();
+  const sessions = await ctx.store.listSessions(input.eventId);
+  const rooms = await ctx.store.listRooms(input.eventId);
+  const roomById = new Map(rooms.map((r) => [r.id, r] as const));
+  const asked = new Set(tokenise(input.text).filter((t) => t.length > 2));
+
+  // A named session is answered from its stored record: time, room, seats and whether it has started.
+  const matched = sessions
+    .map((s) => ({ s, score: tokenise(s.title).filter((t) => t.length > 2 && asked.has(t)).length }))
+    .filter((m) => m.score > 0)
+    .sort((a, b) => b.score - a.score || a.s.startsAt - b.s.startsAt)[0];
+  if (matched && (matched.score >= 2 || tokenise(matched.s.title).filter((t) => t.length > 2).length === 1)) {
+    const { s } = matched;
+    const r = roomById.get(s.roomId);
+    const when =
+      s.startsAt > now
+        ? `starts in ${Math.round((s.startsAt - now) / 60000)} min`
+        : s.endsAt > now
+          ? 'is running now'
+          : 'has finished';
+    const seats = s.capacity - s.enrolled;
+    const seatText = seats > 0 ? `${seats} seats free` : 'full';
+    return emptyOutcome(
+      `"${s.title}" ${when}, in ${r?.name ?? 'an unknown room'} at ${formatUtc(s.startsAt)}. It has ${seatText} (${s.enrolled} of ${s.capacity} enrolled).`,
+    );
   }
+
+  if (room) {
+    const inRoom = sessions.filter((s) => s.roomId === room.id).sort((a, b) => a.startsAt - b.startsAt);
+    const occupancy =
+      room.occupancy === null || room.occupancySource === null
+        ? 'No occupancy figure is recorded for it.'
+        : `Recorded occupancy is ${room.occupancy} of ${room.capacity} (${DATA_SOURCE_LABEL[room.occupancySource]}).`;
+    if (inRoom.length === 0) {
+      return emptyOutcome(`${room.name} has no sessions in the schedule. ${occupancy}`);
+    }
+    const lines = inRoom.map((s) => `${s.title} at ${formatUtc(s.startsAt).slice(11)}`);
+    return emptyOutcome(`${room.name} hosts: ${lines.join('; ')}. ${occupancy}`);
+  }
+
   return emptyOutcome(
-    'I answer from verified event information. Ask about a specific room or session, or describe the problem and I will log it. I will not guess.',
+    'I answer from the schedule and room records. Name a session or a room and I will check it. If you are describing a problem, tell me what is happening and where, and I will log it.',
   );
 }
 

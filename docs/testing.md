@@ -35,7 +35,9 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/0001_constraints_and_r
 
 ## Verified results (this build)
 
-- `npx vitest run`: 12 files, 130 tests, all passing (adds SLA rules, workflow rail, workplace workflows, stored conversation records).
+- `npx vitest run`: 13 files, 138 tests, all passing (adds SLA rules, workflow rail, workplace workflows, stored conversation records, room follow-up, classification regressions).
+- Workflow audit (`tests/e2e/workflow-audit.mjs`): 22 steps across seven roles, including the room follow-up, the 'waiting on you' prompts, cancellation through the confirm dialog, and off-shift refusal.
+- Route crawl (`tests/e2e/route-crawl.mjs`): every page as every role. Expected responses are 200 for permitted routes and 404 for forbidden ones; anything else is reported.
 - `npm run test:e2e` against `next start` with demo mode: 13/13 browser checks passed, two consecutive runs, no server errors.
 - `npx tsc --noEmit`: no errors.
 - `npx eslint .`: no errors.

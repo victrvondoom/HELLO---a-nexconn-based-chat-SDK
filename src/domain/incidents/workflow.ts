@@ -59,3 +59,13 @@ export function workflowRail(status: IncidentStatus): WorkflowRail {
   });
   return { stages, position: POSITION[status] };
 }
+
+/**
+ * What the reporter must do next, if anything. Derived from the incident so the prompt appears
+ * exactly when the workflow is waiting on them and disappears once they have acted.
+ */
+export function reporterAction(status: IncidentStatus): 'SUPPLY_ROOM' | 'CONFIRM_OR_REOPEN' | null {
+  if (status === 'NEEDS_INFORMATION') return 'SUPPLY_ROOM';
+  if (status === 'RESOLVED') return 'CONFIRM_OR_REOPEN';
+  return null;
+}

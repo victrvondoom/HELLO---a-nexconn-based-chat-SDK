@@ -52,6 +52,16 @@ describe('utterance classification', () => {
     expect(classifyUtterance('No rush, just a question about the lunch area.').urgency).toBe('LOW');
   });
 
+  it('recognises everyday facilities faults stated as plain sentences', () => {
+    expect(classifyUtterance('The lights are flickering.').category).toBe('FACILITIES');
+    expect(classifyUtterance('There is a water leak near the stage.').category).toBe('FACILITIES');
+  });
+
+  it('keeps a broken device in its own category rather than facilities', () => {
+    expect(classifyUtterance('The microphone is broken.').categories).toEqual(['AV']);
+    expect(classifyUtterance('The broken chair in the foyer needs fixing.').categories).toEqual(['FACILITIES']);
+  });
+
   it('falls back to GENERAL when nothing matches', () => {
     const c = classifyUtterance('Hello there.');
     expect(c.category).toBe('GENERAL');

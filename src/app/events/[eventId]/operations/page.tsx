@@ -22,15 +22,21 @@ export default async function OperationsPage({ params }: { params: Promise<{ eve
     notFound();
   }
   const now = viewer.ctx.now();
+  // Each section is loaded only for viewers who may see it. Volunteers see the board and rooms;
+  // the approval queue and patterns are for those who can act on them.
+  const canQueue = viewer.can('approval.request');
+  const canPatterns = viewer.can('signal.read');
   const [rooms, board, approvals, signals] = await Promise.all([
     getOperationsOverview(viewer.ctx, eventId, viewer.userId),
     listSlaBoard(viewer.ctx, eventId, viewer.userId),
-    listApprovalsForViewer(viewer.ctx, eventId, viewer.userId),
-    listSignalPatternsFor(viewer.store, eventId),
+    canQueue ? listApprovalsForViewer(viewer.ctx, eventId, viewer.userId) : Promise.resolve([]),
+    canPatterns ? listSignalPatternsFor(viewer.store, eventId) : Promise.resolve([]),
   ]);
   const breached = board.filter((r) => r.sla.state === 'BREACHED').length;
   const atRisk = board.filter((r) => r.sla.state === 'AT_RISK').length;
   const pendingApprovals = approvals.filter((a) => a.status === 'PENDING').length;
+  const showApprovals = canQueue;
+  const showPatterns = canPatterns;
   const names = new Map<string, string>();
   for (const row of board) {
     if (row.incident.assigneeUserId && !names.has(row.incident.assigneeUserId)) {
@@ -136,6 +142,7 @@ export default async function OperationsPage({ params }: { params: Promise<{ eve
             </ul>
           </section>
 
+          {showApprovals ? (
           <section className="card card__body stack" aria-labelledby="approvals-heading">
             <h2 id="approvals-heading">Approval queue</h2>
             <p className="small muted">Changes that need an organiser. Execution is recorded separately from approval.</p>
@@ -159,7 +166,9 @@ export default async function OperationsPage({ params }: { params: Promise<{ eve
               }))}
             />
           </section>
+          ) : null}
 
+          {showPatterns ? (
           <section className="card card__body stack" aria-labelledby="signals-heading">
             <h2 id="signals-heading">Patterns</h2>
             <p className="small muted">Built only from stored reports. Each person counts once.</p>
@@ -177,6 +186,7 @@ export default async function OperationsPage({ params }: { params: Promise<{ eve
               }))}
             />
           </section>
+          ) : null}
         </div>
       </div>
     </div>
