@@ -130,8 +130,9 @@ export function rankAssignees(
     }
 
     const skill = skillScore(membership.skills, required);
-    // Organisers can always take work they are asked to coordinate; others need a matching skill.
-    if (skill === 0 && membership.role !== 'ORGANISER') {
+    // Organisers approve and coordinate work, they are not ranked as the person doing it.
+    // Anyone without a matching skill (or the generalist fallback) is ineligible.
+    if (skill === 0) {
       ineligible.push({
         userId: membership.userId,
         displayName,

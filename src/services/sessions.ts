@@ -42,7 +42,7 @@ export async function getOperationsOverview(
       occupancyLabel:
         room.occupancy === null || room.occupancySource === null
           ? 'No occupancy data'
-          : `${room.occupancy} / ${room.capacity} (${DATA_SOURCE_LABEL[room.occupancySource]})`,
+          : `${room.occupancy} / ${room.capacity} · ${DATA_SOURCE_LABEL[room.occupancySource]}`,
       overCapacity,
       overCapacityIsVerified: overCapacity && verifiedSource,
       sessionsToday: sessions.filter((s) => s.roomId === room.id),

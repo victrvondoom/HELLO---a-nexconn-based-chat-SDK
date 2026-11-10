@@ -13,24 +13,40 @@ export default async function EventLayout({
 }) {
   const { eventId } = await params;
   const viewer = await loadEventViewer(eventId);
-  const operational = viewer.can('incident.read.operational');
+  const roleLabel = ROLE_LABEL[viewer.membership.role];
   return (
-    <div className="shell">
+    <div className="app">
       <EventNav
         eventId={eventId}
         eventName={viewer.event.name}
         displayName={viewer.user?.displayName ?? 'Signed in'}
-        roleLabel={ROLE_LABEL[viewer.membership.role]}
-        operational={operational}
+        roleLabel={roleLabel}
+        operational={viewer.can('incident.read.operational')}
         canApprove={viewer.can('approval.decide')}
       />
-      <div className="main">
+      <div className="workspace">
+        <header className="topbar">
+          <div className="topbar__event">
+            <span className="eyebrow">{viewer.event.isDemo ? 'Demo event' : 'Event'}</span>
+            <strong>{viewer.event.name}</strong>
+          </div>
+          <div className="topbar__meta">
+            <span className="badge badge--accent">{roleLabel}</span>
+            <span className="badge hide-sm">{viewer.user?.displayName}</span>
+          </div>
+        </header>
         {viewer.event.isDemo && demoModeEnabled() ? (
-          <div className="notice notice--demo" role="note" style={{ marginBottom: 16 }}>
-            Demo event. All people, rooms, sessions, occupancy figures and incidents are seeded, illustrative data.
+          <div className="demo-band" role="note">
+            <span className="badge badge--demo">Demo</span>
+            <span className="only-lg">
+              People, rooms, sessions, occupancy figures and incidents are seeded, illustrative data. Nothing here is a real event.
+            </span>
+            <span className="only-sm">Seeded, illustrative data. Not a real event.</span>
           </div>
         ) : null}
-        {children}
+        <main id="main" className="page" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+          {children}
+        </main>
       </div>
     </div>
   );

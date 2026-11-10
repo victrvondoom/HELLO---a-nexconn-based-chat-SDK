@@ -56,7 +56,7 @@ export default async function IncidentsPage({
           {operational ? 'No incidents match this filter.' : 'You have not reported anything yet. Use the conversation to tell HELLO what is happening.'}
         </div>
       ) : (
-        <div className="table-wrap panel" style={{ padding: 0 }}>
+        <div className="table-wrap card card__body" style={{ padding: 0 }}>
           <table>
             <caption className="muted small" style={{ textAlign: 'left', padding: 12 }}>
               {rows.length} incident{rows.length === 1 ? '' : 's'}

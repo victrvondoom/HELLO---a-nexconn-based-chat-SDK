@@ -24,7 +24,7 @@ export default async function PeoplePage({
         Search by a declared interest or area of expertise. Only people who chose to be discoverable appear. Contact
         details are never shown here.
       </p>
-      <form method="get" className="panel row" role="search" style={{ marginBottom: 16 }}>
+      <form method="get" className="card card__body row" role="search" style={{ marginBottom: 16 }}>
         <div className="field" style={{ flex: '1 1 320px' }}>
           <label htmlFor="people-q">Who do you want to speak with?</label>
           <input id="people-q" name="q" defaultValue={query} placeholder="For example: satellite communication" maxLength={200} />
@@ -41,7 +41,7 @@ export default async function PeoplePage({
       ) : (
         <ul className="stack" style={{ listStyle: 'none', padding: 0 }}>
           {matches.map((m) => (
-            <li key={m.userId} className="panel stack">
+            <li key={m.userId} className="card card__body stack">
               <div className="row" style={{ justifyContent: 'space-between' }}>
                 <strong>{m.displayName}</strong>
                 <span className="badge">{ROLE_LABEL[m.role]}</span>

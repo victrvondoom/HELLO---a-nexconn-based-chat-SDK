@@ -33,7 +33,7 @@ export default async function SessionsPage({
         </div>
       </div>
 
-      <div className="table-wrap panel" style={{ padding: 0 }}>
+      <div className="table-wrap card card__body" style={{ padding: 0 }}>
         <table>
           <thead>
             <tr>
@@ -77,7 +77,7 @@ export default async function SessionsPage({
       </div>
 
       {alternatives ? (
-        <section className="panel stack" style={{ marginTop: 24 }} aria-labelledby="alt-heading">
+        <section className="card card__body stack" style={{ marginTop: 24 }} aria-labelledby="alt-heading">
           <h2 id="alt-heading">Alternatives to “{currentSession?.title}”</h2>
           {alternatives.recommendations.length === 0 ? (
             <p className="muted" style={{ margin: 0 }}>No alternative sessions are open to you right now.</p>

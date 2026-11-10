@@ -75,7 +75,7 @@ export function ApprovalQueue({ eventId, canDecide, viewerId, approvals, nowMs }
         const expired = row.status === 'PENDING' && nowMs >= row.expiresAt;
         const ownRequest = row.requestedByUserId === viewerId;
         return (
-          <article key={row.id} className="panel stack small" aria-label={`${row.actionType} request`}>
+          <article key={row.id} className="card card__body stack small" aria-label={`${row.actionType} request`}>
             <div className="row" style={{ justifyContent: 'space-between' }}>
               <strong>{row.actionType.replace(/_/g, ' ').toLowerCase()}</strong>
               <span className={row.status === 'APPROVED' ? 'badge badge--success' : row.status === 'REJECTED' ? 'badge badge--danger' : 'badge badge--warning'}>

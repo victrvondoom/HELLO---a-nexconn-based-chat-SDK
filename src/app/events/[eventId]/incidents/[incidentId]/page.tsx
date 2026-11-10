@@ -49,9 +49,9 @@ export default async function IncidentDetailPage({
         <IncidentBadge status={incident.status} />
       </div>
 
-      <div className="grid-2">
+      <div className="split split--even">
         <div className="stack">
-          <section className="panel stack" aria-labelledby="state-heading">
+          <section className="card card__body stack" aria-labelledby="state-heading">
             <h2 id="state-heading">Current state</h2>
             <p style={{ margin: 0 }}>{STATUS_LABEL[incident.status]}</p>
             <p className="small muted" style={{ margin: 0 }}>
@@ -74,7 +74,7 @@ export default async function IncidentDetailPage({
             ) : null}
           </section>
 
-          <section className="panel stack" aria-labelledby="reports-heading">
+          <section className="card card__body stack" aria-labelledby="reports-heading">
             <h2 id="reports-heading">Reports ({reports.length})</h2>
             <p className="small muted" style={{ margin: 0 }}>
               Each person’s report is kept separately. Reports are attached only when room, category and time all match.
@@ -95,7 +95,7 @@ export default async function IncidentDetailPage({
 
         <div className="stack">
           {viewerCanOperate ? (
-            <section className="panel stack" aria-labelledby="assign-heading">
+            <section className="card card__body stack" aria-labelledby="assign-heading">
               <h2 id="assign-heading">Recommended staff</h2>
               {recommendations.length === 0 ? (
                 <p className="small muted" style={{ margin: 0 }}>
@@ -114,7 +114,7 @@ export default async function IncidentDetailPage({
             </section>
           ) : null}
 
-          <section className="panel" aria-labelledby="timeline-heading">
+          <section className="card card__body" aria-labelledby="timeline-heading">
             <h2 id="timeline-heading">Timeline</h2>
             <ol className="timeline small">
               {timeline.map((t) => (

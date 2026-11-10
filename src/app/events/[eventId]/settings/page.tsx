@@ -3,6 +3,7 @@ import { nexconnStatus } from '@/integrations/nexconn/status';
 import { DATA_SOURCE_LABEL } from '@/domain/labels';
 import { ROLE_LABEL } from '@/components/ui/labels';
 import { SignOutButton } from '@/components/settings/SignOutButton';
+import { ResetDemoButton } from '@/components/settings/ResetDemoButton';
 import { demoModeEnabled } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
@@ -15,7 +16,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ event
   return (
     <>
       <h1>Settings</h1>
-      <section className="panel stack" aria-labelledby="account-heading">
+      <section className="card card__body stack" aria-labelledby="account-heading">
         <h2 id="account-heading">Account</h2>
         <p style={{ margin: 0 }}>
           {viewer.user?.displayName} · {ROLE_LABEL[viewer.membership.role]}
@@ -24,10 +25,15 @@ export default async function SettingsPage({ params }: { params: Promise<{ event
           Discoverable in people search: {viewer.user?.discoverable ? 'yes' : 'no'}. Accessibility needs recorded:{' '}
           {viewer.user?.accessibilityRequired ? 'yes' : 'no'}.
         </p>
-        {demoModeEnabled() ? <SignOutButton /> : null}
+        {demoModeEnabled() ? (
+          <div className="row">
+            <SignOutButton />
+            <ResetDemoButton eventId={eventId} />
+          </div>
+        ) : null}
       </section>
 
-      <section className="panel stack" style={{ marginTop: 24 }} aria-labelledby="transport-heading">
+      <section className="card card__body stack" style={{ marginTop: 24 }} aria-labelledby="transport-heading">
         <h2 id="transport-heading">Messaging transport</h2>
         <div className={nexconn.state === 'NOT_CONFIGURED' ? 'notice notice--demo' : 'notice'} role="status">
           <strong>{nexconn.state === 'NOT_CONFIGURED' ? 'Not connected to Nexconn' : 'Nexconn key configured'}</strong>
@@ -38,7 +44,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ event
         </p>
       </section>
 
-      <section className="panel stack" style={{ marginTop: 24 }} aria-labelledby="data-heading">
+      <section className="card card__body stack" style={{ marginTop: 24 }} aria-labelledby="data-heading">
         <h2 id="data-heading">How to read a figure</h2>
         <ul className="small" style={{ margin: 0, paddingLeft: 18 }}>
           {Object.entries(DATA_SOURCE_LABEL).map(([key, label]) => (

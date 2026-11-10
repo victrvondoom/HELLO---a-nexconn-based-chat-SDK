@@ -18,7 +18,7 @@ export default async function NotificationsPage({ params }: { params: Promise<{ 
       ) : (
         <ul className="stack" style={{ listStyle: 'none', padding: 0 }}>
           {notes.map((n) => (
-            <li key={n.id} className="panel stack">
+            <li key={n.id} className="card card__body stack">
               <div className="small muted">
                 {n.kind.replace(/_/g, ' ').toLowerCase()} · {formatUtc(n.createdAt)}
               </div>

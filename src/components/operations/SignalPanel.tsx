@@ -68,7 +68,7 @@ export function SignalPanel({ eventId, canReview, patterns }: { eventId: string;
         <div className="empty">No emerging pattern. A pattern needs three independent reporters within ten minutes.</div>
       ) : (
         patterns.map((p) => (
-          <article key={p.id} className="panel stack small" aria-label="Detected pattern">
+          <article key={p.id} className="card card__body stack small" aria-label="Detected pattern">
             <div className="row" style={{ justifyContent: 'space-between' }}>
               <strong>Pattern · {p.distinctReporters} reporters</strong>
               <span className="badge">Confidence {p.confidence.toFixed(2)}</span>

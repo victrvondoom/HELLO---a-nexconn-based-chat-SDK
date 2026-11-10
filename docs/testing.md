@@ -29,11 +29,13 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/0001_constraints_and_r
 | Signal intelligence | `tests/unit/signals-notifications.test.ts` | Distinct reporters, windows, confidence cap, determinism; notification dedupe. |
 | AI boundary | `tests/unit/intent.test.ts` | Judge sentences, schema validation, timeout, rate limit, provider error. |
 | Workflows | `tests/integration/workflows.test.ts` | Judge demonstration, concurrent claims, full lifecycle, reopening, isolation, approvals, signals, people, degradation. |
+| Browser (judge flow) | `tests/e2e/judge-flow.mjs` | 13 checks: sign-in, two-concern report, persisted reply, claim, approval, phone overflow, access. |
 | Database | `supabase/tests/0001_constraints_and_rls.sql` | Constraints, append-only audit, RLS for strangers, attendees and organisers. |
 
 ## Verified results (this build)
 
-- `npx vitest run`: 8 files, 105 tests, all passing.
+- `npx vitest run`: 9 files, 108 tests, all passing.
+- `npm run test:e2e` against `next start` with demo mode: 13/13 browser checks passed, two consecutive runs, no server errors.
 - `npx tsc --noEmit`: no errors.
 - `npx eslint .`: no errors.
 - `npx next build`: compiled, all pages and routes generated.
@@ -43,8 +45,8 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/0001_constraints_and_r
 
 ## Not done
 
-- **Browser end-to-end tests** (Playwright). Not written. The judge flow is verified over HTTP and in integration tests,
-  not in a real browser, and no responsive-layout screenshot review has been done.
+- **Visual regression** snapshots. Layouts were reviewed by screenshot at 390px and 1280px; no automated pixel baseline exists.
+- **Browser coverage** is the judge flow and access checks only. Settings, sessions, people search and notifications have no browser test.
 - **Accessibility audit** with an automated tool or assistive technology.
 - **Load and concurrency tests** against Postgres.
 - **Nexconn and AI provider integration tests.** These need credentials and are not written.

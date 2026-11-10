@@ -15,6 +15,25 @@ import { requireCapability, type ServiceContext } from './context';
 
 export const MAX_MESSAGE_LENGTH = 2000;
 
+/** What the assistant said and created for one message. Persisted with the message. */
+export interface StoredOutcome {
+  reply: string;
+  clarifyingQuestion: string | null;
+  incidents: Array<{
+    incidentId: string;
+    title: string;
+    category: IncidentCategory;
+    status: IncidentStatus;
+    urgency: Urgency;
+    attached: boolean;
+    matchConfidence: number | null;
+  }>;
+  alternatives: Array<{ sessionId: string; title: string; roomName: string; startsAt: number; reasons: string[] }>;
+  approvalId: string | null;
+  statusReport: MessageResponse['statusReport'];
+  people: Array<{ userId: string; displayName: string; reason: string }>;
+}
+
 export interface IncidentOutcome {
   incidentId: string;
   title: string;
@@ -143,6 +162,32 @@ export async function handleMessage(ctx: ServiceContext, input: SendMessageInput
       break;
   }
 
+  // The assistant's answer is stored with the message, so the conversation survives a reload and
+  // every card the attendee saw can be rebuilt from the record instead of from client state.
+  const outcomeSummary: StoredOutcome = {
+    reply: outcome.reply,
+    clarifyingQuestion: outcome.clarifyingQuestion,
+    incidents: outcome.incidents.map((i) => ({
+      incidentId: i.incidentId,
+      title: i.title,
+      category: i.category,
+      status: i.status,
+      urgency: i.urgency,
+      attached: i.attached,
+      matchConfidence: i.matchConfidence,
+    })),
+    alternatives: (outcome.alternatives?.recommendations ?? []).map((r) => ({
+      sessionId: r.sessionId,
+      title: r.title,
+      roomName: r.roomName,
+      startsAt: r.startsAt,
+      reasons: r.reasons.slice(0, 2),
+    })),
+    approvalId: outcome.approval?.id ?? null,
+    statusReport: outcome.statusReport,
+    people: outcome.people.map((p) => ({ userId: p.userId, displayName: p.displayName, reason: p.reason })),
+  };
+
   await ctx.store.insertMessage({
     id: base.messageId,
     eventId: input.eventId,
@@ -152,6 +197,7 @@ export async function handleMessage(ctx: ServiceContext, input: SendMessageInput
     interpretation: {
       ...base.interpretation,
       classificationSignals: classification.matchedSignals,
+      outcome: outcomeSummary,
     },
     linkedIncidentId,
     linkedApprovalId,

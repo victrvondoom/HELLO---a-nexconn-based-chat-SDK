@@ -69,6 +69,14 @@ describe('assignment scoring', () => {
     expect(ranking.ineligible[0]?.reason).toContain('limit');
   });
 
+  it('never recommends an organiser as the person doing technical work', () => {
+    const ranking = rankAssignees({ category: 'AV', zone: null }, [
+      staff('nadia', { role: 'ORGANISER', skills: [] }),
+    ]);
+    expect(ranking.eligible).toHaveLength(0);
+    expect(ranking.ineligible[0]?.reason).toBe('No AV skill recorded.');
+  });
+
   it('allows generalists at reduced skill weight', () => {
     const ranking = rankAssignees({ category: 'FACILITIES', zone: null }, [staff('gen', { skills: ['GENERAL'] })]);
     expect(ranking.eligible[0]?.components.skill).toBe(0.5);

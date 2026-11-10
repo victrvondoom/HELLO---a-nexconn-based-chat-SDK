@@ -36,3 +36,8 @@ export function getRuntime(): Promise<Runtime> {
   g.__helloRuntime ??= createRuntime();
   return g.__helloRuntime;
 }
+
+/** Discards all in-memory state. The next request re-seeds the demo event. Used by demo reset only. */
+export function resetRuntime(): void {
+  g.__helloRuntime = undefined;
+}

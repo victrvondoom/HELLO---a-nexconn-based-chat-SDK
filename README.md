@@ -110,6 +110,16 @@ npm run dev                         # http://localhost:3000
 
 Open `/`, choose **Enter the demo event**, pick a demo account, and use the conversation.
 
+## Browser test
+
+```bash
+HELLO_DEMO_MODE=true npm run build && HELLO_DEMO_MODE=true npm start   # terminal 1
+CHROMIUM_PATH=/path/to/chromium BASE_URL=http://localhost:3000 npm run test:e2e   # terminal 2
+```
+
+The suite resets the demo first (`POST /api/demo/reset`), so it is repeatable. `CHROMIUM_PATH` is optional when
+Playwright's own browser is installed.
+
 ## Demo walkthrough (judge scenario)
 
 1. Sign in as **Ada (demo attendee)** and send: `The microphone is not working, and there are too many people in Room 3.`
@@ -158,7 +168,8 @@ and it must never return actions. See [docs/ai-system.md](docs/ai-system.md).
 
 ```bash
 npm run dev         # development server
-npm test            # unit and integration tests
+npm test            # unit and integration tests (108)
+npm run test:e2e    # browser test of the judge flow (needs a running server, see below)
 npm run typecheck   # TypeScript
 npm run lint        # ESLint
 npm run build       # production build
@@ -189,7 +200,8 @@ instance has its own copy, and demo sign-in is not authentication. See [docs/dep
 | Sign-in | **Demo shortcut only**, not authentication |
 | Nexconn messaging | **Not connected** |
 | AI provider | **Not connected**; deterministic interpreter in use |
-| Browser end-to-end tests, accessibility audit, load tests | **Not done** |
+| Browser end-to-end test of the judge flow (13 checks, Playwright) | Implemented; run against a demo server |
+| Visual regression, accessibility audit, load tests | **Not done** |
 | Equipment/resource management, staff directory, announcement management, admin screens, audit log UI, session seat holds | **Not built** |
 | Personal schedule planner | **Not built**; clash checks use only the current session |
 

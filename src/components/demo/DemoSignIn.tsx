@@ -7,6 +7,7 @@ interface Account {
   userId: string;
   name: string;
   role: string;
+  blurb: string;
 }
 
 export function DemoSignIn({ eventId, accounts }: { eventId: string; accounts: Account[] }) {
@@ -38,28 +39,43 @@ export function DemoSignIn({ eventId, accounts }: { eventId: string; accounts: A
   }
 
   return (
-    <div className="stack">
+    <div className="stack" style={{ gap: 16 }}>
       {error ? (
         <p role="alert" className="notice notice--error">
           {error}
         </p>
       ) : null}
-      <ul className="stack" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+      <ul
+        style={{
+          listStyle: 'none',
+          padding: 0,
+          margin: 0,
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+          gap: 12,
+        }}
+      >
         {accounts.map((account) => (
-          <li key={account.userId} className="panel row" style={{ justifyContent: 'space-between' }}>
-            <div>
-              <div style={{ fontWeight: 600 }}>{account.name}</div>
-              <div className="small muted">{account.role}</div>
+          <li key={account.userId} className="card" style={{ display: 'flex', flexDirection: 'column' }}>
+            <div className="card__body stack" style={{ gap: 8, flex: 1 }}>
+              <div className="row" style={{ justifyContent: 'space-between' }}>
+                <strong style={{ fontSize: 15 }}>{account.name}</strong>
+                <span className="badge badge--accent">{account.role}</span>
+              </div>
+              <p className="small muted">{account.blurb}</p>
             </div>
-            <button
-              type="button"
-              className="button button--ghost"
-              onClick={() => void signIn(account.userId)}
-              disabled={pending !== null}
-              aria-label={`Continue as ${account.name}`}
-            >
-              {pending === account.userId ? 'Signing in…' : 'Continue'}
-            </button>
+            <div className="card__body" style={{ paddingTop: 0 }}>
+              <button
+                type="button"
+                className="button button--ghost"
+                style={{ width: '100%' }}
+                onClick={() => void signIn(account.userId)}
+                disabled={pending !== null}
+                aria-label={`Continue as ${account.name}`}
+              >
+                {pending === account.userId ? 'Signing in…' : `Continue as ${account.role.toLowerCase()}`}
+              </button>
+            </div>
           </li>
         ))}
       </ul>

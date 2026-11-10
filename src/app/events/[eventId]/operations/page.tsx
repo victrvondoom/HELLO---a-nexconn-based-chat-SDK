@@ -3,7 +3,7 @@ import { loadEventViewer } from '@/lib/viewer';
 import { getOperationsOverview } from '@/services/sessions';
 import { listIncidentsForViewer } from '@/services/incidents';
 import { listApprovalsForViewer } from '@/services/approvals';
-import { DATA_SOURCE_LABEL, STATUS_LABEL } from '@/domain/labels';
+import { STATUS_LABEL } from '@/domain/labels';
 import { IncidentBadge } from '@/components/incidents/IncidentBadge';
 import { ApprovalQueue } from '@/components/operations/ApprovalQueue';
 import { SignalPanel } from '@/components/operations/SignalPanel';
@@ -40,7 +40,7 @@ export default async function OperationsPage({ params }: { params: Promise<{ eve
         </div>
       </div>
 
-      <section className="panel stack" aria-labelledby="rooms-heading">
+      <section className="card card__body stack" aria-labelledby="rooms-heading">
         <h2 id="rooms-heading">Rooms and occupancy</h2>
         <div className="table-wrap">
           <table>
@@ -70,9 +70,6 @@ export default async function OperationsPage({ params }: { params: Promise<{ eve
                         </span>
                       </div>
                     ) : null}
-                    {r.room.occupancySource ? (
-                      <div className="small muted">{DATA_SOURCE_LABEL[r.room.occupancySource]}</div>
-                    ) : null}
                   </td>
                   <td>
                     {r.sessionsToday.map((s) => (
@@ -89,8 +86,8 @@ export default async function OperationsPage({ params }: { params: Promise<{ eve
         </div>
       </section>
 
-      <div className="grid-2" style={{ marginTop: 24 }}>
-        <section className="panel stack" aria-labelledby="open-heading">
+      <div className="split split--even" style={{ marginTop: 24 }}>
+        <section className="card card__body stack" aria-labelledby="open-heading">
           <h2 id="open-heading">Open incidents ({incidents.length})</h2>
           {incidents.length === 0 ? (
             <div className="empty">Nothing open right now.</div>
@@ -131,7 +128,7 @@ export default async function OperationsPage({ params }: { params: Promise<{ eve
         </section>
 
         <div className="stack">
-          <section className="panel stack" aria-labelledby="approvals-heading">
+          <section className="card card__body stack" aria-labelledby="approvals-heading">
             <h2 id="approvals-heading">Approval queue</h2>
             <p className="small muted" style={{ margin: 0 }}>
               Consequential changes wait here. An approval is recorded separately from execution, which can still fail.
@@ -159,7 +156,7 @@ export default async function OperationsPage({ params }: { params: Promise<{ eve
             />
           </section>
 
-          <section className="panel stack" aria-labelledby="signals-heading">
+          <section className="card card__body stack" aria-labelledby="signals-heading">
             <h2 id="signals-heading">Signal intelligence</h2>
             <p className="small muted" style={{ margin: 0 }}>
               Patterns are suggestions built only from stored reports. Each counts independent people once.
