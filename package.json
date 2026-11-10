@@ -32,7 +32,12 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "playwright": "^1.63.0",
     "typescript": "^5.8.0",
-    "typescript-eslint": "^8.0.0",
+    "typescript-eslint": "^8.72.2",
     "vitest": "^5.1.0"
+  },
+  "overrides": {
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "^11.0.5"
+    }
   }
 }
