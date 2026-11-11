@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { NavLinks, type NavLinkItem } from './NavLinks';
+import { HaloMark, Wordmark } from '@/components/brand/Wordmark';
 
 interface EventNavProps {
   eventId: string;
@@ -19,7 +20,7 @@ interface EventNavProps {
 export function EventNav(props: EventNavProps) {
   const base = `/events/${props.eventId}`;
   const primary: NavLinkItem[] = [
-    { href: base, label: 'Today', icon: 'home' },
+    { href: base, label: 'Today', icon: 'home', exact: true },
     { href: `${base}/conversation`, label: 'Conversation', icon: 'conversation' },
     { href: `${base}/incidents`, label: props.operational ? 'Incidents' : 'My requests', icon: 'incidents' },
     { href: `${base}/announcements`, label: 'Announcements', icon: 'megaphone' },
@@ -31,6 +32,7 @@ export function EventNav(props: EventNavProps) {
     ? [
         { href: `${base}/operations`, label: props.canApprove ? 'Operations and approvals' : 'Operations', icon: 'operations' },
         { href: `${base}/team`, label: 'Team', icon: 'team' },
+        { href: `${base}/agents`, label: 'Agent mesh', icon: 'agents' },
       ]
     : [];
   const governance: NavLinkItem[] = props.canAudit ? [{ href: `${base}/audit`, label: 'Audit trail', icon: 'shield' }] : [];
@@ -38,9 +40,9 @@ export function EventNav(props: EventNavProps) {
   return (
     <aside className="sidebar" aria-label="Event navigation">
       <Link href={base} className="brand" aria-label="HELLO home">
-        <span className="brand__mark" aria-hidden="true">H</span>
-        <span>
-          HELLO
+        <HaloMark size={34} />
+        <span className="brand__text">
+          <Wordmark height={26} id="wm-nav" title="HELLO" />
           <span className="brand__sub">Event coordination</span>
         </span>
       </Link>
@@ -64,9 +66,24 @@ export function EventNav(props: EventNavProps) {
       </nav>
 
       <div className="nav-foot">
-        <strong>{props.displayName}</strong>
-        <span className="faint">{props.roleLabel}</span>
+        <span className="nav-foot__avatar" aria-hidden="true">
+          {initials(props.displayName)}
+        </span>
+        <span style={{ minWidth: 0 }}>
+          <strong>{props.displayName}</strong>
+          <span className="faint xs">{props.roleLabel}</span>
+        </span>
       </div>
     </aside>
   );
+}
+
+function initials(name: string): string {
+  return name
+    .replace(/\(.*?\)/g, '')
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((p) => p.charAt(0).toUpperCase())
+    .join('');
 }

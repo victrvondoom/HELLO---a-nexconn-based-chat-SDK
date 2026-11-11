@@ -67,6 +67,8 @@ export interface EventRecord {
   timezone: string;
   /** True when the event was created by the demo seed, never by a real organiser. */
   isDemo: boolean;
+  /** Venue city, used only to scope outside-the-venue web questions ("nearest pharmacy"). */
+  venueCity?: string | null;
 }
 
 export interface Membership {
@@ -248,4 +250,24 @@ export interface SignalPattern {
   reviewStatus: 'PENDING_REVIEW' | 'ACCEPTED' | 'REJECTED';
   reviewedByUserId: string | null;
   reviewedAt: number | null;
+}
+
+/** Who may read a reference document. Staff-only documents never reach attendees, not even as citations. */
+export type ReferenceAudience = 'EVERYONE' | 'STAFF';
+
+/**
+ * A page of the event guide: venue facts, policies and staff procedures written by organisers.
+ * Agents answer questions from these documents and cite them; they never invent event facts.
+ */
+export interface ReferenceDoc {
+  id: string;
+  eventId: string;
+  title: string;
+  body: string;
+  tags: string[];
+  /** Incident categories this document is a procedure for, if any. */
+  categories: IncidentCategory[];
+  audience: ReferenceAudience;
+  source: DataSource;
+  updatedAt: number;
 }

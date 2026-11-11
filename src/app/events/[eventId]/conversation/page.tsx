@@ -4,8 +4,9 @@ import { parseStoredOutcome } from '@/lib/validation/outcome';
 import { ChatComposer } from '@/components/conversation/ChatComposer';
 import { OutcomeCards } from '@/components/conversation/OutcomeCards';
 import { ScrollToEnd } from '@/components/conversation/ScrollToEnd';
+import { AgentTrace } from '@/components/conversation/AgentTrace';
+import { HaloMark } from '@/components/brand/Wordmark';
 import { LiveRefresh } from '@/components/workplace/LiveRefresh';
-import { Icon } from '@/components/ui/Icon';
 import { formatUtc, minutesAgo } from '@/components/ui/labels';
 import { IncidentBadge } from '@/components/incidents/IncidentBadge';
 import { listIncidentsForViewer } from '@/services/incidents';
@@ -80,7 +81,7 @@ export default async function ConversationPage({
                 </>
               ) : (
                 <>
-              <Icon name="conversation" size={22} />
+              <HaloMark size={56} />
               <strong>Tell HELLO what is happening.</strong>
               <span>
                 Describe a problem, ask for help, or ask a question in ordinary words. HELLO finds the room, the session
@@ -107,7 +108,9 @@ export default async function ConversationPage({
                   </div>
                   {outcome ? (
                     <div className="msg">
-                      <div className="avatar avatar--hello" aria-hidden="true">H</div>
+                      <div className="avatar avatar--hello" aria-hidden="true">
+                        <HaloMark size={26} />
+                      </div>
                       <div className="msg__body" style={{ flex: 1 }}>
                         <span className="msg__meta">HELLO · {formatUtc(m.createdAt).slice(11)}</span>
                         <div className="bubble bubble--hello">{outcome.reply}</div>
@@ -117,6 +120,7 @@ export default async function ConversationPage({
                           </div>
                         ) : null}
                         <OutcomeCards eventId={eventId} outcome={outcome} />
+                        {outcome.agents ? <AgentTrace trace={outcome.agents} showSteps={operational || isMine} /> : null}
                       </div>
                     </div>
                   ) : null}

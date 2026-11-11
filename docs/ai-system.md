@@ -37,3 +37,21 @@ hint. Permissions, state rules and approvals decide every outcome.
 
 Implement `IntentProvider` and pass it to `createContext({ intentProvider })`. Keep the returned object
 inside `IntentResultSchema`. Do not let the provider return actions, IDs or permission decisions.
+
+## Agent mesh
+
+Message handling runs as seven agents (`src/agents/types.ts` lists them, with what each must never do).
+The trace for each message is stored with it and validated on read (`src/lib/validation/outcome.ts`); links
+that are not http(s) are dropped to null before they can be rendered.
+
+- **Event guide retrieval** (`src/agents/knowledge.ts`): deterministic BM25 over title, tags and body, with
+  light stemming. Answers only at relevance ≥ `ANSWER_THRESHOLD` (0.34). Documents with `audience: 'STAFF'` are
+  filtered out before ranking for non-staff, so they cannot appear even as citations.
+- **Safety sentinel** (`src/agents/sentinel.ts`): pattern-based. Raises the urgency to CRITICAL, turns a
+  question into a report, and puts the event guide's emergency page first in the reply. If the event has no
+  such page, it uses generic wording that names no phone number or place.
+- **Web research** (`src/agents/web.ts`): runs only for questions with outside-the-venue cues, after the
+  schedule and guide have failed. The query is redacted (emails, phone numbers, handles, member names) and
+  given the venue city. Results are schema-checked, cleaned, de-duplicated and capped, and the timeout does not
+  depend on the provider honouring the abort signal. Tests use fake providers only.
+- **Grounding**: every reply is labelled `VERIFIED_RECORDS`, `EVENT_GUIDE`, `WEB_UNVERIFIED` or `NO_ANSWER`.

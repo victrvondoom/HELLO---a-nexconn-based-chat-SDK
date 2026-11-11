@@ -1,6 +1,7 @@
 import { createContext, type ServiceContext } from '@/services/context';
 import { MemoryHelloStore } from '@/store/memory';
 import { DEMO_NOW, loadDemoEvent } from '@/store/seed';
+import { webSearchFromEnv } from '@/agents/web';
 
 /**
  * Process-wide runtime. In this build the only persistence is the in-memory demo
@@ -30,6 +31,8 @@ async function createRuntime(): Promise<Runtime> {
     now: () => DEMO_NOW + (Date.now() - bootedAt),
     newId: (prefix) => `${prefix}_${crypto.randomUUID().slice(0, 12)}`,
     intentProvider: null,
+    // Read from HELLO_WEB_SEARCH_PROVIDER / HELLO_WEB_SEARCH_API_KEY. Null when not configured.
+    webSearch: webSearchFromEnv(process.env),
   });
   return { store, ctx, persistence: 'MEMORY_DEMO', clock: 'LIVE_FROM_SEEDED_EVENT_TIME' };
 }

@@ -9,6 +9,7 @@ import type {
   Membership,
   Message,
   Notification,
+  ReferenceDoc,
   Room,
   Session,
   SignalPattern,
@@ -73,6 +74,9 @@ export interface HelloStore {
   listNotifications(recipientUserId: string): Promise<Notification[]>;
   /** Marks the recipient's notifications in an event as read. Returns how many changed. */
   markNotificationsRead(recipientUserId: string, eventId: string, now: number): Promise<number>;
+
+  /** Event guide pages, newest first is not guaranteed; callers rank them. */
+  listReferenceDocs(eventId: string): Promise<ReferenceDoc[]>;
 
   upsertSignalPatterns(patterns: SignalPattern[]): Promise<void>;
   listSignalPatterns(eventId: string): Promise<SignalPattern[]>;

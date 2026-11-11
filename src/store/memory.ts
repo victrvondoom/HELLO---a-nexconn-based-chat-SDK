@@ -9,6 +9,7 @@ import type {
   Membership,
   Message,
   Notification,
+  ReferenceDoc,
   Room,
   Session,
   SignalPattern,
@@ -43,6 +44,7 @@ export class MemoryHelloStore implements HelloStore {
   private notifications: Notification[] = [];
   private notificationKeys = new Set<string>();
   private patterns = new Map<string, SignalPattern>();
+  private referenceDocs: ReferenceDoc[] = [];
 
   private static copy<T>(value: T): T {
     return structuredClone(value);
@@ -65,7 +67,9 @@ export class MemoryHelloStore implements HelloStore {
     timeline?: IncidentTimelineEntry[];
     announcements?: Announcement[];
     notifications?: Notification[];
+    referenceDocs?: ReferenceDoc[];
   }): void {
+    for (const d of data.referenceDocs ?? []) this.referenceDocs.push(MemoryHelloStore.copy(d));
     for (const a of data.announcements ?? []) this.announcements.push(MemoryHelloStore.copy(a));
     for (const n of data.notifications ?? []) {
       this.notifications.push(MemoryHelloStore.copy(n));
@@ -328,6 +332,10 @@ export class MemoryHelloStore implements HelloStore {
         : incoming;
       this.patterns.set(incoming.id, MemoryHelloStore.copy(merged));
     }
+  }
+
+  async listReferenceDocs(eventId: string): Promise<ReferenceDoc[]> {
+    return MemoryHelloStore.copyAll(this.referenceDocs.filter((d) => d.eventId === eventId));
   }
 
   async listSignalPatterns(eventId: string): Promise<SignalPattern[]> {

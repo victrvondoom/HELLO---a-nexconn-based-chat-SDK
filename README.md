@@ -42,6 +42,39 @@ accountable workflow.
 - **Honest data labels.** Every occupancy figure states whether it is live verified, administrator entered,
   attendee reported, or demo data.
 
+## Agent mesh
+
+Every message is handled by seven small agents, each with one job and a declared scope (`src/agents/`).
+Agents read, rank and cite. Only the coordinator changes state, and only through the domain services.
+
+| Agent | Job | Scope |
+|---|---|---|
+| Triage | Classifies the message (fault, question, status check, person search, change needing approval) | Read only |
+| Safety sentinel | Detects medical, fire and security emergencies; raises them to critical and puts the event guide's emergency guidance first | Read only |
+| Context | Resolves the room, session and schedule facts from stored records | Read only |
+| Event guide | BM25 retrieval over the organisers' event guide; answers only above a relevance threshold, with citations. Staff-only procedures never reach attendees | Read only |
+| Web research | Only for outside-the-venue questions the guide cannot answer. Redacts personal details, scopes to the venue city, caches for 10 minutes, labels results as unverified | Web, read only |
+| Coordinator | Opens or joins incidents, ranks staff, lists free sessions, requests approvals | Acts via services |
+| Grounding check | Labels each reply: from HELLO records, from the event guide, from the web (unverified), or no reliable source | Read only |
+
+Each reply stores its trace and numbered sources with the message. In the conversation, people see the
+sources under the reply and can expand "How HELLO worked this out". Staff get an **Agent mesh** page with the
+roster, configuration, event-guide pages and recent runs. When nothing answers a question, HELLO says so
+instead of guessing.
+
+Web research is off unless `HELLO_WEB_SEARCH_PROVIDER=tavily` and `HELLO_WEB_SEARCH_API_KEY` are set. Provider
+output is schema-checked, stripped of markup and control characters, limited to http(s) links, and never
+treated as instructions. A hung or failing provider becomes a FAILED step in the trace, never an error.
+
+## Design
+
+The interface uses a white "diamond" theme with a single sky-blue accent family. Bright sky blue is used for
+light, glow and the brand. Deep sky blue is used for text and filled controls, so contrast stays AA on white.
+The HELLO wordmark is drawn as rounded SVG strokes, and its O is a halo with a diamond inside. The landing and
+sign-in pages show a 3D halo drawn on a canvas: a lit, depth-sorted ring of points around a brilliant-cut gem.
+It draws one still frame for people who prefer reduced motion, and it pauses when off screen or in a hidden
+tab. Inter and Nunito are self-hosted at build time by `next/font`.
+
 ## Workplace features
 
 Everything on these screens is computed from current state when it is requested, and the live screens refresh
@@ -191,7 +224,7 @@ and it must never return actions. See [docs/ai-system.md](docs/ai-system.md).
 
 ```bash
 npm run dev         # development server
-npm test            # unit and integration tests (138)
+npm test            # unit and integration tests (164)
 npm run test:e2e    # browser checks: judge flow (13), workplace features (10), workflow audit (22); needs a running server
 npm run test:routes # visits every page as every demo role and reports server and page errors
 npm run typecheck   # TypeScript
@@ -224,6 +257,9 @@ instance has its own copy, and demo sign-in is not authentication. See [docs/dep
 | Sign-in | **Demo shortcut only**, not authentication |
 | Nexconn messaging | **Not connected** |
 | AI provider | **Not connected**; deterministic interpreter in use |
+| Agent mesh (triage, sentinel, context, event guide, web, coordinator, grounding) | Implemented and tested; event guide is seeded demo data |
+| Web research | Implemented behind a provider boundary (Tavily adapter); tested with fake providers, **not exercised against the live API** |
+| Event guide in Postgres | **Not written**: `listReferenceDocs` is on the store contract, memory store only |
 | Browser end-to-end test of the judge flow (13 checks, Playwright) | Implemented; run against a demo server |
 | Visual regression, accessibility audit, load tests | **Not done** |
 | Equipment/resource management, staff directory, announcement management, admin screens, audit log UI, session seat holds | **Not built** |
