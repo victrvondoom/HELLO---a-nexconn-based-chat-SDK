@@ -42,6 +42,70 @@ accountable workflow.
 - **Honest data labels.** Every occupancy figure states whether it is live verified, administrator entered,
   attendee reported, or demo data.
 
+## Why HELLO, and what it solves that other event apps don't
+
+Seven hidden problems sit under the usual "chat, schedule and map" event app: the read-and-act paradox
+of AI plus encryption, encryption claims nobody can check, social graphs that leak, connections that end
+with the event, erasure versus accountability, wayfinding that ignores accessibility, and safety messages
+stuck in a queue. Each one, and what HELLO does about it, is in [docs/vision.md](docs/vision.md).
+
+## People, privacy and private messages
+
+- **Profiles, follow, followers, following.** Follows are global, so connections outlive the event.
+  "Connections only" profiles need a mutual follow. Follower lists are visible only to their owner.
+- **End-to-end encrypted private messages** between mutual connections (`src/lib/e2ee/crypto.ts`):
+  browser-generated ECDH P-256 keys with non-extractable private keys kept in IndexedDB, HKDF-SHA-256
+  bound to both people and both keys, then AES-256-GCM with the direction as associated data. The server
+  validates and relays ciphertext only. "Show what HELLO stores" displays it, and safety numbers let two
+  people check their keys in person.
+- **Encryption at rest** for profile text (`src/lib/vault.ts`, AES-256-GCM with `HELLO_DATA_KEY`, bound to
+  the record). This is not end-to-end, and the UI says so.
+- **Your rights:** download everything (`/api/me/export`) and erase (`/api/me/erase`). Erasure deletes
+  personal data and redacts operational text while keeping the accountable record.
+- **Browser-enforced no-leak policy:** a Content-Security-Policy with `connect-src 'self'`, and a cross-site
+  Origin check on every state-changing API call (`src/proxy.ts`).
+
+## Venue map
+
+One venue model (`src/domain/venue`), three engines: **Plan** (2D floor plan), **3D** (exploded, turnable
+isometric model) and **Live heat** (rooms coloured by recorded occupancy, with open-incident counts for
+staff). Directions are computed on the device with Dijkstra. Step-free mode removes stairs from the graph,
+so it finds a route with no steps or says none exists. It is the default for people whose profile asks for
+it. No third-party map tiles are loaded. Chat replies about a room link to directions.
+
+## Agent mesh
+
+Every message is handled by seven small agents, each with one job and a declared scope (`src/agents/`).
+Agents read, rank and cite. Only the coordinator changes state, and only through the domain services.
+
+| Agent | Job | Scope |
+|---|---|---|
+| Triage | Classifies the message (fault, question, status check, person search, change needing approval) | Read only |
+| Safety sentinel | Detects medical, fire and security emergencies; raises them to critical and puts the event guide's emergency guidance first | Read only |
+| Context | Resolves the room, session and schedule facts from stored records | Read only |
+| Event guide | BM25 retrieval over the organisers' event guide; answers only above a relevance threshold, with citations. Staff-only procedures never reach attendees | Read only |
+| Web research | Only for outside-the-venue questions the guide cannot answer. Redacts personal details, scopes to the venue city, caches for 10 minutes, labels results as unverified | Web, read only |
+| Coordinator | Opens or joins incidents, ranks staff, lists free sessions, requests approvals | Acts via services |
+| Grounding check | Labels each reply: from HELLO records, from the event guide, from the web (unverified), or no reliable source | Read only |
+
+Each reply stores its trace and numbered sources with the message. In the conversation, people see the
+sources under the reply and can expand "How HELLO worked this out". Staff get an **Agent mesh** page with the
+roster, configuration, event-guide pages and recent runs. When nothing answers a question, HELLO says so
+instead of guessing.
+
+Web research is off unless `HELLO_WEB_SEARCH_PROVIDER=tavily` and `HELLO_WEB_SEARCH_API_KEY` are set. Provider
+output is schema-checked, stripped of markup and control characters, limited to http(s) links, and never
+treated as instructions. A hung or failing provider becomes a FAILED step in the trace, never an error.
+
+## Design
+
+The interface uses a white "diamond" theme with a single sky-blue accent family. Bright sky blue is used for
+light, glow and the brand. Deep sky blue is used for text and filled controls, so contrast stays AA on white.
+The HELLO wordmark is drawn as rounded SVG strokes, and its O is a halo with a diamond inside. The landing and
+sign-in pages show a 3D halo drawn on a canvas: a lit, depth-sorted ring of points around a brilliant-cut gem.
+It draws one still frame for people who prefer reduced motion, and it pauses when off screen or in a hidden
+tab. Inter and Nunito are self-hosted at build time by `next/font`.
+
 ## Workplace features
 
 Everything on these screens is computed from current state when it is requested, and the live screens refresh
@@ -191,8 +255,8 @@ and it must never return actions. See [docs/ai-system.md](docs/ai-system.md).
 
 ```bash
 npm run dev         # development server
-npm test            # unit and integration tests (138)
-npm run test:e2e    # browser checks: judge flow (13), workplace features (10), workflow audit (22); needs a running server
+npm test            # unit and integration tests
+npm run test:e2e    # browser checks: judge flow (13), features (10), workflow audit (22), private messages (6); needs a running server
 npm run test:routes # visits every page as every demo role and reports server and page errors
 npm run typecheck   # TypeScript
 npm run lint        # ESLint
@@ -224,6 +288,13 @@ instance has its own copy, and demo sign-in is not authentication. See [docs/dep
 | Sign-in | **Demo shortcut only**, not authentication |
 | Nexconn messaging | **Not connected** |
 | AI provider | **Not connected**; deterministic interpreter in use |
+| Agent mesh (triage, sentinel, context, event guide, web, coordinator, grounding) | Implemented and tested; event guide is seeded demo data |
+| Web research | Implemented behind a provider boundary (Tavily adapter); tested with fake providers, **not exercised against the live API** |
+| Event guide in Postgres | **Not written**: `listReferenceDocs` is on the store contract, memory store only |
+| Profiles, follows, data export and erasure | Implemented and tested; memory store only |
+| End-to-end encrypted private messages | Implemented; tested in Node and between two real browser profiles. **No forward secrecy**, one key per device |
+| Venue map (plan, 3D, heat) and step-free routing | Implemented and tested; the venue is hand-drawn demo data |
+| Content-Security-Policy and cross-site Origin check | Implemented (production builds) |
 | Browser end-to-end test of the judge flow (13 checks, Playwright) | Implemented; run against a demo server |
 | Visual regression, accessibility audit, load tests | **Not done** |
 | Equipment/resource management, staff directory, announcement management, admin screens, audit log UI, session seat holds | **Not built** |

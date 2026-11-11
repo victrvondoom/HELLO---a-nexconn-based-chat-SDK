@@ -4,6 +4,8 @@ import type { AuditEntry, Membership, Notification } from '../domain/types';
 import { buildDedupeKey } from '../domain/notifications/dedupe';
 import type { HelloStore } from '../store/store';
 import type { IntentProvider } from '../ai/intent';
+import type { WebSearchProvider } from '../agents/web';
+import { vaultFromEnv, type Vault } from '../lib/vault';
 
 /** Everything a service needs. Passed explicitly so tests can control time and IDs. */
 export interface ServiceContext {
@@ -12,6 +14,11 @@ export interface ServiceContext {
   newId: (prefix: string) => string;
   intentProvider: IntentProvider | null;
   intentTimeoutMs: number;
+  /** Web research provider for the web agent. Null means the agent reports that it is not configured. */
+  webSearch: WebSearchProvider | null;
+  webSearchTimeoutMs: number;
+  /** Encryption at rest for personal data the server must read (profile text). Not end-to-end. */
+  vault: Vault;
 }
 
 export function createContext(
@@ -24,6 +31,9 @@ export function createContext(
     newId: options.newId ?? ((prefix) => `${prefix}-${crypto.randomUUID()}`),
     intentProvider: options.intentProvider ?? null,
     intentTimeoutMs: options.intentTimeoutMs ?? 4000,
+    webSearch: options.webSearch ?? null,
+    webSearchTimeoutMs: options.webSearchTimeoutMs ?? 5000,
+    vault: options.vault ?? vaultFromEnv({}),
   };
 }
 

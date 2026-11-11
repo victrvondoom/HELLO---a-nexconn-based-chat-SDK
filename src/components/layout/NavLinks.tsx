@@ -10,6 +10,8 @@ export interface NavLinkItem {
   icon: IconName;
   /** A live count shown beside the label. Omitted or zero shows nothing. */
   count?: number;
+  /** Match only this exact path, not its sub-pages. Used for the event home. */
+  exact?: boolean;
 }
 
 /** Client island: only the active-state calculation and live counts need the browser. */
@@ -18,7 +20,7 @@ export function NavLinks({ items }: { items: NavLinkItem[] }) {
   return (
     <>
       {items.map((item) => {
-        const current = pathname === item.href || pathname.startsWith(`${item.href}/`);
+        const current = pathname === item.href || (!item.exact && pathname.startsWith(`${item.href}/`));
         return (
           <Link key={item.href} className="nav-link" href={item.href} aria-current={current ? 'page' : undefined}>
             <Icon name={item.icon} />

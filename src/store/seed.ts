@@ -1,4 +1,6 @@
 import type {
+  ProfileVisibility,
+  ReferenceDoc,
   Announcement,
   ApprovalRequest,
   Notification,
@@ -12,6 +14,8 @@ import type {
   User,
 } from '../domain/types';
 import type { MemoryHelloStore } from './memory';
+import type { Vault } from '../lib/vault';
+import { buildDemoVenue } from './venue-seed';
 
 /**
  * DEMO SEED DATA — every record here is fictional and exists only to demonstrate
@@ -62,7 +66,7 @@ export function buildDemoData(): {
   const E = DEMO_EVENT_ID;
 
   const events: EventRecord[] = [
-    { id: E, name: 'HELLO Global Technology Summit', timezone: 'UTC', isDemo: true },
+    { id: E, name: 'HELLO Global Technology Summit', timezone: 'UTC', isDemo: true, venueCity: 'Lisbon' },
   ];
 
   const users: User[] = [
@@ -280,9 +284,121 @@ function timelineEntry(
  * Loads the demo event into an empty in-memory store. Must be called once per store;
  * the store rejects duplicate ids, so a second call fails loudly instead of doubling data.
  */
-export async function loadDemoEvent(store: MemoryHelloStore): Promise<void> {
+/**
+ * The demo event guide. Fictional venue facts written for the demo, labelled DEMO_SEED, so every
+ * answer an agent gives from them is traceable to a page an organiser would own in a real event.
+ */
+export function buildReferenceDocs(eventId: string, at: number): ReferenceDoc[] {
+  const doc = (
+    id: string,
+    title: string,
+    body: string,
+    tags: string[],
+    extra: Partial<Pick<ReferenceDoc, 'categories' | 'audience'>> = {},
+  ): ReferenceDoc => ({
+    id,
+    eventId,
+    title,
+    body,
+    tags,
+    categories: extra.categories ?? [],
+    audience: extra.audience ?? 'EVERYONE',
+    source: 'DEMO_SEED',
+    updatedAt: at,
+  });
+  return [
+    doc(
+      'ref-wifi',
+      'Wi-Fi and charging',
+      'The event network is HELLO-Summit and the password is printed on the back of your badge. Charging lockers are next to the registration desk on the ground floor and in the Workshop corridor outside Room 2.',
+      ['wifi', 'wi-fi', 'internet', 'network', 'password', 'charging', 'charger', 'phone', 'battery'],
+    ),
+    doc(
+      'ref-access',
+      'Accessible entrance and step-free routes',
+      'The accessible entrance is on the east side of the building, next to the taxi drop-off, with a level ramp and automatic doors. Lifts to every floor are behind registration. Main Hall, Room 3 and Room 4 are step-free. Room 2 is reached by stairs only.',
+      ['accessible', 'accessibility', 'entrance', 'wheelchair', 'ramp', 'lift', 'elevator', 'step-free', 'stairs'],
+      { categories: ['ACCESSIBILITY'] },
+    ),
+    doc(
+      'ref-food',
+      'Food, coffee and dietary needs',
+      'Coffee is served all day in the Atrium. Lunch runs from 12:30 to 14:00 UTC in the Atrium, with vegetarian, vegan, halal and gluten-free options labelled at each counter. Ask any catering staff member about allergens.',
+      ['food', 'lunch', 'coffee', 'eat', 'drink', 'vegan', 'vegetarian', 'halal', 'gluten', 'allergy', 'allergen', 'catering', 'water'],
+    ),
+    doc(
+      'ref-toilets',
+      'Toilets and quiet room',
+      'Toilets are on every floor beside the lifts, including accessible toilets with baby-changing facilities. A quiet room for prayer or rest is on the first floor opposite Room 4.',
+      ['toilet', 'toilets', 'restroom', 'bathroom', 'washroom', 'quiet', 'prayer', 'rest', 'baby'],
+    ),
+    doc(
+      'ref-badge',
+      'Badges, registration and lost property',
+      'Registration and badge reprints are at the desk in the ground-floor lobby, open 08:00 to 18:00 UTC. Lost property is held at the same desk. Badges must be worn to enter session rooms.',
+      ['badge', 'registration', 'register', 'lost', 'property', 'found', 'reprint', 'ticket', 'desk'],
+    ),
+    doc(
+      'ref-emergency',
+      'Emergencies and first aid',
+      'In an emergency, tell the nearest staff member or call the venue control room on extension 999 from any house phone. First aid is next to registration and is staffed all day. If you hear the alarm, leave by the nearest marked exit and gather at the assembly point in the front plaza. Do not use the lifts.',
+      ['emergency', 'first', 'aid', 'medical', 'fire', 'alarm', 'evacuate', 'evacuation', 'injury', 'injured', 'unwell', 'faint', 'assembly'],
+    ),
+    doc(
+      'ref-transport',
+      'Getting here and leaving',
+      'The nearest metro station is a five-minute walk from the main entrance. Taxis and ride-share pick-ups use the east drop-off next to the accessible entrance. There is no public parking at the venue.',
+      ['metro', 'train', 'taxi', 'uber', 'transport', 'parking', 'park', 'bus', 'station', 'airport', 'leave'],
+    ),
+    doc(
+      'ref-proc-av',
+      'Staff procedure: AV faults',
+      'Check the receiver pack and battery first, then swap to the spare handheld microphone kept in each room cabinet. If the projector has no signal, reseat the HDMI cable at the lectern and press Source. Escalate to the AV lead if not fixed within 10 minutes.',
+      ['microphone', 'mic', 'audio', 'sound', 'projector', 'hdmi', 'screen', 'av', 'speaker'],
+      { categories: ['AV'], audience: 'STAFF' },
+    ),
+    doc(
+      'ref-proc-capacity',
+      'Staff procedure: overcrowded rooms',
+      'Stop admitting people at the door once a room reaches its posted capacity. Direct attendees to the overflow stream in the Atrium and to sessions with free seats. Room moves need an organiser approval in HELLO; never move a session on your own.',
+      ['crowded', 'overcrowded', 'capacity', 'full', 'overflow', 'door', 'seats'],
+      { categories: ['CAPACITY'], audience: 'STAFF' },
+    ),
+  ];
+}
+
+/** Demo profiles: written as plain text here, sealed with the runtime's vault before they reach the store. */
+const DEMO_PROFILES: Array<{ userId: string; headline: string; bio: string; visibility: ProfileVisibility }> = [
+  { userId: DEMO_USERS.attendeeAda, headline: 'Satellite power engineer (fictional)', bio: 'Here for the satellite power and robotics sessions. Happy to talk solar arrays.', visibility: 'EVENT' },
+  { userId: DEMO_USERS.attendeeBen, headline: 'Security researcher (fictional)', bio: 'Zero trust, event networks, and anything with a threat model.', visibility: 'EVENT' },
+  { userId: DEMO_USERS.attendeeChloe, headline: 'Edge computing lead (fictional)', bio: 'Uses a wheelchair; ask me about step-free venues done right.', visibility: 'CONNECTIONS' },
+  { userId: DEMO_USERS.attendeeDev, headline: 'Ground-station developer (fictional)', bio: 'Building satellite communication links. Looking for collaborators.', visibility: 'EVENT' },
+  { userId: DEMO_USERS.speakerInes, headline: 'Speaker: Satellite Power Systems (fictional)', bio: 'Speaking at 13:00 in Room 3. Slides will be shared with followers afterwards.', visibility: 'EVENT' },
+];
+
+const DEMO_FOLLOWS: Array<[string, string]> = [
+  [DEMO_USERS.attendeeAda, DEMO_USERS.speakerInes],
+  [DEMO_USERS.speakerInes, DEMO_USERS.attendeeAda],
+  [DEMO_USERS.attendeeAda, DEMO_USERS.attendeeDev],
+  [DEMO_USERS.attendeeDev, DEMO_USERS.attendeeAda],
+  [DEMO_USERS.attendeeBen, DEMO_USERS.attendeeAda],
+  [DEMO_USERS.attendeeChloe, DEMO_USERS.attendeeBen],
+  [DEMO_USERS.attendeeDev, DEMO_USERS.speakerInes],
+];
+
+export async function loadDemoEvent(store: MemoryHelloStore, options: { vault?: Vault } = {}): Promise<void> {
   const data = buildDemoData();
+  const vault = options.vault;
   store.seed({
+    profiles: vault
+      ? DEMO_PROFILES.map((p) => ({
+          userId: p.userId,
+          sealed: vault.seal(JSON.stringify({ headline: p.headline, bio: p.bio }), `profile:${p.userId}`),
+          visibility: p.visibility,
+          updatedAt: DEMO_T0,
+        }))
+      : [],
+    follows: DEMO_FOLLOWS.map(([followerId, followeeId], i) => ({ followerId, followeeId, createdAt: DEMO_T0 - (i + 1) * 3_600_000 })),
     events: data.events,
     users: data.users,
     memberships: data.memberships,
@@ -293,6 +409,8 @@ export async function loadDemoEvent(store: MemoryHelloStore): Promise<void> {
     timeline: data.timeline,
     announcements: data.announcements,
     notifications: data.notifications,
+    referenceDocs: buildReferenceDocs(DEMO_EVENT_ID, DEMO_T0),
+    venues: [buildDemoVenue(DEMO_EVENT_ID)],
   });
   for (const approval of data.approvals) {
     await store.insertApproval(approval);

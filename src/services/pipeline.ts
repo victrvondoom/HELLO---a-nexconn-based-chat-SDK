@@ -1,4 +1,16 @@
-import { interpretMessage, type Intent, type IntentResult, type InterpretationSource, type FallbackReason } from '../ai/intent';
+import {
+  interpretDeterministically,
+  interpretMessage,
+  type FallbackReason,
+  type Intent,
+  type IntentResult,
+  type InterpretationSource,
+} from '../ai/intent';
+import { AgentRun } from '../agents/trace';
+import { detectEmergency, EMERGENCY_FALLBACK, EMERGENCY_TERMS } from '../agents/sentinel';
+import { ANSWER_THRESHOLD, bestSnippet, hitToReference, searchKnowledge, terms, type KnowledgeHit } from '../agents/knowledge';
+import { isOutsideVenueQuestion, redactQuery, searchWeb, type WebOutcome } from '../agents/web';
+import type { AgentTrace, Grounding, Reference } from '../agents/types';
 import { authorize } from '../domain/permissions';
 import { classifyUtterance, resolveRoomName } from '../domain/incidents/classify';
 import { DomainError } from '../domain/errors';
@@ -34,6 +46,9 @@ export interface StoredOutcome {
   approvalId: string | null;
   statusReport: MessageResponse['statusReport'];
   people: Array<{ userId: string; displayName: string; reason: string }>;
+  agents: AgentTrace;
+  /** The room the message was about, so the reply can offer directions on the venue map. */
+  room?: { id: string; name: string } | null;
 }
 
 export interface IncidentOutcome {
@@ -77,6 +92,8 @@ export interface MessageResponse {
   missingInformation: string[];
   clarifyingQuestion: string | null;
   reply: string;
+  /** How the agent mesh handled the message, with the sources the reply rests on. */
+  agents: AgentTrace;
 }
 
 export interface SendMessageInput {
@@ -95,9 +112,9 @@ function maxUrgency(a: Urgency, b: Urgency): Urgency {
 }
 
 /**
- * The unified conversation pipeline. Each step either adds structured facts or
- * routes to a permitted action. The model's output only chooses the route.
- * Every state change goes through a domain service with its own checks.
+ * The unified conversation pipeline, run as a mesh of small agents (see src/agents/types.ts).
+ * Each agent adds facts or sources and records a step in the trace. The model's output only
+ * chooses the route. Every state change goes through a domain service with its own checks.
  */
 export async function handleMessage(ctx: ServiceContext, input: SendMessageInput): Promise<MessageResponse> {
   const text = input.text.trim();
@@ -105,19 +122,119 @@ export async function handleMessage(ctx: ServiceContext, input: SendMessageInput
     throw new DomainError('VALIDATION_FAILED', `Messages must be between 1 and ${MAX_MESSAGE_LENGTH} characters.`);
   }
 
-  // 1. Identify the user and the active event. Membership is checked on the server.
+  // Identify the user and the active event. Membership is checked on the server.
   const membership = await requireCapability(ctx, input.eventId, input.userId, 'message.send');
   const operational = authorize(membership, 'incident.read.operational', input.eventId).allowed;
+  const run = new AgentRun();
+  const [rooms, docs, event] = await Promise.all([
+    ctx.store.listRooms(input.eventId),
+    ctx.store.listReferenceDocs(input.eventId),
+    ctx.store.getEvent(input.eventId),
+  ]);
 
-  // 2–5. Resolve rooms, classify intent, extract structured details.
-  const rooms = await ctx.store.listRooms(input.eventId);
-  const interpreted = await interpretMessage(
-    { text, roomNames: rooms.map((r) => r.name) },
-    { provider: ctx.intentProvider, timeoutMs: ctx.intentTimeoutMs },
+  // Triage: what kind of message is this?
+  const interpreted = await run.step(
+    'triage',
+    async () => {
+      const value = await interpretMessage(
+        { text, roomNames: rooms.map((r) => r.name) },
+        { provider: ctx.intentProvider, timeoutMs: ctx.intentTimeoutMs },
+      );
+      const via = value.source === 'AI_PROVIDER' ? 'AI provider' : 'deterministic rules';
+      return { value, summary: `${INTENT_LABEL[value.result.intent]}, via ${via}.`, confidence: value.result.confidence };
+    },
+    () => ({ result: interpretDeterministically({ text, roomNames: rooms.map((r) => r.name) }), source: 'DETERMINISTIC_FALLBACK' as const, fallbackReason: 'PROVIDER_ERROR' as const }),
   );
-  const result: IntentResult = interpreted.result;
+  let result: IntentResult = interpreted.result;
   const classification = classifyUtterance(text);
+
+  // Safety sentinel: an emergency is always critical, always reaches operations, and its guidance comes first.
+  const danger = detectEmergency(text);
+  let safetyLead: string | null = null;
+  if (danger.emergency && danger.kind) {
+    const kind = danger.kind;
+    const page = searchKnowledge(docs, { text: `${EMERGENCY_TERMS[kind]} ${text}`, staff: false, limit: 5 }).find((h) =>
+      h.doc.tags.includes('emergency'),
+    );
+    const ref = page ? hitToReference({ ...page, snippet: bestSnippet(page.doc.body, terms(EMERGENCY_TERMS[kind]), 360) }) : null;
+    if (result.intent === 'ASK_QUESTION' || result.intent === 'FIND_PERSON' || result.intent === 'STATUS_CHECK') {
+      result = { ...result, intent: 'REPORT_INCIDENT' };
+    }
+    result = { ...result, urgency: 'CRITICAL' };
+    run.record('sentinel', 'DONE', `Possible ${kind.toLowerCase()} emergency (${danger.matched.join(', ')}). Raised to critical.`, 0, 1, ref ? [ref] : []);
+    safetyLead = ref ? `${ref.snippet} [${citeIndex(run, ref.id)}]` : EMERGENCY_FALLBACK[kind];
+  } else {
+    run.record('sentinel', 'DONE', 'No emergency language found.', 0, null);
+  }
+
+  // Context: the room, and for questions, whatever the schedule can answer.
   const room = resolveRoomName(text, rooms) ?? (result.roomHint ? resolveRoomName(result.roomHint, rooms) : null);
+  const scheduleAnswer = result.intent === 'ASK_QUESTION' ? await answerFromSchedule(ctx, input, room) : null;
+  run.record(
+    'context',
+    'DONE',
+    [
+      room ? `Room: ${room.name}.` : 'No room named.',
+      scheduleAnswer?.reference ? `Schedule record: ${scheduleAnswer.reference.title}.` : null,
+    ]
+      .filter(Boolean)
+      .join(' '),
+    0,
+    room ? 1 : null,
+    scheduleAnswer?.reference ? [scheduleAnswer.reference] : [],
+  );
+
+  // Event guide: search the organisers' pages. Staff also see procedures for the category.
+  const wantsGuide = result.intent === 'ASK_QUESTION' || result.intent === 'REPORT_INCIDENT' || result.intent === 'REQUEST_ASSISTANCE';
+  let guide: KnowledgeHit | null = null;
+  if (!wantsGuide) {
+    run.record('knowledge', 'SKIPPED', `Not needed for ${INTENT_LABEL[result.intent].toLowerCase()}.`);
+  } else {
+    const hits = searchKnowledge(docs, { text, staff: operational, category: result.category });
+    const top = hits[0];
+    guide = top && top.score >= ANSWER_THRESHOLD ? top : null;
+    run.record(
+      'knowledge',
+      'DONE',
+      guide
+        ? `Best match: “${guide.doc.title}” (relevance ${guide.score.toFixed(2)}).`
+        : top
+          ? `No page was relevant enough to use (best relevance ${top.score.toFixed(2)}, needs ${ANSWER_THRESHOLD.toFixed(2)}).`
+          : `No page in the event guide (${docs.length} pages) matched.`,
+      0,
+      guide ? guide.score : null,
+      guide ? [hitToReference(guide)] : [],
+    );
+  }
+
+  // Web research: only for questions about the world outside the venue that nothing above answered.
+  let web: Extract<WebOutcome, { status: 'OK' }> | null = null;
+  if (result.intent !== 'ASK_QUESTION') {
+    run.record('web', 'SKIPPED', 'Only questions are researched on the web.');
+  } else if (scheduleAnswer?.answered) {
+    run.record('web', 'SKIPPED', 'The schedule already answers this.');
+  } else if (guide) {
+    run.record('web', 'SKIPPED', 'The event guide already answers this.');
+  } else if (!isOutsideVenueQuestion(text)) {
+    run.record('web', 'SKIPPED', 'The question is about the event, so it is not sent outside HELLO.');
+  } else {
+    const names = [...(await namesFor(ctx, input.eventId)).values()];
+    let query = redactQuery(text, names);
+    const city = event?.venueCity ?? null;
+    if (city && query.length >= 3 && !query.toLowerCase().includes(city.toLowerCase())) query = `${query} ${city}`;
+    const outcome = await run.step(
+      'web',
+      async () => {
+        const value = await searchWeb(ctx.webSearch, query, { timeoutMs: ctx.webSearchTimeoutMs });
+        if (value.status === 'OK') {
+          return { value, summary: `${value.references.length} sources for “${query}” via ${ctx.webSearch?.name ?? 'provider'}.`, references: value.references };
+        }
+        return { value, status: value.status, summary: value.reason };
+      },
+      (): WebOutcome => ({ status: 'FAILED', reason: 'The search failed.' }),
+    );
+    web = outcome.status === 'OK' ? outcome : null;
+  }
 
   const base = {
     messageId: ctx.newId('msg'),
@@ -133,10 +250,13 @@ export async function handleMessage(ctx: ServiceContext, input: SendMessageInput
     room: room ? { id: room.id, name: room.name } : null,
   };
 
-  let outcome: Omit<MessageResponse, 'messageId' | 'interpretation' | 'room'>;
+  let outcome: Omit<MessageResponse, 'messageId' | 'interpretation' | 'room' | 'agents'>;
   let linkedIncidentId: string | null = null;
   let linkedApprovalId: string | null = null;
+  let grounding: Grounding = 'VERIFIED_RECORDS';
 
+  // Coordinator: the only agent that changes state, and only through domain services.
+  const coordinatorStarted = performance.now();
   switch (result.intent) {
     case 'REPORT_INCIDENT':
     case 'REQUEST_ASSISTANCE':
@@ -145,6 +265,10 @@ export async function handleMessage(ctx: ServiceContext, input: SendMessageInput
       outcome = handled.response;
       linkedIncidentId = handled.linkedIncidentId;
       linkedApprovalId = handled.linkedApprovalId;
+      // While the team responds, a public guide page that answers the problem is offered to the reporter.
+      if (guide && guide.doc.audience === 'EVERYONE' && !danger.emergency) {
+        outcome = { ...outcome, reply: `${outcome.reply} Meanwhile, the event guide says: ${guide.snippet} [${citeIndex(run, guide.doc.id)}]` };
+      }
       break;
     }
     case 'STATUS_CHECK':
@@ -164,12 +288,33 @@ export async function handleMessage(ctx: ServiceContext, input: SendMessageInput
       if (follow) {
         outcome = follow.response;
         linkedIncidentId = follow.linkedIncidentId;
+      } else if (scheduleAnswer?.answered) {
+        outcome = scheduleAnswer.outcome;
+      } else if (guide) {
+        outcome = emptyOutcome(`From the event guide: ${guide.snippet} [${citeIndex(run, guide.doc.id)}]`);
+        grounding = 'EVENT_GUIDE';
+      } else if (web && web.references[0]) {
+        const top = web.references[0];
+        outcome = emptyOutcome(
+          `The event guide does not cover this. A web source says: “${top.snippet}” [${citeIndex(run, top.id)}] This is from the web and has not been checked by the organisers, so confirm it before relying on it.`,
+        );
+        grounding = 'WEB_UNVERIFIED';
       } else {
-        outcome = await handleQuestion(ctx, input, room);
+        outcome = emptyOutcome(NO_ANSWER_REPLY);
+        grounding = 'NO_ANSWER';
       }
       break;
     }
   }
+  run.record('coordinator', 'DONE', describeOutcome(outcome, grounding), performance.now() - coordinatorStarted);
+
+  if (safetyLead) {
+    outcome = { ...outcome, reply: `${safetyLead} ${outcome.reply}`.trim() };
+  }
+
+  // Grounding check: every reply is labelled with what it rests on.
+  run.record('grounding', 'DONE', GROUNDING_SUMMARY[grounding], 0, grounding === 'NO_ANSWER' ? 0 : grounding === 'WEB_UNVERIFIED' ? 0.5 : 1);
+  const agents = run.finish(grounding);
 
   // The assistant's answer is stored with the message, so the conversation survives a reload and
   // every card the attendee saw can be rebuilt from the record instead of from client state.
@@ -195,6 +340,8 @@ export async function handleMessage(ctx: ServiceContext, input: SendMessageInput
     approvalId: outcome.approval?.id ?? null,
     statusReport: outcome.statusReport,
     people: outcome.people.map((p) => ({ userId: p.userId, displayName: p.displayName, reason: p.reason })),
+    agents,
+    room: base.room,
   };
 
   await ctx.store.insertMessage({
@@ -212,10 +359,52 @@ export async function handleMessage(ctx: ServiceContext, input: SendMessageInput
     linkedApprovalId,
   });
 
-  return { ...base, ...outcome };
+  return { ...base, ...outcome, agents };
 }
 
-type Outcome = Omit<MessageResponse, 'messageId' | 'interpretation' | 'room'>;
+const INTENT_LABEL: Record<Intent, string> = {
+  REPORT_INCIDENT: 'A problem report',
+  REQUEST_ASSISTANCE: 'A request for help',
+  STATUS_CHECK: 'A status check',
+  SCHEDULE_CONFLICT: 'A schedule conflict',
+  FIND_PERSON: 'A request to find people',
+  CONSEQUENTIAL_REQUEST: 'A change that needs approval',
+  ASK_QUESTION: 'A question',
+};
+
+const GROUNDING_SUMMARY: Record<Grounding, string> = {
+  VERIFIED_RECORDS: 'Every statement comes from stored incidents, schedule and room records.',
+  EVENT_GUIDE: 'The answer quotes the organisers’ event guide and cites the page.',
+  WEB_UNVERIFIED: 'The answer quotes a web source. It is labelled as unverified.',
+  NO_ANSWER: 'No source answered this, so HELLO says so instead of guessing.',
+};
+
+const NO_ANSWER_REPLY =
+  'I could not find this in the schedule, the room records or the event guide, so I will not guess. Ask a staff member at registration, or if something is wrong, tell me what is happening and where, and I will log it.';
+
+/** The 1-based position of a reference in the run's citations, used for [n] markers in replies. */
+function citeIndex(run: AgentRun, referenceId: string): number {
+  return run.citations().findIndex((r) => r.id === referenceId) + 1;
+}
+
+function describeOutcome(outcome: Pick<MessageResponse, 'incidents' | 'approval' | 'alternatives' | 'people' | 'statusReport'>, grounding: Grounding): string {
+  const parts: string[] = [];
+  const joined = outcome.incidents.filter((i) => i.attached).length;
+  const opened = outcome.incidents.length - joined;
+  if (opened > 0) parts.push(`opened ${opened} incident${opened === 1 ? '' : 's'}`);
+  if (joined > 0) parts.push(`joined ${joined} open report${joined === 1 ? '' : 's'}`);
+  if (outcome.approval) parts.push('requested an organiser approval');
+  if ((outcome.alternatives?.recommendations.length ?? 0) > 0) parts.push(`listed ${outcome.alternatives?.recommendations.length} free sessions`);
+  if (outcome.people.length > 0) parts.push(`matched ${outcome.people.length} people by declared interest`);
+  if (outcome.statusReport) parts.push('reported the status of your request');
+  if (parts.length === 0) {
+    return grounding === 'NO_ANSWER' ? 'Nothing to act on, and no source to answer from.' : 'Answered; nothing needed changing.';
+  }
+  const text = parts.join(', ');
+  return `${text.charAt(0).toUpperCase()}${text.slice(1)}.`;
+}
+
+type Outcome = Omit<MessageResponse, 'messageId' | 'interpretation' | 'room' | 'agents'>;
 
 function emptyOutcome(reply: string, clarifyingQuestion: string | null = null): Outcome {
   return {
@@ -607,7 +796,14 @@ async function handleConsequential(
   };
 }
 
-async function handleQuestion(ctx: ServiceContext, input: SendMessageInput, room: Room | null): Promise<Outcome> {
+interface ScheduleAnswer {
+  answered: boolean;
+  outcome: Outcome;
+  reference: Reference | null;
+}
+
+/** Read-only: answers a question about a named session or room from the stored schedule, if it can. */
+async function answerFromSchedule(ctx: ServiceContext, input: SendMessageInput, room: Room | null): Promise<ScheduleAnswer> {
   const now = ctx.now();
   const sessions = await ctx.store.listSessions(input.eventId);
   const rooms = await ctx.store.listRooms(input.eventId);
@@ -630,9 +826,12 @@ async function handleQuestion(ctx: ServiceContext, input: SendMessageInput, room
           : 'has finished';
     const seats = s.capacity - s.enrolled;
     const seatText = seats > 0 ? `${seats} seats free` : 'full';
-    return emptyOutcome(
-      `"${s.title}" ${when}, in ${r?.name ?? 'an unknown room'} at ${formatUtc(s.startsAt)}. It has ${seatText} (${s.enrolled} of ${s.capacity} enrolled).`,
-    );
+    const reply = `"${s.title}" ${when}, in ${r?.name ?? 'an unknown room'} at ${formatUtc(s.startsAt)}. It has ${seatText} (${s.enrolled} of ${s.capacity} enrolled).`;
+    return {
+      answered: true,
+      outcome: emptyOutcome(reply),
+      reference: { id: `session:${s.id}`, kind: 'SCHEDULE', title: s.title, snippet: `${r?.name ?? 'Unknown room'} · ${formatUtc(s.startsAt)} · ${s.enrolled}/${s.capacity} enrolled`, url: null, score: 1 },
+    };
   }
 
   if (room) {
@@ -641,15 +840,26 @@ async function handleQuestion(ctx: ServiceContext, input: SendMessageInput, room
       room.occupancy === null || room.occupancySource === null
         ? 'No occupancy figure is recorded for it.'
         : `Recorded occupancy is ${room.occupancy} of ${room.capacity} (${DATA_SOURCE_LABEL[room.occupancySource]}).`;
+    const reference: Reference = {
+      id: `room:${room.id}`,
+      kind: 'SCHEDULE',
+      title: room.name,
+      snippet: `${room.zone} zone · capacity ${room.capacity}${room.accessible ? ' · step-free' : ''}`,
+      url: null,
+      score: 1,
+    };
     if (inRoom.length === 0) {
-      return emptyOutcome(`${room.name} has no sessions in the schedule. ${occupancy}`);
+      return { answered: true, outcome: emptyOutcome(`${room.name} has no sessions in the schedule. ${occupancy}`), reference };
     }
     const lines = inRoom.map((s) => `${s.title} at ${formatUtc(s.startsAt).slice(11)}`);
-    return emptyOutcome(`${room.name} hosts: ${lines.join('; ')}. ${occupancy}`);
+    return { answered: true, outcome: emptyOutcome(`${room.name} hosts: ${lines.join('; ')}. ${occupancy}`), reference };
   }
 
-  return emptyOutcome(
-    'I answer from the schedule and room records. Name a session or a room and I will check it. If you are describing a problem, tell me what is happening and where, and I will log it.',
-  );
+  return {
+    answered: false,
+    outcome: emptyOutcome(
+      'I answer from the schedule, room records and the event guide. Name a session or a room and I will check it. If you are describing a problem, tell me what is happening and where, and I will log it.',
+    ),
+    reference: null,
+  };
 }
-

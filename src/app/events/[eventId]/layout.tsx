@@ -4,6 +4,7 @@ import { EventNav } from '@/components/layout/EventNav';
 import { ROLE_LABEL } from '@/components/ui/labels';
 import { demoModeEnabled } from '@/lib/session';
 import { notificationFeed } from '@/services/workplace';
+import { DeviceKey } from '@/components/social/DeviceKey';
 
 export default async function EventLayout({
   children,
@@ -18,6 +19,7 @@ export default async function EventLayout({
   const feed = await notificationFeed(viewer.ctx, eventId, viewer.userId);
   return (
     <div className="app">
+      <DeviceKey userId={viewer.userId} />
       <EventNav
         eventId={eventId}
         eventName={viewer.event.name}

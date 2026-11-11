@@ -56,7 +56,7 @@ export function DemoSignIn({ eventId, accounts }: { eventId: string; accounts: A
         }}
       >
         {accounts.map((account) => (
-          <li key={account.userId} className="card" style={{ display: 'flex', flexDirection: 'column' }}>
+          <li key={account.userId} className="card card--interactive role-card" style={{ display: 'flex', flexDirection: 'column' }}>
             <div className="card__body stack" style={{ gap: 8, flex: 1 }}>
               <div className="row" style={{ justifyContent: 'space-between' }}>
                 <strong style={{ fontSize: 15 }}>{account.name}</strong>

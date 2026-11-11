@@ -9,11 +9,17 @@ import type {
   Membership,
   Message,
   Notification,
+  ReferenceDoc,
+  ProfileRecord,
+  Follow,
+  KeyBundle,
+  SealedMessage,
   Room,
   Session,
   SignalPattern,
   User,
 } from '../domain/types';
+import type { Venue } from '../domain/venue/types';
 import { OPEN_STATUSES } from '../domain/incidents/lifecycle';
 import { DomainError } from '../domain/errors';
 import { VersionConflictError, type HelloStore } from './store';
@@ -43,6 +49,12 @@ export class MemoryHelloStore implements HelloStore {
   private notifications: Notification[] = [];
   private notificationKeys = new Set<string>();
   private patterns = new Map<string, SignalPattern>();
+  private referenceDocs: ReferenceDoc[] = [];
+  private venues = new Map<string, Venue>();
+  private profiles = new Map<string, ProfileRecord>();
+  private follows: Follow[] = [];
+  private keyBundles: KeyBundle[] = [];
+  private sealed: SealedMessage[] = [];
 
   private static copy<T>(value: T): T {
     return structuredClone(value);
@@ -65,7 +77,15 @@ export class MemoryHelloStore implements HelloStore {
     timeline?: IncidentTimelineEntry[];
     announcements?: Announcement[];
     notifications?: Notification[];
+    referenceDocs?: ReferenceDoc[];
+    venues?: Venue[];
+    profiles?: ProfileRecord[];
+    follows?: Follow[];
   }): void {
+    for (const p of data.profiles ?? []) this.profiles.set(p.userId, MemoryHelloStore.copy(p));
+    for (const f of data.follows ?? []) this.follows.push(MemoryHelloStore.copy(f));
+    for (const v of data.venues ?? []) this.venues.set(v.eventId, MemoryHelloStore.copy(v));
+    for (const d of data.referenceDocs ?? []) this.referenceDocs.push(MemoryHelloStore.copy(d));
     for (const a of data.announcements ?? []) this.announcements.push(MemoryHelloStore.copy(a));
     for (const n of data.notifications ?? []) {
       this.notifications.push(MemoryHelloStore.copy(n));
@@ -105,6 +125,10 @@ export class MemoryHelloStore implements HelloStore {
     const next = { ...current, ...patch };
     this.users.set(userId, next);
     return MemoryHelloStore.copy(next);
+  }
+
+  async listMembershipsOfUser(userId: string): Promise<Membership[]> {
+    return MemoryHelloStore.copyAll([...this.memberships.values()].filter((m) => m.userId === userId));
   }
 
   async findMembership(eventId: string, userId: string): Promise<Membership | null> {
@@ -328,6 +352,118 @@ export class MemoryHelloStore implements HelloStore {
         : incoming;
       this.patterns.set(incoming.id, MemoryHelloStore.copy(merged));
     }
+  }
+
+  // --- social graph ---
+
+  async getProfile(userId: string): Promise<ProfileRecord | null> {
+    const p = this.profiles.get(userId);
+    return p ? MemoryHelloStore.copy(p) : null;
+  }
+
+  async putProfile(profile: ProfileRecord): Promise<void> {
+    this.profiles.set(profile.userId, MemoryHelloStore.copy(profile));
+  }
+
+  async deleteProfile(userId: string): Promise<void> {
+    this.profiles.delete(userId);
+  }
+
+  async addFollow(follow: Follow): Promise<boolean> {
+    if (this.follows.some((f) => f.followerId === follow.followerId && f.followeeId === follow.followeeId)) return false;
+    this.follows.push(MemoryHelloStore.copy(follow));
+    return true;
+  }
+
+  async removeFollow(followerId: string, followeeId: string): Promise<boolean> {
+    const before = this.follows.length;
+    this.follows = this.follows.filter((f) => !(f.followerId === followerId && f.followeeId === followeeId));
+    return this.follows.length !== before;
+  }
+
+  async listFollowers(userId: string): Promise<Follow[]> {
+    return MemoryHelloStore.copyAll(this.follows.filter((f) => f.followeeId === userId));
+  }
+
+  async listFollowing(userId: string): Promise<Follow[]> {
+    return MemoryHelloStore.copyAll(this.follows.filter((f) => f.followerId === userId));
+  }
+
+  async removeAllFollows(userId: string): Promise<number> {
+    const before = this.follows.length;
+    this.follows = this.follows.filter((f) => f.followerId !== userId && f.followeeId !== userId);
+    return before - this.follows.length;
+  }
+
+  // --- end-to-end encrypted messages ---
+
+  async putKeyBundle(bundle: KeyBundle): Promise<void> {
+    if (this.keyBundles.some((k) => k.id === bundle.id)) return;
+    this.keyBundles.push(MemoryHelloStore.copy(bundle));
+  }
+
+  async listKeyBundles(userId: string): Promise<KeyBundle[]> {
+    return MemoryHelloStore.copyAll(this.keyBundles.filter((k) => k.userId === userId).sort((a, b) => a.createdAt - b.createdAt));
+  }
+
+  async deleteKeyBundles(userId: string): Promise<number> {
+    const before = this.keyBundles.length;
+    this.keyBundles = this.keyBundles.filter((k) => k.userId !== userId);
+    return before - this.keyBundles.length;
+  }
+
+  async insertSealedMessage(message: SealedMessage): Promise<void> {
+    this.sealed.push(MemoryHelloStore.copy(message));
+  }
+
+  async listSealedBetween(a: string, b: string): Promise<SealedMessage[]> {
+    return MemoryHelloStore.copyAll(
+      this.sealed
+        .filter((m) => (m.senderId === a && m.recipientId === b) || (m.senderId === b && m.recipientId === a))
+        .sort((x, y) => x.createdAt - y.createdAt),
+    );
+  }
+
+  async listSealedInvolving(userId: string): Promise<SealedMessage[]> {
+    return MemoryHelloStore.copyAll(this.sealed.filter((m) => m.senderId === userId || m.recipientId === userId));
+  }
+
+  async deleteSealedInvolving(userId: string): Promise<number> {
+    const before = this.sealed.length;
+    this.sealed = this.sealed.filter((m) => m.senderId !== userId && m.recipientId !== userId);
+    return before - this.sealed.length;
+  }
+
+  // --- rights ---
+
+  async redactMessagesFrom(userId: string, replacement: string): Promise<number> {
+    let n = 0;
+    for (const m of this.messages) {
+      if (m.senderUserId !== userId) continue;
+      m.text = replacement;
+      m.interpretation = null;
+      n += 1;
+    }
+    return n;
+  }
+
+  async redactReportsFrom(userId: string, replacement: string): Promise<number> {
+    let n = 0;
+    for (const r of this.reports) {
+      if (r.reporterUserId !== userId) continue;
+      r.text = replacement;
+      n += 1;
+    }
+    return n;
+  }
+
+  async getVenue(eventId: string): Promise<Venue | null> {
+    const v = this.venues.get(eventId);
+    return v ? MemoryHelloStore.copy(v) : null;
+  }
+
+  async listReferenceDocs(eventId: string): Promise<ReferenceDoc[]> {
+    return MemoryHelloStore.copyAll(this.referenceDocs.filter((d) => d.eventId === eventId));
   }
 
   async listSignalPatterns(eventId: string): Promise<SignalPattern[]> {

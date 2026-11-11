@@ -48,6 +48,35 @@ const PATHS: Record<IconName, ReactNode> = {
   ),
   shield: <path d="M12 3 4 6v6c0 4.5 3.2 8 8 9 4.8-1 8-4.5 8-9V6z" />,
   home: <path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z" />,
+  agents: (
+    <>
+      <circle cx="12" cy="5" r="2.5" />
+      <circle cx="5" cy="18" r="2.5" />
+      <circle cx="19" cy="18" r="2.5" />
+      <path d="M10.8 7.2 6.2 15.8M13.2 7.2l4.6 8.6M7.5 18h9" />
+    </>
+  ),
+  globe: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" />
+    </>
+  ),
+  book: <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5zM4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5" />,
+  bolt: <path d="M13 2 4 14h7l-1 8 9-12h-7z" />,
+  map: <path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2zM9 4v14M15 6v14" />,
+  lock: (
+    <>
+      <rect x="4" y="11" width="16" height="10" rx="2" />
+      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+    </>
+  ),
+  user: (
+    <>
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 21a8 8 0 0 1 16 0" />
+    </>
+  ),
 };
 
 export type IconName =
@@ -64,7 +93,14 @@ export type IconName =
   | 'megaphone'
   | 'team'
   | 'shield'
-  | 'home';
+  | 'home'
+  | 'agents'
+  | 'globe'
+  | 'book'
+  | 'bolt'
+  | 'map'
+  | 'lock'
+  | 'user';
 
 export function Icon({ name, size = 16, label }: { name: IconName; size?: number; label?: string }) {
   return (

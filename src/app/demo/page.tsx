@@ -4,6 +4,8 @@ import { demoModeEnabled } from '@/lib/session';
 import { DEMO_EVENT_ID } from '@/store/seed';
 import { ROLE_LABEL } from '@/components/ui/labels';
 import { DemoSignIn } from '@/components/demo/DemoSignIn';
+import { Halo } from '@/components/brand/Halo';
+import { Wordmark } from '@/components/brand/Wordmark';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,6 +47,10 @@ export default async function DemoPage() {
       <p className="eyebrow">
         <Link href="/">HELLO</Link> / Demo
       </p>
+      <div className="signin-hero">
+        <Halo label="The HELLO halo" />
+        <Wordmark height={64} id="wm-demo" />
+      </div>
       <div className="page-header" style={{ marginTop: 8 }}>
         <div>
           <h1>Choose a demo role</h1>

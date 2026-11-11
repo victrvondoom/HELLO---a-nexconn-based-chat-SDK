@@ -67,6 +67,8 @@ export interface EventRecord {
   timezone: string;
   /** True when the event was created by the demo seed, never by a real organiser. */
   isDemo: boolean;
+  /** Venue city, used only to scope outside-the-venue web questions ("nearest pharmacy"). */
+  venueCity?: string | null;
 }
 
 export interface Membership {
@@ -248,4 +250,73 @@ export interface SignalPattern {
   reviewStatus: 'PENDING_REVIEW' | 'ACCEPTED' | 'REJECTED';
   reviewedByUserId: string | null;
   reviewedAt: number | null;
+}
+
+/** Who may read a reference document. Staff-only documents never reach attendees, not even as citations. */
+export type ReferenceAudience = 'EVERYONE' | 'STAFF';
+
+/**
+ * A page of the event guide: venue facts, policies and staff procedures written by organisers.
+ * Agents answer questions from these documents and cite them; they never invent event facts.
+ */
+export interface ReferenceDoc {
+  id: string;
+  eventId: string;
+  title: string;
+  body: string;
+  tags: string[];
+  /** Incident categories this document is a procedure for, if any. */
+  categories: IncidentCategory[];
+  audience: ReferenceAudience;
+  source: DataSource;
+  updatedAt: number;
+}
+
+// ---------- social graph and private messages --------------------------------
+
+/**
+ * Who may read a person's headline and bio. CONNECTIONS means people the person follows who also
+ * follow them back: a one-sided follow is not enough, or anyone could unlock a profile by following it.
+ */
+export type ProfileVisibility = 'EVENT' | 'CONNECTIONS' | 'ONLY_ME';
+
+/** Profile text, sealed at rest with the server data key (see src/lib/vault.ts). */
+export interface ProfileRecord {
+  userId: string;
+  sealed: string;
+  visibility: ProfileVisibility;
+  updatedAt: number;
+}
+
+export interface Follow {
+  followerId: string;
+  followeeId: string;
+  createdAt: number;
+}
+
+/** A public key a person's browser published for end-to-end encrypted messages. The private key never leaves that browser. */
+export interface KeyBundle {
+  id: string;
+  userId: string;
+  /** P-256 ECDH public key as a JWK with only the public members. */
+  publicKey: { kty: 'EC'; crv: 'P-256'; x: string; y: string };
+  /** SHA-256 of the public key, shown to people so they can compare keys in person. */
+  fingerprint: string;
+  createdAt: number;
+}
+
+/**
+ * An end-to-end encrypted direct message. The server stores and relays it but cannot read it:
+ * it holds no key that opens `ciphertext`.
+ */
+export interface SealedMessage {
+  id: string;
+  senderId: string;
+  recipientId: string;
+  senderKeyId: string;
+  recipientKeyId: string;
+  /** Base64url AES-GCM IV and ciphertext (with tag). */
+  iv: string;
+  ciphertext: string;
+  createdAt: number;
 }

@@ -10,6 +10,7 @@ const SUGGESTIONS = [
   'The microphone in Room 3 has stopped working.',
   'There are too many people in Room 3.',
   'The schedule says 2 PM, but the speaker says 2:30 PM.',
+  'What is the Wi-Fi password?',
   'I cannot find the accessible entrance.',
   'Can someone help me find a person who works on satellite communication?',
 ];
@@ -74,7 +75,7 @@ export function ChatComposer({ eventId }: { eventId: string }) {
     <div className="stack" style={{ gap: 10 }}>
       {text.trim().length === 0 ? (
         <div className="chips" aria-label="Suggestions">
-          {SUGGESTIONS.slice(0, 3).map((s) => (
+          {SUGGESTIONS.slice(0, 4).map((s) => (
             <button
               key={s}
               type="button"
@@ -120,7 +121,7 @@ export function ChatComposer({ eventId }: { eventId: string }) {
 
       <div className="composer__foot">
         <span id="composer-help" className="xs faint">
-          Enter to send · Shift+Enter for a new line · {text.length}/{MAX}
+          <span className="plane-tag plane-tag--open">Read by HELLO and event staff, so they can act</span> Enter to send · {text.length}/{MAX}
         </span>
         {error ? (
           <span role="alert" className="xs" style={{ color: 'var(--danger)' }}>

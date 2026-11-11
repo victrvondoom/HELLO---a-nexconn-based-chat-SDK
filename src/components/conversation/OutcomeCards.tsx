@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { ParsedOutcome } from '@/lib/validation/outcome';
 import { CATEGORY_LABEL, STATUS_LABEL } from '@/domain/labels';
 import { formatUtc } from '@/components/ui/labels';
+import { Icon } from '@/components/ui/Icon';
 
 import { IncidentBadge } from '@/components/incidents/IncidentBadge';
 
@@ -12,11 +13,17 @@ export function OutcomeCards({ eventId, outcome }: { eventId: string; outcome: P
     outcome.alternatives.length > 0 ||
     outcome.people.length > 0 ||
     outcome.statusReport !== null ||
-    outcome.approvalId !== null;
+    outcome.approvalId !== null ||
+    Boolean(outcome.room);
   if (!hasCards) return null;
 
   return (
     <div className="cards" aria-label="Actions taken">
+      {outcome.room ? (
+        <Link className="map-chip" href={`/events/${eventId}/map?to=${encodeURIComponent(outcome.room.id)}`}>
+          <Icon name="map" size={14} /> Directions to {outcome.room.name}
+        </Link>
+      ) : null}
       {outcome.incidents.map((i) => (
         <article key={i.incidentId} className="ocard ocard--incident">
           <div className="ocard__title">
