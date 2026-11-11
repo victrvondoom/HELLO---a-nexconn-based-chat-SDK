@@ -5,6 +5,9 @@ import { ROLE_LABEL } from '@/components/ui/labels';
 import { demoModeEnabled } from '@/lib/session';
 import { STAFF_ROLES } from '@/domain/types';
 import { ProfileForm } from '@/components/workplace/ProfileForm';
+import { ProfileTextForm } from '@/components/social/ProfileTextForm';
+import { ownProfileText } from '@/services/social';
+import { DataRights } from '@/components/social/DataRights';
 import { AvailabilityControl } from '@/components/workplace/AvailabilityControl';
 import { SignOutButton } from '@/components/settings/SignOutButton';
 import { ResetDemoButton } from '@/components/settings/ResetDemoButton';
@@ -16,6 +19,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ event
   const viewer = await loadEventViewer(eventId);
   const nexconn = nexconnStatus();
   const isStaff = STAFF_ROLES.includes(viewer.membership.role);
+  const own = await ownProfileText(viewer.ctx, viewer.userId);
 
   return (
     <div className="page">
@@ -45,6 +49,26 @@ export default async function SettingsPage({ params }: { params: Promise<{ event
                 }}
               />
             ) : null}
+          </section>
+
+          <section className="card card__body stack" aria-labelledby="public-profile-heading">
+            <div>
+              <h2 id="public-profile-heading">Your public profile</h2>
+              <p className="small muted">
+                What people see on your profile page. <a href={`/events/${eventId}/people/${viewer.userId}`}>View your profile</a>
+              </p>
+            </div>
+            <ProfileTextForm initial={{ headline: own.text.headline, bio: own.text.bio, visibility: own.visibility }} />
+          </section>
+
+          <section className="card card__body stack" aria-labelledby="rights-heading">
+            <div>
+              <h2 id="rights-heading">Your data and your rights</h2>
+              <p className="small muted">
+                Download everything HELLO holds about you, or erase it. Private messages are end-to-end encrypted: HELLO can delete them but has never been able to read them.
+              </p>
+            </div>
+            <DataRights userId={viewer.userId} />
           </section>
 
           {isStaff ? (

@@ -1,3 +1,5 @@
+import { randomBytes } from 'node:crypto';
+import { createVault } from '@/lib/vault';
 import { createContext, type ServiceContext } from '@/services/context';
 import { MemoryHelloStore } from '@/store/memory';
 import { DEMO_EVENT_ID, DEMO_NOW, DEMO_USERS, loadDemoEvent } from '@/store/seed';
@@ -8,7 +10,8 @@ import type { Incident } from '@/domain/types';
 /** A fresh demo store with a controllable clock and sequential IDs. */
 export async function createHarness(options: { provider?: IntentProvider | null; webSearch?: WebSearchProvider | null } = {}) {
   const store = new MemoryHelloStore();
-  await loadDemoEvent(store);
+  const vault = createVault(randomBytes(32));
+  await loadDemoEvent(store, { vault });
   let clock = DEMO_NOW;
   let sequence = 0;
   const ctx: ServiceContext = createContext(store, {
@@ -17,6 +20,7 @@ export async function createHarness(options: { provider?: IntentProvider | null;
     intentProvider: options.provider ?? null,
     webSearch: options.webSearch ?? null,
     webSearchTimeoutMs: 200,
+    vault,
   });
   return {
     store,

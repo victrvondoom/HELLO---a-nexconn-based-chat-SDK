@@ -121,7 +121,7 @@ export function ChatComposer({ eventId }: { eventId: string }) {
 
       <div className="composer__foot">
         <span id="composer-help" className="xs faint">
-          Enter to send · Shift+Enter for a new line · {text.length}/{MAX}
+          <span className="plane-tag plane-tag--open">Read by HELLO and event staff, so they can act</span> Enter to send · {text.length}/{MAX}
         </span>
         {error ? (
           <span role="alert" className="xs" style={{ color: 'var(--danger)' }}>

@@ -24,8 +24,10 @@ export function EventNav(props: EventNavProps) {
     { href: `${base}/conversation`, label: 'Conversation', icon: 'conversation' },
     { href: `${base}/incidents`, label: props.operational ? 'Incidents' : 'My requests', icon: 'incidents' },
     { href: `${base}/announcements`, label: 'Announcements', icon: 'megaphone' },
+    { href: `${base}/map`, label: 'Venue map', icon: 'map' },
     { href: `${base}/sessions`, label: 'Sessions and rooms', icon: 'sessions' },
     { href: `${base}/people`, label: 'People', icon: 'people' },
+    { href: `${base}/messages`, label: 'Private messages', icon: 'lock' },
     { href: `${base}/notifications`, label: 'Notifications', icon: 'bell', count: props.unread },
   ];
   const ops: NavLinkItem[] = props.operational

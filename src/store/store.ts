@@ -10,11 +10,16 @@ import type {
   Message,
   Notification,
   ReferenceDoc,
+  ProfileRecord,
+  Follow,
+  KeyBundle,
+  SealedMessage,
   Room,
   Session,
   SignalPattern,
   User,
 } from '../domain/types';
+import type { Venue } from '../domain/venue/types';
 import { DomainError } from '../domain/errors';
 
 /**
@@ -33,6 +38,8 @@ export interface HelloStore {
 
   findMembership(eventId: string, userId: string): Promise<Membership | null>;
   listMemberships(eventId: string): Promise<Membership[]>;
+  /** Every event a person belongs to. Used by data export and erasure. */
+  listMembershipsOfUser(userId: string): Promise<Membership[]>;
   updateMembership(membershipId: string, patch: Partial<Pick<Membership, 'availability' | 'zone' | 'skills'>>): Promise<Membership>;
 
   listRooms(eventId: string): Promise<Room[]>;
@@ -74,6 +81,33 @@ export interface HelloStore {
   listNotifications(recipientUserId: string): Promise<Notification[]>;
   /** Marks the recipient's notifications in an event as read. Returns how many changed. */
   markNotificationsRead(recipientUserId: string, eventId: string, now: number): Promise<number>;
+
+  // --- social graph (global, not per event: connections outlive an event) ---
+  getProfile(userId: string): Promise<ProfileRecord | null>;
+  putProfile(profile: ProfileRecord): Promise<void>;
+  deleteProfile(userId: string): Promise<void>;
+  /** Returns false when the follow already existed. */
+  addFollow(follow: Follow): Promise<boolean>;
+  removeFollow(followerId: string, followeeId: string): Promise<boolean>;
+  listFollowers(userId: string): Promise<Follow[]>;
+  listFollowing(userId: string): Promise<Follow[]>;
+  removeAllFollows(userId: string): Promise<number>;
+
+  // --- end-to-end encrypted messages: the store only ever sees public keys and ciphertext ---
+  putKeyBundle(bundle: KeyBundle): Promise<void>;
+  listKeyBundles(userId: string): Promise<KeyBundle[]>;
+  deleteKeyBundles(userId: string): Promise<number>;
+  insertSealedMessage(message: SealedMessage): Promise<void>;
+  listSealedBetween(a: string, b: string): Promise<SealedMessage[]>;
+  listSealedInvolving(userId: string): Promise<SealedMessage[]>;
+  deleteSealedInvolving(userId: string): Promise<number>;
+
+  // --- rights: erasure redacts operational text but keeps the accountable record ---
+  redactMessagesFrom(userId: string, replacement: string): Promise<number>;
+  redactReportsFrom(userId: string, replacement: string): Promise<number>;
+
+  /** The venue map and walkable graph for an event, if one has been drawn. */
+  getVenue(eventId: string): Promise<Venue | null>;
 
   /** Event guide pages, newest first is not guaranteed; callers rank them. */
   listReferenceDocs(eventId: string): Promise<ReferenceDoc[]>;

@@ -47,6 +47,8 @@ export interface StoredOutcome {
   statusReport: MessageResponse['statusReport'];
   people: Array<{ userId: string; displayName: string; reason: string }>;
   agents: AgentTrace;
+  /** The room the message was about, so the reply can offer directions on the venue map. */
+  room?: { id: string; name: string } | null;
 }
 
 export interface IncidentOutcome {
@@ -339,6 +341,7 @@ export async function handleMessage(ctx: ServiceContext, input: SendMessageInput
     statusReport: outcome.statusReport,
     people: outcome.people.map((p) => ({ userId: p.userId, displayName: p.displayName, reason: p.reason })),
     agents,
+    room: base.room,
   };
 
   await ctx.store.insertMessage({

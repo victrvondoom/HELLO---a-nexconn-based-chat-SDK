@@ -1,4 +1,5 @@
 import type {
+  ProfileVisibility,
   ReferenceDoc,
   Announcement,
   ApprovalRequest,
@@ -13,6 +14,8 @@ import type {
   User,
 } from '../domain/types';
 import type { MemoryHelloStore } from './memory';
+import type { Vault } from '../lib/vault';
+import { buildDemoVenue } from './venue-seed';
 
 /**
  * DEMO SEED DATA — every record here is fictional and exists only to demonstrate
@@ -364,9 +367,38 @@ export function buildReferenceDocs(eventId: string, at: number): ReferenceDoc[] 
   ];
 }
 
-export async function loadDemoEvent(store: MemoryHelloStore): Promise<void> {
+/** Demo profiles: written as plain text here, sealed with the runtime's vault before they reach the store. */
+const DEMO_PROFILES: Array<{ userId: string; headline: string; bio: string; visibility: ProfileVisibility }> = [
+  { userId: DEMO_USERS.attendeeAda, headline: 'Satellite power engineer (fictional)', bio: 'Here for the satellite power and robotics sessions. Happy to talk solar arrays.', visibility: 'EVENT' },
+  { userId: DEMO_USERS.attendeeBen, headline: 'Security researcher (fictional)', bio: 'Zero trust, event networks, and anything with a threat model.', visibility: 'EVENT' },
+  { userId: DEMO_USERS.attendeeChloe, headline: 'Edge computing lead (fictional)', bio: 'Uses a wheelchair; ask me about step-free venues done right.', visibility: 'CONNECTIONS' },
+  { userId: DEMO_USERS.attendeeDev, headline: 'Ground-station developer (fictional)', bio: 'Building satellite communication links. Looking for collaborators.', visibility: 'EVENT' },
+  { userId: DEMO_USERS.speakerInes, headline: 'Speaker: Satellite Power Systems (fictional)', bio: 'Speaking at 13:00 in Room 3. Slides will be shared with followers afterwards.', visibility: 'EVENT' },
+];
+
+const DEMO_FOLLOWS: Array<[string, string]> = [
+  [DEMO_USERS.attendeeAda, DEMO_USERS.speakerInes],
+  [DEMO_USERS.speakerInes, DEMO_USERS.attendeeAda],
+  [DEMO_USERS.attendeeAda, DEMO_USERS.attendeeDev],
+  [DEMO_USERS.attendeeDev, DEMO_USERS.attendeeAda],
+  [DEMO_USERS.attendeeBen, DEMO_USERS.attendeeAda],
+  [DEMO_USERS.attendeeChloe, DEMO_USERS.attendeeBen],
+  [DEMO_USERS.attendeeDev, DEMO_USERS.speakerInes],
+];
+
+export async function loadDemoEvent(store: MemoryHelloStore, options: { vault?: Vault } = {}): Promise<void> {
   const data = buildDemoData();
+  const vault = options.vault;
   store.seed({
+    profiles: vault
+      ? DEMO_PROFILES.map((p) => ({
+          userId: p.userId,
+          sealed: vault.seal(JSON.stringify({ headline: p.headline, bio: p.bio }), `profile:${p.userId}`),
+          visibility: p.visibility,
+          updatedAt: DEMO_T0,
+        }))
+      : [],
+    follows: DEMO_FOLLOWS.map(([followerId, followeeId], i) => ({ followerId, followeeId, createdAt: DEMO_T0 - (i + 1) * 3_600_000 })),
     events: data.events,
     users: data.users,
     memberships: data.memberships,
@@ -378,6 +410,7 @@ export async function loadDemoEvent(store: MemoryHelloStore): Promise<void> {
     announcements: data.announcements,
     notifications: data.notifications,
     referenceDocs: buildReferenceDocs(DEMO_EVENT_ID, DEMO_T0),
+    venues: [buildDemoVenue(DEMO_EVENT_ID)],
   });
   for (const approval of data.approvals) {
     await store.insertApproval(approval);

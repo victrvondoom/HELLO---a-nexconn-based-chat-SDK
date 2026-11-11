@@ -2,6 +2,7 @@ import { createContext, type ServiceContext } from '@/services/context';
 import { MemoryHelloStore } from '@/store/memory';
 import { DEMO_NOW, loadDemoEvent } from '@/store/seed';
 import { webSearchFromEnv } from '@/agents/web';
+import { vaultFromEnv } from '@/lib/vault';
 
 /**
  * Process-wide runtime. In this build the only persistence is the in-memory demo
@@ -23,7 +24,8 @@ const g = globalThis as GlobalWithRuntime;
 
 async function createRuntime(): Promise<Runtime> {
   const store = new MemoryHelloStore();
-  await loadDemoEvent(store);
+  const vault = vaultFromEnv(process.env);
+  await loadDemoEvent(store, { vault });
   // The clock starts at the seeded event time and then advances in real time, so timers and
   // "minutes ago" labels move. Tests use their own fixed clock; the demo never does.
   const bootedAt = Date.now();
@@ -33,6 +35,7 @@ async function createRuntime(): Promise<Runtime> {
     intentProvider: null,
     // Read from HELLO_WEB_SEARCH_PROVIDER / HELLO_WEB_SEARCH_API_KEY. Null when not configured.
     webSearch: webSearchFromEnv(process.env),
+    vault,
   });
   return { store, ctx, persistence: 'MEMORY_DEMO', clock: 'LIVE_FROM_SEEDED_EVENT_TIME' };
 }

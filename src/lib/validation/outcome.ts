@@ -41,6 +41,7 @@ export const StoredOutcomeSchema = z.object({
     })
     .nullable(),
   people: z.array(z.object({ userId: z.string(), displayName: z.string(), reason: z.string() })).max(10),
+  room: z.object({ id: z.string().min(1).max(80), name: z.string().max(120) }).nullable().optional(),
   /** Absent on messages stored before the agent mesh existed. */
   agents: z
     .object({

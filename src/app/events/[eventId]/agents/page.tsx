@@ -93,6 +93,15 @@ export default async function AgentsPage({ params }: { params: Promise<{ eventId
           </span>
         </div>
         <div className="config-tile">
+          <span className="xs faint">Data at rest</span>
+          <strong>{viewer.ctx.vault.ephemeral ? 'Ephemeral key' : 'Configured key'}</strong>
+          <span className="small muted">
+            Profile text is sealed with AES-256-GCM (key {viewer.ctx.vault.keyId}).
+            {viewer.ctx.vault.ephemeral ? ' No HELLO_DATA_KEY is set, so sealed data is lost on restart.' : ''} Private messages are end-to-end encrypted and never
+            readable here.
+          </span>
+        </div>
+        <div className="config-tile">
           <span className="xs faint">Recent runs</span>
           <strong>
             {answered} of {runs.length} grounded

@@ -271,3 +271,52 @@ export interface ReferenceDoc {
   source: DataSource;
   updatedAt: number;
 }
+
+// ---------- social graph and private messages --------------------------------
+
+/**
+ * Who may read a person's headline and bio. CONNECTIONS means people the person follows who also
+ * follow them back: a one-sided follow is not enough, or anyone could unlock a profile by following it.
+ */
+export type ProfileVisibility = 'EVENT' | 'CONNECTIONS' | 'ONLY_ME';
+
+/** Profile text, sealed at rest with the server data key (see src/lib/vault.ts). */
+export interface ProfileRecord {
+  userId: string;
+  sealed: string;
+  visibility: ProfileVisibility;
+  updatedAt: number;
+}
+
+export interface Follow {
+  followerId: string;
+  followeeId: string;
+  createdAt: number;
+}
+
+/** A public key a person's browser published for end-to-end encrypted messages. The private key never leaves that browser. */
+export interface KeyBundle {
+  id: string;
+  userId: string;
+  /** P-256 ECDH public key as a JWK with only the public members. */
+  publicKey: { kty: 'EC'; crv: 'P-256'; x: string; y: string };
+  /** SHA-256 of the public key, shown to people so they can compare keys in person. */
+  fingerprint: string;
+  createdAt: number;
+}
+
+/**
+ * An end-to-end encrypted direct message. The server stores and relays it but cannot read it:
+ * it holds no key that opens `ciphertext`.
+ */
+export interface SealedMessage {
+  id: string;
+  senderId: string;
+  recipientId: string;
+  senderKeyId: string;
+  recipientKeyId: string;
+  /** Base64url AES-GCM IV and ciphertext (with tag). */
+  iv: string;
+  ciphertext: string;
+  createdAt: number;
+}
