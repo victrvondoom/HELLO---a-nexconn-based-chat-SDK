@@ -1,5 +1,7 @@
 # HELLO — One conversation. Everyone connected.
 
+![HELLO landing page: "One conversation. Everyone connected." with the 3D halo and the agent steps for a microphone fault in Room 3](docs/screenshots/landing.png)
+
 HELLO is an AI-assisted coordination layer for physical events. An attendee describes a problem in
 ordinary words ("The microphone in Room 3 has stopped working."). HELLO works out the room, session and
 team concerned, checks whether someone already reported it, routes it to staff with the right skill,
@@ -8,6 +10,35 @@ keeps a record of every step, and asks the reporter to confirm when it is fixed.
 > **Status: working prototype, not a production system.** The domain logic, workflows and UI are
 > implemented and tested. Persistence is an in-memory demo store, messaging is not connected to Nexconn,
 > and sign-in is a demo shortcut. See [Status](#status) before using this for a real event.
+
+**Contents:** [Quick start](#quick-start) · [Screenshots](#screenshots) · [What it does](#what-it-does-implemented) ·
+[Agent mesh](#agent-mesh) · [Architecture](#architecture) · [Demo walkthrough](#demo-walkthrough-judge-scenario) ·
+[Commands](#commands) · [Status](#status)
+
+## Quick start
+
+```bash
+npm install
+cp .env.example .env.local
+npm run dev
+```
+
+Open <http://localhost:3000>, choose **Enter the demo**, and pick a demo role. Every person, room and incident
+in the demo is seeded, illustrative data. Full instructions are under [Installation and local run](#installation-and-local-run).
+
+## Screenshots
+
+All images are captured from the running demo by `npm run screenshots` (see [Commands](#commands)), so they show
+the real interface, not mock-ups.
+
+| | |
+|---|---|
+| ![Demo sign-in page with a card for each seeded demo role](docs/screenshots/demo-sign-in.png) | ![Conversation: one message about Room 3 becomes two incident cards, free sessions and a pending room change](docs/screenshots/conversation.png) |
+| **Demo sign-in.** Each seeded role (attendee, speaker, volunteer, operations, organiser) sees a different HELLO. Access is decided on the server for every request. | **Conversation.** "The microphone is not working, and there are too many people in Room 3." becomes two concerns, each attached to an existing incident with its match confidence. Free sessions are offered, and the room change waits for an organiser. |
+| ![Incident detail with the workflow rail, acknowledgement timer and ranked staff recommendations](docs/screenshots/incident.png) | ![Operations view with open incidents, acknowledgement timers and room occupancy with data sources](docs/screenshots/operations.png) |
+| **Incident (staff view).** The workflow rail, the acknowledgement timer, every person's report kept separately, and staff ranked by skill, load, availability and location, with reasons. | **Operations (organiser view).** Live counts, the acknowledgement board (most overdue first), rooms with occupancy and where each figure comes from, approvals and signal review. |
+| ![Venue map in plan view with a route from the main entrance to Room 3](docs/screenshots/venue-map.png) | ![Conversation on a phone, with the composer at the bottom of the screen](docs/screenshots/conversation-mobile.png) |
+| **Venue map.** Plan, 3D and live-heat views of one venue model. Directions are computed on the device, with a step-free option. | **Phone.** The same conversation at 390 px wide. The navigation becomes scrolling strips and the composer stays on screen. |
 
 ## The problem
 
@@ -204,7 +235,8 @@ HELLO_DEMO_MODE=true npm run build && HELLO_DEMO_MODE=true npm start   # termina
 CHROMIUM_PATH=/path/to/chromium BASE_URL=http://localhost:3000 npm run test:e2e   # terminal 2
 ```
 
-The suite resets the demo first (`POST /api/demo/reset`), so it is repeatable. `CHROMIUM_PATH` is optional when
+The suite resets the demo first (`POST /api/demo/reset`), so it is repeatable. With the same server running,
+`npm run test:routes` crawls every page as every demo role, and `npm run screenshots` refreshes the README images. `CHROMIUM_PATH` is optional when
 Playwright's own browser is installed.
 
 ## Demo walkthrough (judge scenario)
@@ -257,7 +289,8 @@ and it must never return actions. See [docs/ai-system.md](docs/ai-system.md).
 npm run dev         # development server
 npm test            # unit and integration tests
 npm run test:e2e    # browser checks: judge flow (13), features (10), workflow audit (22), private messages (6); needs a running server
-npm run test:routes # visits every page as every demo role and reports server and page errors
+npm run test:routes # visits every page as every demo role; checks permitted pages load and forbidden ones answer 404
+npm run screenshots # regenerates docs/screenshots/*.png from a running demo server
 npm run typecheck   # TypeScript
 npm run lint        # ESLint
 npm run build       # production build
@@ -282,7 +315,7 @@ instance has its own copy, and demo sign-in is not authentication. See [docs/dep
 | Signal intelligence with human review | Implemented and tested |
 | People discovery with consent | Implemented and tested |
 | Notifications with dedupe (in-app list) | Implemented and tested; no email, push or Nexconn delivery |
-| Role-aware UI, operations view, incident detail | Implemented; checked over HTTP, not in a browser |
+| Role-aware UI, operations view, incident detail | Implemented; checked in a browser (Playwright suites and a route crawl of every page as every role) |
 | Database schema, constraints, RLS | Written; verified on PostgreSQL 16; **not yet used by the app** |
 | Persistence | **In-memory demo store only** |
 | Sign-in | **Demo shortcut only**, not authentication |

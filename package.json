@@ -13,7 +13,8 @@
     "test:watch": "vitest",
     "check": "npm run typecheck && npm run lint && npm run test && npm run build",
     "test:e2e": "node tests/e2e/judge-flow.mjs && node tests/e2e/features-flow.mjs && node tests/e2e/workflow-audit.mjs && node tests/e2e/private-messages.mjs",
-    "test:routes": "node tests/e2e/route-crawl.mjs"
+    "test:routes": "node tests/e2e/route-crawl.mjs",
+    "screenshots": "node tests/e2e/screenshots.mjs"
   },
   "engines": {
     "node": ">=20.9.0"
