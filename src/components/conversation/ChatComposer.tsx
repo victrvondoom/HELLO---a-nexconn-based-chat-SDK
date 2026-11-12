@@ -6,6 +6,24 @@ import { Icon } from '@/components/ui/Icon';
 
 const MAX = 2000;
 
+/** The parts of the Web Speech API used here. It is not in TypeScript's DOM types. */
+interface SpeechRecognitionLike {
+  lang: string;
+  interimResults: boolean;
+  continuous: boolean;
+  onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
+  onend: (() => void) | null;
+  onerror: ((event: { error: string }) => void) | null;
+  start: () => void;
+  stop: () => void;
+}
+type SpeechRecognitionCtor = new () => SpeechRecognitionLike;
+
+function speechRecognition(): SpeechRecognitionCtor | null {
+  const w = window as unknown as { SpeechRecognition?: SpeechRecognitionCtor; webkitSpeechRecognition?: SpeechRecognitionCtor };
+  return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
+}
+
 const SUGGESTIONS = [
   'The microphone in Room 3 has stopped working.',
   'There are too many people in Room 3.',
@@ -25,6 +43,43 @@ export function ChatComposer({ eventId }: { eventId: string }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const areaRef = useRef<HTMLTextAreaElement>(null);
+  // Voice input: detected after mount so server and client render the same markup.
+  const [canSpeak, setCanSpeak] = useState(false);
+  const [listening, setListening] = useState(false);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+
+  useEffect(() => {
+    setCanSpeak(speechRecognition() !== null);
+    return () => recognitionRef.current?.stop();
+  }, []);
+
+  function toggleVoice() {
+    if (listening) {
+      recognitionRef.current?.stop();
+      return;
+    }
+    const Ctor = speechRecognition();
+    if (!Ctor) return;
+    const recognition = new Ctor();
+    recognition.lang = document.documentElement.lang || 'en-GB';
+    recognition.interimResults = false;
+    recognition.continuous = false;
+    const before = text.trim();
+    recognition.onresult = (event) => {
+      const spoken = Array.from(event.results, (result) => result[0]?.transcript ?? '').join(' ').trim();
+      if (spoken) setText(`${before}${before ? ' ' : ''}${spoken}`.slice(0, MAX));
+    };
+    recognition.onerror = (event) => {
+      setError(event.error === 'not-allowed' ? 'Microphone access was refused. You can still type.' : 'Voice input stopped. You can still type.');
+    };
+    recognition.onend = () => {
+      setListening(false);
+    };
+    recognitionRef.current = recognition;
+    setError(null);
+    setListening(true);
+    recognition.start();
+  }
 
   useEffect(() => {
     const el = areaRef.current;
@@ -114,6 +169,19 @@ export function ChatComposer({ eventId }: { eventId: string }) {
           aria-describedby="composer-help"
           disabled={pending}
         />
+        {canSpeak ? (
+          <button
+            type="button"
+            className="mic-button"
+            onClick={toggleVoice}
+            aria-pressed={listening}
+            aria-label={listening ? 'Stop voice input' : 'Speak your message'}
+            title="Speak instead of typing. Your browser's speech service turns it into text, and it may send the audio to its provider."
+            disabled={pending}
+          >
+            <Icon name="mic" />
+          </button>
+        ) : null}
         <button type="submit" className="button" disabled={pending || text.trim().length === 0} aria-label="Send message">
           {pending ? 'Sending' : <Icon name="arrow" />}
         </button>

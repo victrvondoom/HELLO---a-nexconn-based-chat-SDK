@@ -73,6 +73,18 @@ accountable workflow.
 - **Honest data labels.** Every occupancy figure states whether it is live verified, administrator entered,
   attendee reported, or demo data.
 
+## Quick navigation and voice input
+
+- **Command palette.** Press **⌘K** (Ctrl+K on Windows and Linux), or click **Jump to…** in the sidebar, then type a
+  page name. It lists only the pages your role can open (an attendee never sees the audit trail), and each page still
+  re-checks access on the server. Arrow keys move, Enter opens and Esc closes.
+- **Speak instead of typing.** In browsers with speech recognition (Chrome, Edge, Safari), the composer shows a
+  microphone button. What you say is added to the message box for you to check before sending; nothing is sent
+  automatically. The browser's own speech service does the transcription and may send the audio to its provider. The
+  button says so, and the microphone is allowed for HELLO's own pages only (`Permissions-Policy: microphone=(self)`).
+
+![Command palette filtered to "aud", showing Audit trail for an organiser](docs/screenshots/command-palette.png)
+
 ## Why HELLO, and what it solves that other event apps don't
 
 Seven hidden problems sit under the usual "chat, schedule and map" event app: the read-and-act paradox

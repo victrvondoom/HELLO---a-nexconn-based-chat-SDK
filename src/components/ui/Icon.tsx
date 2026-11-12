@@ -65,6 +65,8 @@ const PATHS: Record<IconName, ReactNode> = {
   book: <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5zM4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5" />,
   bolt: <path d="M13 2 4 14h7l-1 8 9-12h-7z" />,
   map: <path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2zM9 4v14M15 6v14" />,
+  mic: <path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM5 11a7 7 0 0 0 14 0M12 18v3" />,
+  search: <path d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM20 20l-4-4" />,
   lock: (
     <>
       <rect x="4" y="11" width="16" height="10" rx="2" />
@@ -81,6 +83,8 @@ const PATHS: Record<IconName, ReactNode> = {
 
 export type IconName =
   | 'conversation'
+  | 'mic'
+  | 'search'
   | 'incidents'
   | 'sessions'
   | 'people'

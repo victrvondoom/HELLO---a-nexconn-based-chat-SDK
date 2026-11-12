@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { NavLinks, type NavLinkItem } from './NavLinks';
+import { CommandPalette } from './CommandPalette';
 import { HaloMark, Wordmark } from '@/components/brand/Wordmark';
 
 interface EventNavProps {
@@ -53,6 +54,10 @@ export function EventNav(props: EventNavProps) {
         <strong>{props.eventName}</strong>
         <span>Demo event · seeded data</span>
       </div>
+
+      <CommandPalette
+        items={[...primary, ...ops, ...governance, { href: `${base}/settings`, label: 'Profile and settings', icon: 'settings' }]}
+      />
 
       <nav aria-label="Primary" className="stack" style={{ gap: 2 }}>
         <NavLinks items={primary} />
