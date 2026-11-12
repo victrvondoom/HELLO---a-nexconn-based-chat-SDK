@@ -236,7 +236,11 @@ CHROMIUM_PATH=/path/to/chromium BASE_URL=http://localhost:3000 npm run test:e2e 
 ```
 
 The suite resets the demo first (`POST /api/demo/reset`), so it is repeatable. With the same server running,
-`npm run test:routes` crawls every page as every demo role, and `npm run screenshots` refreshes the README images. `CHROMIUM_PATH` is optional when
+`npm run test:routes` crawls every page as every demo role, and `npm run screenshots` refreshes the README images.
+
+> **These commands reset the demo.** `test:e2e` and `test:routes` reset it before they run, and `screenshots` resets it
+> before and after capture. Anything you changed in the running demo (messages, claims, approvals) is discarded, because
+> the store is in memory. Run them against a separate server if you want to keep a demo session. `CHROMIUM_PATH` is optional when
 Playwright's own browser is installed.
 
 ## Demo walkthrough (judge scenario)

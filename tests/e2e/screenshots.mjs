@@ -8,6 +8,7 @@
  * The demo is reset first, so every image shows the seeded demo event. Images are written to docs/screenshots/.
  */
 import { mkdir } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:3000';
@@ -36,7 +37,7 @@ async function as(displayName, options = desktop) {
 async function shot(page, name, { fullPage = false } = {}) {
   await page.waitForLoadState('networkidle');
   await page.waitForTimeout(600); // let the halo canvas and transitions settle
-  await page.screenshot({ path: new URL(`${name}.png`, OUT).pathname, fullPage });
+  await page.screenshot({ path: fileURLToPath(new URL(`${name}.png`, OUT)), fullPage });
   console.log(`saved docs/screenshots/${name}.png`);
 }
 

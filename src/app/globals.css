@@ -1324,7 +1324,7 @@ tbody tr:last-child td {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-    grid-template-rows: 100% auto;
+    grid-template-rows: 100% max-content;
   }
 
   .app:has(.chat) .thread {
