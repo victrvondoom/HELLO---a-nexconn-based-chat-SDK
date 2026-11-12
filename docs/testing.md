@@ -35,10 +35,12 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/0001_constraints_and_r
 
 ## Verified results (this build)
 
-- `npx vitest run`: 13 files, 138 tests, all passing (adds SLA rules, workflow rail, workplace workflows, stored conversation records, room follow-up, classification regressions).
+- `npx vitest run`: 18 files, 187 tests, all passing (adds SLA rules, workflow rail, workplace workflows, stored conversation records, room follow-up, classification regressions).
 - Workflow audit (`tests/e2e/workflow-audit.mjs`): 22 steps across seven roles, including the room follow-up, the 'waiting on you' prompts, cancellation through the confirm dialog, and off-shift refusal.
-- Route crawl (`tests/e2e/route-crawl.mjs`): every page as every role. Expected responses are 200 for permitted routes and 404 for forbidden ones; anything else is reported.
-- `npm run test:e2e` against `next start` with demo mode: 13/13 browser checks passed, two consecutive runs, no server errors.
+- Route crawl (`tests/e2e/route-crawl.mjs`): every page as every role. Expected responses are 200 for permitted routes and 404 for forbidden ones; anything else is reported. The expected access for each role is written in the script (`expectDenied`), so a forbidden page that loads is reported as well as a permitted page that fails.
+- Screenshots (`tests/e2e/screenshots.mjs`, `npm run screenshots`): captures the README images from the seeded demo at 1280px and 390px.
+- `npm run test:e2e` against `next start` with demo mode: judge flow 13/13, features 10/10, workflow audit 22/22, private messages 6/6, no page or server errors.
+- `npm run test:routes`: 250 page visits (25 routes × 10 roles), 45 correctly denied, 0 problems.
 - `npx tsc --noEmit`: no errors.
 - `npx eslint .`: no errors.
 - `npx next build`: compiled, all pages and routes generated.
@@ -49,7 +51,7 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/0001_constraints_and_r
 ## Not done
 
 - **Visual regression** snapshots. Layouts were reviewed by screenshot at 390px and 1280px; no automated pixel baseline exists.
-- **Browser coverage** is the judge flow and access checks only. Settings, sessions, people search and notifications have no browser test.
+- **Browser coverage** is the four Playwright suites and the route crawl. The venue map interactions (3D and heat views, step-free routing) and data erasure have no interactive browser test; the map pages are only loaded by the route crawl.
 - **Accessibility audit** with an automated tool or assistive technology.
 - **Load and concurrency tests** against Postgres.
 - **Nexconn and AI provider integration tests.** These need credentials and are not written.
