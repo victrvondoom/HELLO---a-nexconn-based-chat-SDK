@@ -1324,7 +1324,7 @@ tbody tr:last-child td {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-    grid-template-rows: 100% auto;
+    grid-template-rows: 100% max-content;
   }
 
   .app:has(.chat) .thread {
@@ -3922,4 +3922,147 @@ a.segmented__item {
   border-color: rgb(192 38 45 / 0.25);
   background: #fffafa;
   align-items: flex-end;
+}
+
+/* ---------- Command palette (⌘K) ---------- */
+
+.palette-trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  width: 100%;
+  margin-bottom: var(--s-3);
+  padding: 8px var(--s-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text-3);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.palette-trigger:hover {
+  border-color: var(--sky-300);
+  color: var(--sky-800);
+}
+
+.palette-trigger kbd {
+  font: inherit;
+  font-size: 11px;
+  padding: 1px 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--sky-50);
+}
+
+.palette-trigger .nav-link__icon,
+.palette__item .nav-link__icon {
+  width: 16px;
+  height: 16px;
+}
+
+.palette-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  justify-items: center;
+  align-items: start;
+  padding: 12vh 16px 16px;
+  background: rgb(12 74 110 / 0.18);
+  backdrop-filter: blur(6px);
+}
+
+.palette {
+  width: min(560px, 100%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: 0 24px 60px -20px rgb(14 165 233 / 0.55), var(--e2);
+  overflow: hidden;
+}
+
+.palette__input {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  padding: 16px 18px;
+  font: inherit;
+  font-size: 16px;
+  outline: none;
+}
+
+.palette__list {
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.palette__item {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  color: var(--text-2);
+}
+
+.palette__item[aria-selected='true'] {
+  background: var(--sky-50);
+  color: var(--sky-800);
+  box-shadow: inset 0 0 0 1px rgb(56 189 248 / 0.3);
+}
+
+.palette__empty {
+  padding: 12px;
+  color: var(--text-3);
+}
+
+.palette__hint {
+  margin: 0;
+  padding: 8px 18px 12px;
+}
+
+@media (max-width: 900px) {
+  .sidebar .palette-trigger {
+    display: none;
+  }
+}
+
+/* ---------- Voice input ---------- */
+
+.composer .mic-button {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--sky-700);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.composer .mic-button[aria-pressed='true'] {
+  background: var(--sky-50);
+  border-color: var(--sky-400);
+  box-shadow: 0 0 0 0 rgb(56 189 248 / 0.6);
+  animation: mic-pulse 1.4s ease-out infinite;
+}
+
+@keyframes mic-pulse {
+  to {
+    box-shadow: 0 0 0 12px rgb(56 189 248 / 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .composer .mic-button[aria-pressed='true'] {
+    animation: none;
+  }
 }
