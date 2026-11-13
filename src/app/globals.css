@@ -4078,3 +4078,130 @@ a.segmented__item {
   flex: 1;
   min-width: 0;
 }
+
+/* Payment bill drawn as a ticket: a main panel, a perforation with side notches, and a stub. */
+.ticket {
+  --ticket: var(--accent-grad);
+  --notch: var(--surface);
+  max-width: 340px;
+  margin-inline: auto;
+  width: 100%;
+  color: #fff;
+  text-align: center;
+  filter: drop-shadow(0 6px 14px rgba(3, 105, 161, 0.22));
+}
+.ticket--failed,
+.ticket--cancelled,
+.ticket--expired {
+  --ticket: linear-gradient(135deg, #64748b, #475569);
+  filter: none;
+}
+.ticket__main,
+.ticket__stub {
+  position: relative;
+  background: var(--ticket);
+  padding: 16px 20px;
+}
+.ticket__main {
+  border-radius: 16px 16px 0 0;
+  border-bottom: 2px dashed rgba(255, 255, 255, 0.55);
+}
+.ticket__stub {
+  border-radius: 0 0 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+/* Side notches on the perforation line. */
+.ticket__main::before,
+.ticket__main::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--notch);
+  z-index: 1;
+}
+.ticket__main::before {
+  left: -9px;
+}
+.ticket__main::after {
+  right: -9px;
+}
+.ticket__stars {
+  letter-spacing: 6px;
+  font-size: 11px;
+  opacity: 0.85;
+}
+.ticket__head {
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+.ticket__amount {
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1.15;
+  margin-top: 4px;
+}
+.ticket__who {
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.ticket__rows {
+  margin: 0;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+.ticket__rows > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.ticket__rows dt {
+  opacity: 0.8;
+}
+.ticket__rows dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.ticket__status {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.ticket__confirm,
+.ticket__cancel {
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 40px;
+}
+.ticket__confirm {
+  background: #fff;
+  color: var(--accent-ink);
+  border: 0;
+}
+.ticket__cancel {
+  background: transparent;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+}
+.ticket__confirm:disabled,
+.ticket__cancel:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

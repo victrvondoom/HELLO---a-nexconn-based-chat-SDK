@@ -146,8 +146,8 @@ export function PayPanel({ eventId, me, peer }: { eventId: string; me: string; p
             <Icon name="mic" />
           </button>
         ) : null}
-        <button type="submit" className="button" disabled={busy || text.trim().length < 3}>
-          Review
+        <button type="submit" className="button" disabled={busy || text.trim().length < 3} aria-label="Review this payment">
+          <Icon name="arrow" />
         </button>
       </form>
       <span className="xs faint">Speaking only prepares the payment. Nothing is sent until you press Confirm.</span>
@@ -156,31 +156,56 @@ export function PayPanel({ eventId, me, peer }: { eventId: string; me: string; p
           {error}
         </span>
       ) : null}
-      <ul className="list-reset stack" style={{ gap: 8 }} aria-live="polite">
+      <ul className="list-reset stack" style={{ gap: 14 }} aria-live="polite">
         {(thread?.payments ?? []).slice(-5).reverse().map((p) => {
           const mine = p.payerId === me;
           const amount = formatMoney(p.amountMinor, p.currency);
           return (
-            <li key={p.id} className={p.status === 'AWAITING_CONFIRMATION' ? 'ocard ocard--approval' : 'ocard'}>
-              <span className="ocard__title">
-                {mine ? `${amount} to ${peer.name}` : `${amount} from ${peer.name}`}
-                {p.note ? ` · ${p.note}` : ''}
-              </span>
-              <span className="ocard__meta">
-                {mine || p.status !== 'SUCCEEDED' ? STATUS[p.status] : 'Received'}
-                {p.failureReason ? `: ${p.failureReason}` : ''}
-                {p.providerRef ? ` · ref ${p.providerRef}` : ''}
-              </span>
-              {mine && p.status === 'AWAITING_CONFIRMATION' ? (
-                <div className="row" style={{ gap: 8 }}>
-                  <button type="button" className="button" disabled={busy} onClick={() => void decide(p, 'confirm')}>
-                    Confirm {amount}
-                  </button>
-                  <button type="button" className="chip" disabled={busy} onClick={() => void decide(p, 'cancel')}>
-                    Cancel
-                  </button>
-                </div>
-              ) : null}
+            <li key={p.id} className={`ticket ticket--${p.status.toLowerCase()}`}>
+              <div className="ticket__main">
+                <div className="ticket__stars" aria-hidden="true">★ ★ ★ ★ ★</div>
+                <div className="ticket__head">HELLO Pay · {live ? 'Receipt' : 'Sandbox bill'}</div>
+                <div className="ticket__amount">{amount}</div>
+                <div className="ticket__who">{mine ? `You → ${peer.name}` : `${peer.name} → You`}</div>
+                <dl className="ticket__rows">
+                  {p.note ? (
+                    <div>
+                      <dt>For</dt>
+                      <dd>{p.note}</dd>
+                    </div>
+                  ) : null}
+                  <div>
+                    <dt>When</dt>
+                    <dd>{new Date(p.settledAt ?? p.createdAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</dd>
+                  </div>
+                  <div>
+                    <dt>Started by</dt>
+                    <dd>{p.origin === 'VOICE' ? 'Voice' : 'Typing'}</dd>
+                  </div>
+                  {p.providerRef ? (
+                    <div>
+                      <dt>Reference</dt>
+                      <dd>{p.providerRef}</dd>
+                    </div>
+                  ) : null}
+                </dl>
+              </div>
+              <div className="ticket__stub">
+                <span className="ticket__status">
+                  {mine || p.status !== 'SUCCEEDED' ? STATUS[p.status] : 'Received'}
+                  {p.failureReason ? `: ${p.failureReason}` : ''}
+                </span>
+                {mine && p.status === 'AWAITING_CONFIRMATION' ? (
+                  <div className="row" style={{ gap: 8, justifyContent: 'center' }}>
+                    <button type="button" className="ticket__confirm" disabled={busy} onClick={() => void decide(p, 'confirm')}>
+                      Confirm {amount}
+                    </button>
+                    <button type="button" className="ticket__cancel" disabled={busy} onClick={() => void decide(p, 'cancel')}>
+                      Cancel
+                    </button>
+                  </div>
+                ) : null}
+              </div>
             </li>
           );
         })}
