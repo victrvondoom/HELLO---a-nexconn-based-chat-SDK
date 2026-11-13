@@ -4066,3 +4066,58 @@ a.segmented__item {
     animation: none;
   }
 }
+
+/* ── 3D depth layer ─────────────────────────────────────────── */
+body {
+  background:
+    radial-gradient(900px 500px at 12% -10%, rgb(56 189 248 / 0.14), transparent 60%),
+    radial-gradient(800px 500px at 100% 0%, rgb(14 165 233 / 0.10), transparent 55%),
+    var(--bg);
+  background-attachment: fixed;
+}
+.card, .event-card, .agent-card, .person-card, .role-card, .ocard, .feature, .config-tile, .choice {
+  background-image: linear-gradient(180deg, var(--hl), transparent 40%);
+  box-shadow: var(--e2);
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s;
+  transform: perspective(900px) translateZ(0);
+}
+.card--interactive:hover, .event-card:hover, .agent-card:hover, .person-card:hover,
+.role-card:hover, .feature:hover, .config-tile:hover, .choice:hover {
+  transform: perspective(900px) translateY(-4px) rotateX(2deg);
+  box-shadow: var(--e4);
+}
+.button {
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.35) inset, 0 -2px 0 rgb(var(--ink-rgb) / 0.12) inset,
+    0 3px 0 rgb(var(--ink-rgb) / 0.10), 0 8px 16px -8px rgb(14 165 233 / 0.45);
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+.button:hover { transform: translateY(-1px); }
+.button:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.25) inset, 0 1px 2px rgb(var(--ink-rgb) / 0.2);
+}
+.button--ghost { box-shadow: var(--e1); }
+.topbar, .sidebar, .composer, .dialog__inner, .palette {
+  backdrop-filter: blur(14px) saturate(1.4);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+}
+.dialog__inner, .palette { box-shadow: var(--e4); }
+.bubble { box-shadow: var(--e1); }
+.bubble--me { box-shadow: 0 1px 0 rgb(255 255 255 / 0.3) inset, 0 6px 14px -6px rgb(2 132 199 / 0.55); }
+.avatar, .feature__icon, .badge, .chip {
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.6) inset, 0 2px 5px -1px rgb(var(--ink-rgb) / 0.15);
+}
+.kpi__value {
+  background: var(--accent-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.field input, .field textarea, .field select, .palette__input {
+  box-shadow: 0 2px 4px rgb(var(--ink-rgb) / 0.06) inset;
+}
+@media (prefers-reduced-motion: reduce) {
+  .card, .event-card, .agent-card, .person-card, .role-card, .ocard, .feature, .config-tile, .choice, .button {
+    transition: none; transform: none !important;
+  }
+}
