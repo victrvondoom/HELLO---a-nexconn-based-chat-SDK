@@ -14,6 +14,7 @@ import type {
   Follow,
   KeyBundle,
   SealedMessage,
+  Payment,
   Room,
   Session,
   SignalPattern,
@@ -55,6 +56,7 @@ export class MemoryHelloStore implements HelloStore {
   private follows: Follow[] = [];
   private keyBundles: KeyBundle[] = [];
   private sealed: SealedMessage[] = [];
+  private payments = new Map<string, Payment>();
 
   private static copy<T>(value: T): T {
     return structuredClone(value);
@@ -422,6 +424,36 @@ export class MemoryHelloStore implements HelloStore {
         .filter((m) => (m.senderId === a && m.recipientId === b) || (m.senderId === b && m.recipientId === a))
         .sort((x, y) => x.createdAt - y.createdAt),
     );
+  }
+
+  async insertPayment(payment: Payment): Promise<void> {
+    this.payments.set(payment.id, MemoryHelloStore.copy(payment));
+  }
+
+  async getPayment(paymentId: string): Promise<Payment | null> {
+    const found = this.payments.get(paymentId);
+    return found ? MemoryHelloStore.copy(found) : null;
+  }
+
+  async updatePayment(paymentId: string, expectedVersion: number, patch: Partial<Payment>): Promise<Payment> {
+    const current = this.payments.get(paymentId);
+    if (!current) throw new DomainError('NOT_FOUND', 'Payment not found.');
+    if (current.version !== expectedVersion) throw new VersionConflictError('payment');
+    const next: Payment = { ...current, ...patch, version: current.version + 1 };
+    this.payments.set(paymentId, next);
+    return MemoryHelloStore.copy(next);
+  }
+
+  async listPaymentsBetween(a: string, b: string): Promise<Payment[]> {
+    return MemoryHelloStore.copyAll(
+      [...this.payments.values()]
+        .filter((p) => (p.payerId === a && p.payeeId === b) || (p.payerId === b && p.payeeId === a))
+        .sort((x, y) => x.createdAt - y.createdAt),
+    );
+  }
+
+  async listPaymentsFrom(payerId: string): Promise<Payment[]> {
+    return MemoryHelloStore.copyAll([...this.payments.values()].filter((p) => p.payerId === payerId));
   }
 
   async listSealedInvolving(userId: string): Promise<SealedMessage[]> {

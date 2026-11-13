@@ -6,6 +6,7 @@ import type { HelloStore } from '../store/store';
 import type { IntentProvider } from '../ai/intent';
 import type { WebSearchProvider } from '../agents/web';
 import { vaultFromEnv, type Vault } from '../lib/vault';
+import { sandboxGateway, type PaymentGateway } from '../integrations/payments/gateway';
 
 /** Everything a service needs. Passed explicitly so tests can control time and IDs. */
 export interface ServiceContext {
@@ -19,6 +20,8 @@ export interface ServiceContext {
   webSearchTimeoutMs: number;
   /** Encryption at rest for personal data the server must read (profile text). Not end-to-end. */
   vault: Vault;
+  /** Moves the money. The sandbox gateway moves none and says so. */
+  payments: PaymentGateway;
 }
 
 export function createContext(
@@ -34,6 +37,7 @@ export function createContext(
     webSearch: options.webSearch ?? null,
     webSearchTimeoutMs: options.webSearchTimeoutMs ?? 5000,
     vault: options.vault ?? vaultFromEnv({}),
+    payments: options.payments ?? sandboxGateway(),
   };
 }
 

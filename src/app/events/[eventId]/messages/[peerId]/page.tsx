@@ -4,6 +4,7 @@ import { loadEventViewer } from '@/lib/viewer';
 import { getProfileView } from '@/services/social';
 import { DomainError } from '@/domain/errors';
 import { SecureThread } from '@/components/social/SecureThread';
+import { PayPanel } from '@/components/social/PayPanel';
 import { Avatar } from '@/components/social/Avatar';
 import { FollowButton } from '@/components/social/FollowButton';
 
@@ -38,7 +39,10 @@ export default async function ThreadPage({ params }: { params: Promise<{ eventId
         </Link>
       </div>
       {peer.canMessage ? (
-        <SecureThread eventId={eventId} me={{ id: viewer.userId, name: viewer.user?.displayName ?? 'You' }} peer={{ id: peer.userId, name: peer.displayName }} />
+        <>
+          <PayPanel eventId={eventId} me={viewer.userId} peer={{ id: peer.userId, name: peer.displayName }} />
+          <SecureThread eventId={eventId} me={{ id: viewer.userId, name: viewer.user?.displayName ?? 'You' }} peer={{ id: peer.userId, name: peer.displayName }} />
+        </>
       ) : (
         <div className="empty card">
           <strong>Follow each other to message privately</strong>

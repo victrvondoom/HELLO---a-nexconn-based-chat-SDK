@@ -4066,3 +4066,15 @@ a.segmented__item {
     animation: none;
   }
 }
+
+/* Pay panel in a private thread */
+.pay {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+}
+.pay .composer input {
+  flex: 1;
+  min-width: 0;
+}
