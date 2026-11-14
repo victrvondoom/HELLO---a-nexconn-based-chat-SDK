@@ -1,4 +1,4 @@
-/* global process, console, fetch, document */
+/* global process, console, document */
 /**
  * End-to-end check of the judge demonstration, in a real browser.
  *
@@ -10,6 +10,7 @@
  */
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
+import { resetDemo } from './reset.mjs';
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:3000';
 const EVENT = 'evt-demo-hello-summit';
@@ -30,7 +31,7 @@ async function step(name, fn) {
 }
 
 // Start from the seeded state so the run is repeatable.
-const reset = await fetch(`${BASE}/api/demo/reset`, { method: 'POST' });
+const reset = await resetDemo(BASE);
 assert.equal(reset.status, 200, 'demo reset must be enabled for the browser suite (HELLO_DEMO_MODE=true)');
 
 const browser = await chromium.launch(launchOptions);

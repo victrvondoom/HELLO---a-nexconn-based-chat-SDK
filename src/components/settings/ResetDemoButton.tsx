@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useFeedback } from '@/components/ui/Feedback';
 
-export function ResetDemoButton({ eventId }: { eventId: string }) {
+export function ResetDemoButton() {
   const router = useRouter();
   const { toast, confirm } = useFeedback();
   const [busy, setBusy] = useState(false);
@@ -25,7 +25,8 @@ export function ResetDemoButton({ eventId }: { eventId: string }) {
         return;
       }
       toast('success', 'Demo data restored.');
-      router.push(`/events/${eventId}/conversation`);
+      // The reset also ends every session, including this one.
+      router.push('/demo');
       router.refresh();
     } catch {
       toast('error', 'Could not reach the server.');

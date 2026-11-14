@@ -1,4 +1,4 @@
-/* global process, console, fetch */
+/* global process, console */
 /**
  * Browser checks for the workplace features: live timers, escalation, consent, availability,
  * announcements through a second organiser, notification read state, team and audit access.
@@ -7,6 +7,7 @@
  */
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
+import { resetDemo } from './reset.mjs';
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:3000';
 const EVENT = 'evt-demo-hello-summit';
@@ -24,7 +25,7 @@ async function step(name, fn) {
   }
 }
 
-await fetch(`${BASE}/api/demo/reset`, { method: 'POST' });
+await resetDemo(BASE);
 const browser = await chromium.launch(launchOptions);
 const open = async () => {
   const context = await browser.newContext({ viewport: { width: 1280, height: 820 } });

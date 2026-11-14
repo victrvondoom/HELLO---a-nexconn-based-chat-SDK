@@ -1,4 +1,4 @@
-/* global process, console, fetch, document */
+/* global process, console, document */
 /**
  * Workflow audit: runs the real flows across roles (report, follow-up, claim, resolve, confirm, reopen,
  * cancel, approvals, announcements, escalation, sign-out) in a browser, and reports each step.
@@ -6,6 +6,7 @@
  */
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
+import { resetDemo } from './reset.mjs';
 const BASE = process.env.BASE_URL ?? 'http://localhost:3000';
 const E = 'evt-demo-hello-summit';
 const results = [];
@@ -13,7 +14,7 @@ async function step(name, fn) {
   try { await fn(); results.push(['PASS', name]); console.log('PASS ', name); }
   catch (e) { results.push(['FAIL', name]); console.log('FAIL ', name, '\n       ', String(e).split('\n')[0].slice(0, 220)); }
 }
-await fetch(`${BASE}/api/demo/reset`, { method: 'POST' });
+await resetDemo(BASE);
 const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH, args: ['--no-sandbox'] } : {});
 const errors = [];
 async function as(userId) {

@@ -34,7 +34,7 @@ export function DataRights({ userId }: { userId: string }) {
       }
       await forgetDeviceIdentity(userId);
       toast('success', 'Your data has been erased.');
-      await fetch('/api/demo/session', { method: 'DELETE' });
+      await fetch('/api/auth/logout', { method: 'POST' });
       router.push('/');
       router.refresh();
     } catch {

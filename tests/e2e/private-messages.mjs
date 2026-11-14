@@ -3,6 +3,7 @@
 // server's copy cannot be read. Run against a demo server (see README): BASE_URL=http://localhost:3000.
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
+import { resetDemo } from './reset.mjs';
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:3000';
 const EVENT = 'evt-demo-hello-summit';
@@ -21,7 +22,7 @@ async function step(name, fn) {
 
 const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
 const reset = await browser.newContext();
-await reset.request.post(`${BASE}/api/demo/reset`);
+await resetDemo(BASE);
 await reset.close();
 
 async function as(userId) {

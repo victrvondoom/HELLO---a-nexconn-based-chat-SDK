@@ -8,6 +8,9 @@ import { FollowButton } from '@/components/social/FollowButton';
 import { Avatar } from '@/components/social/Avatar';
 import { Icon } from '@/components/ui/Icon';
 
+import { FeedView } from '@/components/feed/FeedView';
+import { listFeed } from '@/services/feed';
+
 export const dynamic = 'force-dynamic';
 
 const VISIBILITY_LABEL = {
@@ -26,6 +29,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ eventI
     if (error instanceof DomainError && (error.code === 'NOT_FOUND' || error.code === 'FORBIDDEN')) notFound();
     throw error;
   }
+  const posts = await listFeed(viewer.ctx, eventId, viewer.userId, { scope: 'all', communityId: null, authorId: profile.userId });
 
   return (
     <div className="page" style={{ maxWidth: 920 }}>
@@ -101,6 +105,10 @@ export default async function ProfilePage({ params }: { params: Promise<{ eventI
           ) : null}
         </div>
       </article>
+      <section style={{ marginTop: 24 }} aria-labelledby="posts-heading">
+        <h2 id="posts-heading" style={{ marginBottom: 12 }}>Posts</h2>
+        <FeedView eventId={eventId} initial={{ now: viewer.ctx.now(), posts }} authorId={userId} canPost={false} />
+      </section>
     </div>
   );
 }
