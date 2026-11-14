@@ -12,6 +12,7 @@ interface EventNavProps {
   canApprove: boolean;
   canAudit: boolean;
   unread: number;
+  isDemo: boolean;
 }
 
 /**
@@ -22,6 +23,7 @@ export function EventNav(props: EventNavProps) {
   const base = `/events/${props.eventId}`;
   const primary: NavLinkItem[] = [
     { href: base, label: 'Today', icon: 'home', exact: true },
+    { href: `${base}/flow`, label: 'Workflow canvas', icon: 'flow' },
     { href: `${base}/conversation`, label: 'Conversation', icon: 'conversation' },
     { href: `${base}/incidents`, label: props.operational ? 'Incidents' : 'My requests', icon: 'incidents' },
     { href: `${base}/announcements`, label: 'Announcements', icon: 'megaphone' },
@@ -30,6 +32,13 @@ export function EventNav(props: EventNavProps) {
     { href: `${base}/people`, label: 'People', icon: 'people' },
     { href: `${base}/messages`, label: 'Private messages', icon: 'lock' },
     { href: `${base}/notifications`, label: 'Notifications', icon: 'bell', count: props.unread },
+  ];
+  const social: NavLinkItem[] = [
+    { href: `${base}/feed`, label: 'Feed', icon: 'feed' },
+    { href: `${base}/communities`, label: 'Communities', icon: 'groups' },
+    { href: `${base}/calls`, label: 'Calls', icon: 'video' },
+    { href: `${base}/games`, label: 'Games', icon: 'game' },
+    { href: `${base}/live-map`, label: 'Live map', icon: 'pin' },
   ];
   const ops: NavLinkItem[] = props.operational
     ? [
@@ -52,15 +61,17 @@ export function EventNav(props: EventNavProps) {
 
       <div className="event-card">
         <strong>{props.eventName}</strong>
-        <span>Demo event · seeded data</span>
+        <span>{props.isDemo ? 'Demo event · seeded data' : 'Event'}</span>
       </div>
 
       <CommandPalette
-        items={[...primary, ...ops, ...governance, { href: `${base}/settings`, label: 'Profile and settings', icon: 'settings' }]}
+        items={[...primary, ...social, ...ops, ...governance, { href: `${base}/settings`, label: 'Profile and settings', icon: 'settings' }]}
       />
 
       <nav aria-label="Primary" className="stack" style={{ gap: 2 }}>
         <NavLinks items={primary} />
+        <div className="nav-group">Community</div>
+        <NavLinks items={social} />
         {ops.length > 0 ? <div className="nav-group">Operations</div> : null}
         <NavLinks items={ops} />
         {governance.length > 0 ? <div className="nav-group">Governance</div> : null}

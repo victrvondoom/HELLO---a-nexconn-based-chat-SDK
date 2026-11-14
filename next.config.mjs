@@ -11,6 +11,7 @@ const csp = [
   `script-src 'self' 'unsafe-inline'${isProd ? '' : " 'unsafe-eval'"}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
+  "media-src 'self' blob:",
   "font-src 'self'",
   `connect-src 'self'${isProd ? '' : ' ws: wss:'}`,
   "object-src 'none'",
@@ -35,7 +36,9 @@ const nextConfig = {
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(self), geolocation=()',
+            // Calls use the camera, microphone and screen; the live map uses location. Each still needs the
+            // person's own browser permission, and no embedded third-party frame can ask for any of them.
+            value: 'camera=(self), microphone=(self), geolocation=(self), display-capture=(self)',
           },
         ],
       },

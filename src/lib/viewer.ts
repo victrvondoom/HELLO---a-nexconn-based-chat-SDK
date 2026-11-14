@@ -5,13 +5,13 @@ import { roleHasCapability, type Capability } from '@/domain/permissions';
 import type { Membership } from '@/domain/types';
 
 /**
- * Loads the viewer for an event page. Redirects to demo sign-in when nobody is signed in,
+ * Loads the viewer for an event page. Redirects to sign-in when nobody is signed in,
  * and returns 404 for non-members so the existence of an event is not revealed.
  */
 export async function loadEventViewer(eventId: string) {
   const userId = await currentUserId();
   if (!userId) {
-    redirect('/demo');
+    redirect('/signin');
   }
   const runtime = await getRuntime();
   const { store, ctx } = runtime;
