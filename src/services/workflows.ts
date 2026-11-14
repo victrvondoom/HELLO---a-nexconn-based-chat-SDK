@@ -215,7 +215,7 @@ export async function flowSnapshot(ctx: ServiceContext, eventId: string, userId:
     { from: 'feed', to: 'notifications', label: 'likes, comments' },
     { from: 'communities', to: 'calls', label: 'group calls' },
     { from: 'calls', to: 'notifications', label: 'invites' },
-    { from: 'mcp', to: 'conversation', label: 'tools' },
+    { from: 'mcp', to: 'agents', label: 'tools' },
   ];
   if (can('signal.read')) edges.push({ from: 'incidents', to: 'signals', label: 'repeats' }, { from: 'signals', to: 'needs', label: 'review' });
 
