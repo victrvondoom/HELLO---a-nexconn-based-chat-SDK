@@ -8,7 +8,7 @@ import { Icon, type IconName } from '@/components/ui/Icon';
 import type { FlowNode, FlowSnapshot } from '@/services/workflows';
 
 const NODE_W = 230;
-const HEIGHT: Record<FlowNode['kind'], number> = { source: 118, agent: 118, queue: 118, output: 118, workflow: 150 };
+const HEIGHT: Record<FlowNode['kind'], number> = { source: 118, agent: 118, queue: 118, output: 118, workflow: 190 };
 const ICON: Record<string, IconName> = {
   conversation: 'conversation', feed: 'feed', communities: 'groups', mcp: 'key', agents: 'agents', calls: 'video', games: 'game',
   incidents: 'incidents', map: 'pin', needs: 'bell', notifications: 'bell', signals: 'sparkle',
@@ -43,7 +43,7 @@ export function FlowCanvas({ eventId, initial }: { eventId: string; initial: Flo
       /* a damaged saved layout is simply ignored */
     }
     const width = frame.current?.clientWidth ?? 1200;
-    if (width < 1180) setView({ x: 8, y: 8, k: Math.max(0.42, width / 1200) });
+    if (width < 1320) setView({ x: 4, y: 4, k: Math.max(0.3, width / 1340) });
   }, [storageKey]);
 
   const place = useCallback((n: FlowNode) => moved[n.id] ?? { x: n.x, y: n.y }, [moved]);
@@ -56,13 +56,20 @@ export function FlowCanvas({ eventId, initial }: { eventId: string; initial: Flo
       if (!from || !to) return [];
       const a = place(from);
       const b = place(to);
+      if (from.kind === 'workflow') {
+        const sx = a.x + NODE_W / 2;
+        const tx = b.x + NODE_W / 2;
+        const ty = b.y + HEIGHT[to.kind];
+        const lift = Math.max(40, (a.y - ty) / 2);
+        return [{ key: `${e.from}>${e.to}`, d: `M${sx},${a.y} C${sx},${a.y - lift} ${tx},${ty + lift} ${tx},${ty}`, label: e.label, lx: 0, ly: 0, live: running !== null && e.from === `wf:${running}`, dashed: true }];
+      }
       const forward = b.x >= a.x + NODE_W / 2;
       const x1 = forward ? a.x + NODE_W : a.x;
       const x2 = forward ? b.x : b.x + NODE_W;
       const y1 = a.y + HEIGHT[from.kind] / 2;
       const y2 = b.y + HEIGHT[to.kind] / 2;
       const bend = Math.max(50, Math.abs(x2 - x1) / 2) * (forward ? 1 : -1);
-      return [{ key: `${e.from}>${e.to}`, d: `M${x1},${y1} C${x1 + bend},${y1} ${x2 - bend},${y2} ${x2},${y2}`, label: e.label, lx: (x1 + x2) / 2, ly: (y1 + y2) / 2 - 6, live: running !== null && e.from === `wf:${running}` }];
+      return [{ key: `${e.from}>${e.to}`, d: `M${x1},${y1} C${x1 + bend},${y1} ${x2 - bend},${y2} ${x2},${y2}`, label: e.label, lx: (x1 + x2) / 2, ly: (y1 + y2) / 2 - 6, live: false, dashed: false }];
     });
   }, [data, place, running]);
 
@@ -122,7 +129,7 @@ export function FlowCanvas({ eventId, initial }: { eventId: string; initial: Flo
           <svg className="canvas__edges" width="1" height="1" aria-hidden="true">
             {edges.map((e) => (
               <g key={e.key}>
-                <path d={e.d} className={e.live ? 'is-flow' : undefined} />
+                <path d={e.d} className={e.live ? 'is-flow' : e.dashed ? 'is-quiet' : undefined} />
                 {e.label ? (
                   <text x={e.lx} y={e.ly} textAnchor="middle">
                     {e.label}

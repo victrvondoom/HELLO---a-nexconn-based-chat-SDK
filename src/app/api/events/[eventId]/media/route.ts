@@ -11,7 +11,8 @@ const TOO_LARGE = 'That file is too large. Pictures can be up to 4 MB and videos
 
 /** Reads the body in chunks and stops as soon as it passes the limit, so an oversized upload is never held in memory. */
 async function readCapped(request: Request, limit: number): Promise<Uint8Array> {
-  if (Number(request.headers.get('content-length') ?? 0) > limit) throw new DomainError('VALIDATION_FAILED', TOO_LARGE);
+  const declared = Number(request.headers.get('content-length') ?? 0);
+  if (declared > limit) throw new DomainError('VALIDATION_FAILED', TOO_LARGE);
   const reader = request.body?.getReader();
   if (!reader) throw new DomainError('VALIDATION_FAILED', 'Choose a file to upload.');
   const chunks: Uint8Array[] = [];
@@ -26,6 +27,8 @@ async function readCapped(request: Request, limit: number): Promise<Uint8Array> 
     }
     chunks.push(value);
   }
+  // A body shorter than it declared was cut off on the way in: refuse it rather than keep a broken file.
+  if (declared > 0 && size !== declared) throw new DomainError('VALIDATION_FAILED', 'The upload was interrupted. Try again.');
   const bytes = new Uint8Array(size);
   let offset = 0;
   for (const chunk of chunks) {

@@ -4186,8 +4186,8 @@ body {
 /* ---- workflow canvas ---- */
 .canvas {
   position: relative;
-  height: min(72vh, 780px);
-  min-height: 460px;
+  height: min(86vh, 940px);
+  min-height: 480px;
   overflow: hidden;
   border: 1px solid var(--hair);
   border-radius: var(--r-lg);
@@ -4202,6 +4202,7 @@ body {
 .canvas__edges { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
 .canvas__edges path { fill: none; stroke: var(--hair-strong); stroke-width: 1.25; }
 .canvas__edges path.is-flow { stroke: var(--sky-500); stroke-dasharray: 3 7; animation: edge-flow 1.6s linear infinite; }
+.canvas__edges path.is-quiet { stroke-dasharray: 2 5; }
 .canvas__edges text { font-size: 10.5px; fill: var(--text-3); paint-order: stroke; stroke: var(--surface); stroke-width: 4px; }
 @keyframes edge-flow { to { stroke-dashoffset: -20; } }
 @media (prefers-reduced-motion: reduce) { .canvas__edges path.is-flow { animation: none; } }
@@ -4334,3 +4335,7 @@ body {
 .radio-row label { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid var(--hair); border-radius: var(--r-pill); font-size: 13px; cursor: pointer; }
 .radio-row label:has(input:checked) { border-color: var(--sky-600); color: var(--accent-ink); }
 .secret { display: block; padding: 10px 12px; border: 1px dashed var(--hair-strong); border-radius: var(--r-md); font-family: var(--font-mono); font-size: 12.5px; overflow-wrap: anywhere; user-select: all; background: var(--surface-2); }
+
+/* Radios and checkboxes inside option rows keep their natural size (text inputs are full width). */
+.radio-row input, input[type='checkbox'], input[type='radio'] { width: auto; min-height: 0; padding: 0; border: 0; box-shadow: none; flex: none; accent-color: var(--sky-600); }
+.radio-row label { white-space: nowrap; }

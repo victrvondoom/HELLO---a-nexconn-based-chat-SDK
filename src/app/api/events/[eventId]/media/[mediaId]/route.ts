@@ -6,8 +6,8 @@ import { readMedia } from '@/services/feed';
 
 /**
  * Serves an uploaded picture or video to members of its event. The type comes from our own record
- * of a checked upload, never from the request, and the response is sandboxed so a file can only
- * ever be displayed, not run as a page. Byte ranges are supported so videos can be scrubbed.
+ * of a checked upload (pictures and videos only), never from the request, and browsers are told not
+ * to guess another type, so a file can only ever be displayed. Byte ranges are supported so videos can be scrubbed.
  */
 export async function GET(request: Request, context: { params: Promise<{ eventId: string; mediaId: string }> }): Promise<Response> {
   const userId = await currentUserId();
@@ -21,7 +21,6 @@ export async function GET(request: Request, context: { params: Promise<{ eventId
       'Accept-Ranges': 'bytes',
       'Cache-Control': 'private, max-age=3600',
       'Content-Disposition': 'inline',
-      'Content-Security-Policy': "default-src 'none'; sandbox",
     };
     const range = /^bytes=(\d*)-(\d*)$/.exec(request.headers.get('range') ?? '');
     if (range && (range[1] || range[2])) {

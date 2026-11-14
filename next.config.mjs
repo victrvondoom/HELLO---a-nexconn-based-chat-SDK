@@ -24,6 +24,9 @@ const csp = [
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // The request check in src/proxy.ts buffers bodies. Video uploads are allowed up to 24 MB
+  // (enforced again, exactly, in the upload route), so the buffer must be at least that large.
+  experimental: { proxyClientMaxBodySize: '25mb' },
   async headers() {
     return [
       {

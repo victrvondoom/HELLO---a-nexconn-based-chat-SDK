@@ -196,11 +196,11 @@ await step('W8 sessions page offers alternatives for a chosen session', async ()
   await nadia.page.getByRole('heading', { name: /Alternatives to/ }).waitFor({ timeout: 10000 });
 });
 
-// W9 sign out returns to demo sign in
-await step('W9 signing out returns to the demo picker', async () => {
+// W9 sign out returns to sign-in
+await step('W9 signing out returns to sign-in', async () => {
   await nadia.page.goto(`${BASE}/events/${E}/settings`, { waitUntil: 'networkidle' });
-  await nadia.page.getByRole('button', { name: 'Switch demo account' }).click();
-  await nadia.page.waitForURL('**/demo', { timeout: 10000 });
+  await nadia.page.getByRole('button', { name: 'Sign out' }).click();
+  await nadia.page.waitForURL('**/signin', { timeout: 10000 });
 });
 
 for (const c of [reporter, kiri, quiet, vol, marco, lena, nadia, dana, off]) await c.ctx.close();

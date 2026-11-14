@@ -197,15 +197,15 @@ export async function flowSnapshot(ctx: ServiceContext, eventId: string, userId:
     { id: 'feed', kind: 'source', title: 'Feed', metric: String(posts.length), caption: `posts · ${posts.filter((p) => p.mediaKind === 'VIDEO').length} videos`, href: `${base}/feed`, tone: 'plain', x: 40, y: 220 },
     { id: 'communities', kind: 'source', title: 'Communities', metric: String(communities.length), caption: `${communities.filter((c) => c.memberIds.includes(userId)).length} joined`, href: `${base}/communities`, tone: 'plain', x: 40, y: 380 },
     { id: 'mcp', kind: 'source', title: 'MCP access', metric: String(tokens.length), caption: 'of your access tokens', href: `${base}/settings#tokens`, tone: 'plain', x: 40, y: 540 },
-    { id: 'agents', kind: 'agent', title: 'Agent mesh', metric: String(AGENT_ROSTER.length), caption: ctx.intentProvider ? 'agents · model-assisted' : 'agents · rule-based', href: operational ? `${base}/agents` : null, tone: 'accent', x: 330, y: 60 },
-    { id: 'calls', kind: 'queue', title: 'Calls', metric: String(liveCalls.length), caption: `open · ${inCalls} people talking`, href: `${base}/calls`, tone: inCalls > 0 ? 'good' : 'plain', x: 330, y: 220 },
-    { id: 'games', kind: 'queue', title: 'Games', metric: String(openGames), caption: 'open to play', href: `${base}/games`, tone: 'plain', x: 330, y: 380 },
-    { id: 'incidents', kind: 'queue', title: operational ? 'Incidents' : 'My requests', metric: String(open.length), caption: operational ? `open · ${unclaimed} unclaimed` : 'open', href: `${base}/incidents`, tone: unclaimed > 0 && operational ? 'attention' : 'plain', x: 620, y: 60 },
-    { id: 'map', kind: 'queue', title: 'Live map', metric: String(sharing), caption: 'sharing a location by choice', href: `${base}/live-map`, tone: 'plain', x: 620, y: 380 },
-    { id: 'needs', kind: 'output', title: 'Needs you', metric: String(needs), caption: needs === 0 ? 'nothing waiting' : 'waiting for you', href: can('approval.decide') && approvals > 0 ? `${base}/operations` : `${base}/notifications`, tone: needs > 0 ? 'attention' : 'good', x: 910, y: 60 },
-    { id: 'notifications', kind: 'output', title: 'Notifications', metric: String(unread), caption: 'unread', href: `${base}/notifications`, tone: 'plain', x: 910, y: 220 },
+    { id: 'agents', kind: 'agent', title: 'Agent mesh', metric: String(AGENT_ROSTER.length), caption: ctx.intentProvider ? 'agents · model-assisted' : 'agents · rule-based', href: operational ? `${base}/agents` : null, tone: 'accent', x: 370, y: 60 },
+    { id: 'calls', kind: 'queue', title: 'Calls', metric: String(liveCalls.length), caption: `open · ${inCalls} people talking`, href: `${base}/calls`, tone: inCalls > 0 ? 'good' : 'plain', x: 370, y: 220 },
+    { id: 'games', kind: 'queue', title: 'Games', metric: String(openGames), caption: 'open to play', href: `${base}/games`, tone: 'plain', x: 370, y: 380 },
+    { id: 'incidents', kind: 'queue', title: operational ? 'Incidents' : 'My requests', metric: String(open.length), caption: operational ? `open · ${unclaimed} unclaimed` : 'open', href: `${base}/incidents`, tone: unclaimed > 0 && operational ? 'attention' : 'plain', x: 700, y: 60 },
+    { id: 'map', kind: 'queue', title: 'Live map', metric: String(sharing), caption: 'sharing a location by choice', href: `${base}/live-map`, tone: 'plain', x: 700, y: 380 },
+    { id: 'needs', kind: 'output', title: 'Needs you', metric: String(needs), caption: needs === 0 ? 'nothing waiting' : 'waiting for you', href: can('approval.decide') && approvals > 0 ? `${base}/operations` : `${base}/notifications`, tone: needs > 0 ? 'attention' : 'good', x: 1030, y: 60 },
+    { id: 'notifications', kind: 'output', title: 'Notifications', metric: String(unread), caption: 'unread', href: `${base}/notifications`, tone: 'plain', x: 1030, y: 220 },
   ];
-  if (can('signal.read')) nodes.push({ id: 'signals', kind: 'queue', title: 'Signals', metric: String(patterns), caption: 'patterns to review', href: `${base}/operations`, tone: patterns > 0 ? 'attention' : 'plain', x: 620, y: 220 });
+  if (can('signal.read')) nodes.push({ id: 'signals', kind: 'queue', title: 'Signals', metric: String(patterns), caption: 'patterns to review', href: `${base}/operations`, tone: patterns > 0 ? 'attention' : 'plain', x: 700, y: 220 });
 
   const edges: FlowEdge[] = [
     { from: 'conversation', to: 'agents', label: 'each message' },
@@ -214,7 +214,6 @@ export async function flowSnapshot(ctx: ServiceContext, eventId: string, userId:
     { from: 'incidents', to: 'needs', label: 'unclaimed' },
     { from: 'feed', to: 'notifications', label: 'likes, comments' },
     { from: 'communities', to: 'calls', label: 'group calls' },
-    { from: 'communities', to: 'feed' },
     { from: 'calls', to: 'notifications', label: 'invites' },
     { from: 'mcp', to: 'conversation', label: 'tools' },
   ];
@@ -222,7 +221,7 @@ export async function flowSnapshot(ctx: ServiceContext, eventId: string, userId:
 
   WORKFLOWS.filter((w) => can(w.capability)).forEach((w, i) => {
     const last = visibleRuns.find((r) => r.workflowId === w.id);
-    nodes.push({ id: `wf:${w.id}`, kind: 'workflow', title: w.name, metric: '', caption: w.purpose, href: null, tone: 'accent', x: 330 + (i % 3) * 290, y: 560 + Math.floor(i / 3) * 190, workflow: { id: w.id, purpose: w.purpose, steps: w.steps, lastRun: last ? { status: last.status, at: last.startedAt } : null } });
+    nodes.push({ id: `wf:${w.id}`, kind: 'workflow', title: w.name, metric: '', caption: w.purpose, href: null, tone: 'accent', x: 40 + i * 262, y: 720, workflow: { id: w.id, purpose: w.purpose, steps: w.steps, lastRun: last ? { status: last.status, at: last.startedAt } : null } });
     if (nodes.some((n) => n.id === w.feeds)) edges.push({ from: `wf:${w.id}`, to: w.feeds });
   });
 
