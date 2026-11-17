@@ -14,6 +14,7 @@ import type {
   Follow,
   KeyBundle,
   SealedMessage,
+  Payment,
   Room,
   Session,
   SignalPattern,
@@ -102,6 +103,13 @@ export interface HelloStore {
   listSealedBetween(a: string, b: string): Promise<SealedMessage[]>;
   listSealedInvolving(userId: string): Promise<SealedMessage[]>;
   deleteSealedInvolving(userId: string): Promise<number>;
+
+  // --- payments: version-checked so a double tap cannot charge twice ---
+  insertPayment(payment: Payment): Promise<void>;
+  getPayment(paymentId: string): Promise<Payment | null>;
+  updatePayment(paymentId: string, expectedVersion: number, patch: Partial<Payment>): Promise<Payment>;
+  listPaymentsBetween(a: string, b: string): Promise<Payment[]>;
+  listPaymentsFrom(payerId: string): Promise<Payment[]>;
 
   // --- rights: erasure redacts operational text but keeps the accountable record ---
   redactMessagesFrom(userId: string, replacement: string): Promise<number>;

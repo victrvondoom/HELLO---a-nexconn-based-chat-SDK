@@ -320,3 +320,31 @@ export interface SealedMessage {
   ciphertext: string;
   createdAt: number;
 }
+
+// ---------- payments between connected people ---------------------------------
+
+export type PaymentStatus = 'AWAITING_CONFIRMATION' | 'SUCCEEDED' | 'FAILED' | 'CANCELLED' | 'EXPIRED';
+
+/**
+ * A payment from one person to another inside their private thread. Speech may draft it, but it
+ * is only charged after the payer confirms on screen. The provider reference is the gateway's id.
+ */
+export interface Payment {
+  id: string;
+  eventId: string;
+  payerId: string;
+  payeeId: string;
+  amountMinor: number;
+  currency: 'INR' | 'USD' | 'EUR' | 'GBP';
+  note: string | null;
+  /** How the draft was made. Never an authorisation by itself. */
+  origin: 'VOICE' | 'TYPED';
+  status: PaymentStatus;
+  provider: string;
+  providerRef: string | null;
+  failureReason: string | null;
+  createdAt: number;
+  expiresAt: number;
+  settledAt: number | null;
+  version: number;
+}
