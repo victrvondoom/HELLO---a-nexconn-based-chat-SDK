@@ -129,3 +129,18 @@ Status key: **Real** = implemented end to end and tested. **Partial** = implemen
 
 The full 23-part brief is a multi-phase programme. This audit covers Phase 1 investigation only. The Nexconn
 transport, Postgres store, real-time delivery and the advanced messaging features are not implemented yet.
+
+## 9. HELLO Field Atlas (added 2026-11-17)
+
+| Area | Execution path | Backend | Frontend | Persistence | Security | Tests | Status |
+|---|---|---|---|---|---|---|---|
+| Missions and map | `GET /api/events/[eventId]/atlas` → `listMissionsForViewer` → `src/domain/field/rules.ts` | real, per-person availability | `FieldAtlas` + `AtlasMap` (venue geometry, keyboard markers, floor switch) | `fieldMissions` in the store | drafts hidden from attendees; event membership checked | unit + integration + E2E | **Real** |
+| Verification | `POST …/missions/[id]/submit` → `submitMission` → `decideVerification` | real: workflow run, staff check-in code, organiser review | mission panel | `fieldAttempts`, `fieldStations` (code hash only) | rate limited; expired codes flagged; no AI in the path | integration + E2E | **Real** for the three methods. No self-attestation |
+| XP and levels | `awardMission` → `docPutIfAbsent` ledger → `levelFor` | real; idempotent; concurrency tested | header, cabinet, history | `fieldLedger`, `fieldLevels` | audited adjustments only; no edit of entries | integration | **Real** |
+| Monthly season and badges | `saveSeason`, `draftMonthlyChallenge`, `awardMission` season branch | real; UTC months | season block, cabinet history | `fieldSeasons`, `fieldBadges` | badges never revoked | unit + integration + E2E | **Real** (UTC only) |
+| Quest Director | `fieldGuide`, `recommendFor`, `draftMonthlyChallenge` | deterministic; grounded; schema validated | guide answers with citations, suggestions | `questRuns` | cannot award or verify | integration | **Partial**: no language model. Output is labelled deterministic |
+| Integrity flags | `flag()` from submit paths | real, four kinds | organiser flag list, dismiss | `fieldFlags` | never removes an award | integration | **Partial**: no AI review; deterministic flags only |
+| Organiser management | `/atlas/manage`, `POST …/atlas/manage` | real, capability checked per action | `AtlasManage` | all field collections | `field.manage` / `field.review`; attendee refused (403) | integration + E2E | **Real** |
+| Notifications | `notify()` for mission, level and badge | in-app only | notifications page (existing) | `notifications` | dedupe keys | integration | **Partial**: no Nexconn chat message, no push |
+| Export and erasure | `exportMyData`, `eraseMe` | real | Data rights (existing) | — | erasure removes attempts, XP, badges | integration | **Real** |
+| Leaderboards | none | — | — | — | — | — | **Missing** |

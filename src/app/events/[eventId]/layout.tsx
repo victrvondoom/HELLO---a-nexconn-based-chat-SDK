@@ -28,6 +28,7 @@ export default async function EventLayout({
         operational={viewer.can('incident.read.operational')}
         canApprove={viewer.can('approval.decide')}
         canAudit={viewer.can('audit.read')}
+        canManageAtlas={viewer.can('field.manage') || viewer.can('field.review')}
         unread={feed.unread}
         isDemo={viewer.event.isDemo}
       />

@@ -158,8 +158,9 @@ export async function seedFieldAtlas(store: MemoryHelloStore, eventId: string, n
       spaceId,
       name,
       codeHash: createHash('sha256').update(`${id}:${unknown}`).digest('hex'),
-      codeIssuedAt: now,
-      codeExpiresAt: now,
+      // 0 means no code has been issued yet. A zero expiry is always in the past, so nothing can verify.
+      codeIssuedAt: 0,
+      codeExpiresAt: 0,
       rotations: 0,
       createdBy: 'seed',
       version: 1,

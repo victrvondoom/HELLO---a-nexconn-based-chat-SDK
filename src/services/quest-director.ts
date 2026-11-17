@@ -130,12 +130,17 @@ export interface Recommendation {
   missionId: string;
   title: string;
   reason: string;
-  route: null | { metres: number; seconds: number; stepFree: boolean; steps: string[] };
+  route: null | { metres: number; seconds: number; stepFree: boolean; steps: string[]; legs: Array<{ floor: number; points: Array<readonly [number, number]> }> };
   citations: Citation[];
 }
 
 /** The next useful missions for this person. Deterministic: ranks by fit, not by a guess about where they are. */
-export async function recommendFor(ctx: ServiceContext, eventId: string, userId: string, input: z.infer<typeof RecommendSchema>): Promise<{ recommendations: Recommendation[]; note: string; generator: string }> {
+export async function recommendFor(
+  ctx: ServiceContext,
+  eventId: string,
+  userId: string,
+  input: z.infer<typeof RecommendSchema>,
+): Promise<{ recommendations: Recommendation[]; routes: Record<string, NonNullable<Recommendation['route']>>; note: string; generator: string }> {
   await requireCapability(ctx, eventId, userId, 'event.read');
   const parsed = RecommendSchema.safeParse(input);
   if (!parsed.success) throw new DomainError('VALIDATION_FAILED', 'Check the time and place you entered.');
@@ -143,7 +148,7 @@ export async function recommendFor(ctx: ServiceContext, eventId: string, userId:
   const venue = await ctx.store.getVenue(eventId);
   const views = (await listMissionsForViewer(ctx, eventId, userId)).filter((v) => v.availability.state === 'AVAILABLE' && v.attempt.status !== 'APPROVED' && v.attempt.status !== 'PENDING_REVIEW');
   if (views.length === 0) {
-    return { recommendations: [], note: 'No mission is open to you right now. Missions unlock as your level and the event schedule allow.', generator: GENERATOR_ID };
+    return { recommendations: [], routes: {}, note: 'No mission is open to you right now. Missions unlock as your level and the event schedule allow.', generator: GENERATOR_ID };
   }
   const startSpace = startSpaceId && venue ? venue.spaces.find((s) => s.id === startSpaceId) ?? null : null;
   if (startSpaceId && !startSpace) throw new DomainError('VALIDATION_FAILED', 'That place is not on the venue map.');
@@ -164,7 +169,13 @@ export async function recommendFor(ctx: ServiceContext, eventId: string, userId:
     if (startSpace && missionSpace && venue) {
       const result = findRoute(venue, startSpace.nodeId, missionSpace.nodeId, { stepFree });
       if (result.ok) {
-        route = { metres: Math.round(result.metres), seconds: Math.round(result.seconds), stepFree: result.stepFree, steps: result.steps };
+        route = {
+          metres: Math.round(result.metres),
+          seconds: Math.round(result.seconds),
+          stepFree: result.stepFree,
+          steps: result.steps,
+          legs: result.legs.map((leg) => ({ floor: leg.floor, points: leg.points })),
+        };
         score += Math.max(0, 3 - result.metres / 40);
         reasons.push(`about ${Math.round(result.metres)} m from ${startSpace.name}${stepFree ? ' by a step-free route' : ''}`);
         citations.push({ kind: 'space', id: missionSpace.id, field: 'nodeId' });
@@ -182,6 +193,8 @@ export async function recommendFor(ctx: ServiceContext, eventId: string, userId:
     return { v, score, reasons, route, citations };
   });
   scored.sort((a, b) => b.score - a.score || a.v.id.localeCompare(b.v.id));
+  const routes: Record<string, NonNullable<Recommendation['route']>> = {};
+  for (const s of scored) if (s.route) routes[s.v.id] = s.route;
   const recommendations: Recommendation[] = scored.slice(0, 3).map((s) => ({
     missionId: s.v.id,
     title: s.v.title,
@@ -192,7 +205,7 @@ export async function recommendFor(ctx: ServiceContext, eventId: string, userId:
   const note = startSpace
     ? 'Ranked from the place you chose and the venue map. Your location is not tracked.'
     : 'No starting place chosen, so these are ranked by fit and reward. Choose a place to get routes. Your location is not tracked.';
-  return { recommendations, note, generator: GENERATOR_ID };
+  return { recommendations, routes, note, generator: GENERATOR_ID };
 }
 
 // ---------- monthly challenge drafting ----------

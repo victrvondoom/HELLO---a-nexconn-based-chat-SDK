@@ -2,26 +2,31 @@
 
 Phases follow the brief's dependency order. Status reflects the repository, not intent.
 
-## Phase 1: Foundation: in progress
+## Phase 1: Foundation: partly done
 - [x] Repository audit (`docs/IMPLEMENTATION_AUDIT.md`)
 - [x] Restore the broken store so typecheck, lint, unit and integration tests and build pass
 - [x] Verify Nexconn SDK type definitions from the published package
-- [ ] Install `@nexconn/chat` and create the `ChatTransport` interface and a mock transport. **Next**
+- [ ] Install `@nexconn/chat` and create the `ChatTransport` interface and a mock transport
 - [ ] Real Nexconn connection. **Blocked:** needs `NEXCONN_APP_KEY` and the token-issuance procedure
 - [ ] Postgres `HelloStore` against the Supabase schema, with a database integration test
-- [ ] Run `npm run test:e2e` against a test server and record results
+
+## HELLO Field Atlas: done (see AGENTS.md and docs/TEST_EVIDENCE.md)
+- [x] Mission, progression, XP ledger, levels, monthly seasons, badges
+- [x] Verification: workflow run, staff check-in code, organiser review
+- [x] Organiser management with capability checks and audit entries
+- [x] Quest Director: grounded field guide, routed recommendations, validated monthly drafts
+- [x] Export and erasure
+- [x] Browser journey (`tests/e2e/field-atlas-flow.mjs`)
+
+## Field Atlas: remaining
+- [ ] Opt-in leaderboard
+- [ ] A live language model for summaries and integrity review (currently deterministic)
+- [ ] Real-time push instead of 15-second polling
+- [ ] Seasons in the event's own timezone
+- [ ] Nexconn chat notifications for badges (needs Phase 1 Nexconn work)
 
 ## Phase 2: Communication engine: not started
-Direct and group messaging, event channels, history, real-time subscriptions, delivery states, read receipts.
-
 ## Phase 3: Advanced messaging: not started
-Rich media, threads, reactions, mentions, search, offline outbox, notifications.
-
 ## Phase 4: Intelligence: not started
-Summarisation, action extraction, conversation intelligence agents, intelligent assignment.
-
 ## Phase 5: Product expansion: not started
-Communities, presence, multi-browser video calls, MCP improvements, external SDK.
-
 ## Phase 6: Production readiness: not started
-Security audit with evidence, database verification, performance, browser testing, deployment and runbook.

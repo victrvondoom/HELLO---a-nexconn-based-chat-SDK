@@ -11,6 +11,7 @@ interface EventNavProps {
   operational: boolean;
   canApprove: boolean;
   canAudit: boolean;
+  canManageAtlas: boolean;
   unread: number;
   isDemo: boolean;
 }
@@ -28,6 +29,7 @@ export function EventNav(props: EventNavProps) {
     { href: `${base}/incidents`, label: props.operational ? 'Incidents' : 'My requests', icon: 'incidents' },
     { href: `${base}/announcements`, label: 'Announcements', icon: 'megaphone' },
     { href: `${base}/map`, label: 'Venue map', icon: 'map' },
+    { href: `${base}/atlas`, label: 'Field Atlas', icon: 'sparkle' },
     { href: `${base}/sessions`, label: 'Sessions and rooms', icon: 'sessions' },
     { href: `${base}/people`, label: 'People', icon: 'people' },
     { href: `${base}/messages`, label: 'Private messages', icon: 'lock' },
@@ -44,6 +46,7 @@ export function EventNav(props: EventNavProps) {
     ? [
         { href: `${base}/operations`, label: props.canApprove ? 'Operations and approvals' : 'Operations', icon: 'operations' },
         { href: `${base}/team`, label: 'Team', icon: 'team' },
+        ...(props.canManageAtlas ? [{ href: `${base}/atlas/manage`, label: 'Atlas management', icon: 'sparkle' as const }] : []),
         { href: `${base}/agents`, label: 'Agent mesh', icon: 'agents' },
       ]
     : [];

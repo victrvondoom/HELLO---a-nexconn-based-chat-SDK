@@ -4,6 +4,7 @@ import { DEMO_NOW, loadDemoEvent } from '@/store/seed';
 import { webSearchFromEnv } from '@/agents/web';
 import { vaultFromEnv } from '@/lib/vault';
 import { persistenceFromEnv, type Persistence } from '@/lib/persistence';
+import { resetAllRateLimiters } from '@/lib/rate-limit';
 
 /**
  * Process-wide runtime. In this build the only persistence is the in-memory demo
@@ -56,6 +57,7 @@ export function getRuntime(): Promise<Runtime> {
 
 /** Discards all in-memory state. The next request re-seeds the demo event. Used by demo reset only. */
 export async function resetRuntime(): Promise<void> {
+  resetAllRateLimiters();
   const current = await g.__helloRuntime?.catch(() => null);
   current?.disk?.wipe();
   g.__helloRuntime = undefined;

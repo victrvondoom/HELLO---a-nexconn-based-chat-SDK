@@ -96,6 +96,8 @@ async function approvedAttemptsOf(ctx: ServiceContext, eventId: string, userId: 
 
 export interface PlayerState {
   xp: number;
+  /** One-based position of the current level in the event's ordered level table. */
+  levelNumber: number;
   level: { id: string; name: string; description: string; identity: LevelDefinition['identity']; minXp: number };
   next: { id: string; name: string; xpNeeded: number } | null;
   /** Progress through the current level band, 0 to 1. Clamped; 1 at the top level. */
@@ -111,10 +113,13 @@ export async function playerState(ctx: ServiceContext, eventId: string, userId: 
   const held = new Set(badges.map((b) => b.badgeId));
   const level = levelFor(levels, xp, held);
   const next = nextLevel(levels, level, xp);
+  const ordered = levels.filter((l) => l.active).sort((a, b) => a.minXp - b.minXp || a.displayOrder - b.displayOrder);
+  const levelNumber = ordered.findIndex((l) => l.id === level.id) + 1;
   const span = next ? next.level.minXp - level.minXp : 1;
   const progress = next ? Math.min(1, Math.max(0, (xp - level.minXp) / span)) : 1;
   return {
     xp,
+    levelNumber,
     level: { id: level.id, name: level.name, description: level.description, identity: level.identity, minXp: level.minXp },
     next: next ? { id: next.level.id, name: next.level.name, xpNeeded: next.xpNeeded } : null,
     progress,
