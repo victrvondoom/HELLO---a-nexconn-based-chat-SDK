@@ -85,3 +85,16 @@ Screenshots from the last run, in the session scratchpad: `shots/verified-checki
   `docs/INTEGRATION_STATUS.md`). No test here claims otherwise.
 - Browser push notifications: not implemented.
 - Two real browsers in separate devices: the E2E uses separate browser contexts, which share a server but not cookies.
+
+## UI restoration pass (2026-11-17, later)
+
+Cause: a merge (`9314457`) had dropped about 270 lines of the design system from `src/app/globals.css`: `.panel`,
+`.tile`, `.tile-grid`, the flow canvas nodes, feed posts, call tiles, the payment tickets, and the floor styles. Thirty
+files use those classes, so the games, feed, canvas and payment screens were unstyled. The restore reverses the
+exact removed lines from `4951e9c`, re-adds the ticket and floor styles from `b328f4d` and `645a427`, and adds the
+standard `sr-only` utility. Field Atlas styles are kept on top.
+
+Checks after the restore: `npm run check` passes (252 tests, build). Field Atlas browser journey 19/19 when run alone.
+Existing suites pass: judge-flow 13/13, features-flow 10/10, workflow-audit 22/22, private-messages 6/6, product-flow passes.
+
+Note: running the browser suites in parallel against one server makes them reset each other's state. Run them one at a time.

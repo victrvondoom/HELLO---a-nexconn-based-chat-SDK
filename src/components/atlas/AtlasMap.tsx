@@ -28,6 +28,12 @@ export interface AtlasVenue {
   spaces: AtlasSpace[];
 }
 
+function bounds(points: ReadonlyArray<readonly [number, number]>) {
+  const xs = points.map((p) => p[0]);
+  const ys = points.map((p) => p[1]);
+  return { minX: Math.min(...xs), maxX: Math.max(...xs), minY: Math.min(...ys), maxY: Math.max(...ys) };
+}
+
 function centroid(points: ReadonlyArray<readonly [number, number]>): [number, number] {
   const n = points.length || 1;
   const x = points.reduce((s, p) => s + p[0], 0) / n;
@@ -95,7 +101,7 @@ export function AtlasMap({
         {spaces.map((s) => {
           const [x, y] = centroid(s.outline);
           return (
-            <text key={`${s.id}-label`} className="space-label" x={x} y={y + 6} textAnchor="middle">
+            <text key={`${s.id}-label`} className="space-label" x={x} y={y + 2} textAnchor="middle">
               {s.name}
             </text>
           );
@@ -104,7 +110,10 @@ export function AtlasMap({
         {onThisFloor.map((m) => {
           const space = m.spaceId ? spaceById.get(m.spaceId) : undefined;
           if (!space) return null;
-          const [x, y] = centroid(space.outline);
+          const box = bounds(space.outline);
+          // The marker sits in the room's top-right corner, clear of the room's name, which is centred.
+          const x = box.maxX - Math.min(7, (box.maxX - box.minX) * 0.22);
+          const y = box.minY + Math.min(7, (box.maxY - box.minY) * 0.22);
           const state = markerState(m);
           const n = numbered.get(m.id) ?? 0;
           return (
@@ -123,8 +132,8 @@ export function AtlasMap({
                 }
               }}
             >
-              <circle cx={x} cy={y - 10} r={selectedId === m.id ? 6.6 : 5.6} />
-              <text x={x} y={y - 8.4}>{state === 'done' ? '✓' : n}</text>
+              <circle cx={x} cy={y} r={selectedId === m.id ? 4.6 : 3.9} />
+              <text x={x} y={y + 1.3}>{state === 'done' ? '✓' : n}</text>
             </g>
           );
         })}
