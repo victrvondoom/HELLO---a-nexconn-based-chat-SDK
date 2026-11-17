@@ -57,6 +57,11 @@ export class MemoryHelloStore implements HelloStore {
   private follows: Follow[] = [];
   private keyBundles: KeyBundle[] = [];
   private sealed: SealedMessage[] = [];
+  private payments = new Map<string, Payment>();
+  /** Opaque media bytes, keyed by blob id (see persistence.ts for the durable copy). */
+  private blobs = new Map<string, Uint8Array>();
+  /** Generic collections used by the feed, communities, calls, games and workflows. */
+  private docs = new Map<CollectionName, Map<string, { id: string }>>(COLLECTION_NAMES.map((name) => [name, new Map()]));
 
 
   private static copy<T>(value: T): T {
