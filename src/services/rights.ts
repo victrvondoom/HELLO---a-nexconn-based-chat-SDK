@@ -39,9 +39,20 @@ export async function exportMyData(ctx: ServiceContext, userId: string) {
       ctx.store.listReportsForEvent(eventId),
       ctx.store.listAudit(eventId),
     ]);
+    const [fieldAttempts, fieldLedger, fieldBadges] = await Promise.all([
+      ctx.store.docList('fieldAttempts', { eventId, userId }),
+      ctx.store.docList('fieldLedger', { eventId, userId }),
+      ctx.store.docList('fieldBadges', { eventId, userId }),
+    ]);
     perEvent.push({
       eventId,
       role: membership?.role ?? null,
+      fieldAtlas: {
+        xpTotal: fieldLedger.reduce((sum, e) => sum + e.amount, 0),
+        xpEntries: fieldLedger.map((e) => ({ amount: e.amount, kind: e.kind, reason: e.reason, at: new Date(e.createdAt).toISOString() })),
+        badges: fieldBadges.map((b) => ({ name: b.name, kind: b.kind, earnedAt: new Date(b.earnedAt).toISOString() })),
+        missionAttempts: fieldAttempts.map((a) => ({ missionId: a.missionId, status: a.status, submissions: a.submissions, evidenceText: a.evidenceText, startedAt: new Date(a.startedAt).toISOString() })),
+      },
       messagesToHello: messages.filter((m) => m.senderUserId === userId).map((m) => ({ id: m.id, at: new Date(m.createdAt).toISOString(), text: m.text })),
       incidentReports: reports
         .filter((r) => r.reporterUserId === userId)
@@ -80,11 +91,40 @@ export async function exportMyData(ctx: ServiceContext, userId: string) {
 }
 
 export interface ErasureReport {
+  fieldAtlasRecords: number;
   follows: number;
   deviceKeys: number;
   privateMessages: number;
   messagesRedacted: number;
   reportsRedacted: number;
+}
+
+/**
+ * Field Atlas: the person's attempts (which hold their evidence), XP entries and badges are deleted.
+ * Organiser flags about them keep the flag but lose the link to the person. Nothing is erased from
+ * the ledger of other people. Returns how many records were removed.
+ */
+async function eraseFieldAtlas(ctx: ServiceContext, userId: string, eventIds: string[]): Promise<number> {
+  let removed = 0;
+  for (const eventId of eventIds) {
+    for (const a of await ctx.store.docList('fieldAttempts', { eventId, userId })) {
+      await ctx.store.docDelete('fieldAttempts', a.id);
+      removed += 1;
+    }
+    for (const e of await ctx.store.docList('fieldLedger', { eventId, userId })) {
+      await ctx.store.docDelete('fieldLedger', e.id);
+      removed += 1;
+    }
+    for (const b of await ctx.store.docList('fieldBadges', { eventId, userId })) {
+      await ctx.store.docDelete('fieldBadges', b.id);
+      removed += 1;
+    }
+    for (const f of await ctx.store.docList('fieldFlags', { eventId, userId })) {
+      await ctx.store.docMutate('fieldFlags', f.id, (x) => ({ ...x, userId: null, detail: ERASED_TEXT }));
+      removed += 1;
+    }
+  }
+  return removed;
 }
 
 export async function eraseMe(ctx: ServiceContext, userId: string): Promise<ErasureReport> {
@@ -93,6 +133,7 @@ export async function eraseMe(ctx: ServiceContext, userId: string): Promise<Eras
   const eventIds = await eventsOf(ctx, userId);
   await ctx.store.deleteProfile(userId);
   const report: ErasureReport = {
+    fieldAtlasRecords: await eraseFieldAtlas(ctx, userId, eventIds),
     follows: await ctx.store.removeAllFollows(userId),
     deviceKeys: await ctx.store.deleteKeyBundles(userId),
     privateMessages: await ctx.store.deleteSealedInvolving(userId),
@@ -135,7 +176,7 @@ export async function eraseMe(ctx: ServiceContext, userId: string): Promise<Eras
       'privacy.erase',
       'user',
       userId,
-      `Erased on request: ${report.follows} follows, ${report.deviceKeys} keys, ${report.privateMessages} private messages; ${report.messagesRedacted} messages and ${report.reportsRedacted} reports redacted.`,
+      `Erased on request: ${report.fieldAtlasRecords} Field Atlas records, ${report.follows} follows, ${report.deviceKeys} keys, ${report.privateMessages} private messages; ${report.messagesRedacted} messages and ${report.reportsRedacted} reports redacted.`,
     );
   }
   return report;

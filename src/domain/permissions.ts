@@ -28,6 +28,8 @@ export const CAPABILITIES = [
   'announcement.publish',
   'people.discover',
   'audit.read',
+  'field.manage',
+  'field.review',
   'member.manage',
   'content.moderate',
 ] as const;
@@ -82,6 +84,7 @@ const ROLE_CAPABILITIES: Record<Role, readonly Capability[]> = {
     'incident.triage',
     'assignment.recommend.view',
     'approval.request',
+    'field.review',
     'signal.read',
     'session.read',
     'session.discover',

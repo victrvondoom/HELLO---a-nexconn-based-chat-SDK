@@ -1,3 +1,5 @@
+import type { AttemptStatus, Difficulty, LevelDefinition, MissionCategory, MissionStatus } from './field/rules';
+
 /**
  * Records for the product modules: accounts, the social feed, communities, live location, calls,
  * games, workflows and access tokens. They live in typed document collections (see HelloStore.doc*).
@@ -176,6 +178,153 @@ export interface WorkflowRun {
   steps: Array<{ label: string; status: RunStatus; detail: string }>;
 }
 
+/** Field Atlas records. See src/domain/field/rules.ts for the invariants. */
+export interface FieldSeason {
+  id: string;
+  eventId: string;
+  year: number;
+  month: number;
+  title: string;
+  theme: string;
+  description: string;
+  startsAt: number;
+  endsAt: number;
+  /** The artwork key the badge cabinet draws. */
+  artwork: 'compass' | 'route' | 'hands' | 'lens' | 'bridge';
+  bonusXp: number;
+  /** Missions in the season. The badge is earned when every one in `requiredMissionIds` is approved in-window. */
+  missionIds: string[];
+  requiredMissionIds: string[];
+  status: 'DRAFT' | 'PUBLISHED' | 'PAUSED';
+  source: 'ORGANISER' | 'QUEST_DIRECTOR' | 'DEMO_SEED';
+  version: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface FieldMission {
+  id: string;
+  eventId: string;
+  title: string;
+  description: string;
+  whyItMatters: string;
+  category: MissionCategory;
+  difficulty: Difficulty;
+  requiredLevel: number;
+  xp: number;
+  seasonId: string | null;
+  spaceId: string | null;
+  nonLocation: boolean;
+  prerequisiteIds: string[];
+  verification:
+    | { method: 'WORKFLOW_RUN'; workflowId: string }
+    | { method: 'CHECK_IN'; stationId: string }
+    | { method: 'MANUAL_REVIEW'; evidencePrompt: string };
+  estimateMinutes: number | null;
+  accessibilityNote: string;
+  startsAt: number | null;
+  endsAt: number | null;
+  status: MissionStatus;
+  maxCompletionsPerPerson: 1;
+  source: 'ORGANISER' | 'QUEST_DIRECTOR' | 'DEMO_SEED';
+  version: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+/** One per person per mission. Id is `${missionId}:${userId}`, so a second start cannot be stored. */
+export interface FieldAttempt {
+  id: string;
+  eventId: string;
+  missionId: string;
+  userId: string;
+  status: AttemptStatus;
+  submissions: number;
+  evidenceText: string;
+  normalisedEvidence: string;
+  /** The last verification reason shown to the person, for failed or pending steps. */
+  lastOutcome: string;
+  startedAt: number;
+  submittedAt: number | null;
+  approvedAt: number | null;
+  reviewedBy: string | null;
+  version: number;
+}
+
+/** Append-only XP ledger. Id is deterministic (source-derived), so a repeat write is a no-op. */
+export interface FieldLedgerEntry {
+  id: string;
+  eventId: string;
+  userId: string;
+  amount: number;
+  kind: 'MISSION' | 'SEASON_BONUS' | 'ADJUSTMENT';
+  sourceId: string;
+  reason: string;
+  actorId: string | null;
+  createdAt: number;
+}
+
+/** Earned badges. Id is `${userId}:${badgeId}`. Never deleted by season expiry. */
+export interface FieldBadge {
+  id: string;
+  eventId: string;
+  userId: string;
+  badgeId: string;
+  kind: 'PERMANENT' | 'MONTHLY';
+  seasonId: string | null;
+  name: string;
+  artwork: string;
+  earnedAt: number;
+}
+
+/** A staff-issued check-in code for one place. Only a hash is stored. */
+export interface FieldStation {
+  id: string;
+  eventId: string;
+  spaceId: string;
+  name: string;
+  codeHash: string;
+  codeIssuedAt: number;
+  codeExpiresAt: number;
+  rotations: number;
+  createdBy: string;
+  version: number;
+}
+
+export interface FieldFlag {
+  id: string;
+  eventId: string;
+  userId: string | null;
+  missionId: string | null;
+  kind: 'REPEATED_SUBMISSIONS' | 'DUPLICATE_EVIDENCE' | 'EXPIRED_CHECK_IN' | 'REPEATED_BAD_CODE';
+  detail: string;
+  status: 'OPEN' | 'DISMISSED';
+  createdAt: number;
+}
+
+export interface FieldLevelConfig {
+  /** One document per event. The list is the whole progression for that event. */
+  id: string;
+  eventId: string;
+  levels: LevelDefinition[];
+  version: number;
+  updatedAt: number;
+}
+
+export interface QuestRun {
+  id: string;
+  eventId: string;
+  createdAt: number;
+  createdBy: string;
+  /** The inputs the draft was built from, by id, so the draft can be traced to real records. */
+  sources: { sessionIds: string[]; roomIds: string[]; spaceIds: string[]; workflowIds: string[] };
+  /** Counts of what the generator could not ground, so it reports gaps instead of inventing them. */
+  unavailable: string[];
+  missionIds: string[];
+  autoPublished: string[];
+  status: 'DRAFT_CREATED' | 'REJECTED_ALL';
+}
+
 export interface Collections {
   accounts: AuthAccount;
   authSessions: SessionRecord;
@@ -189,6 +338,15 @@ export interface Collections {
   calls: CallRoom;
   games: Game;
   workflowRuns: WorkflowRun;
+  fieldSeasons: FieldSeason;
+  fieldMissions: FieldMission;
+  fieldAttempts: FieldAttempt;
+  fieldLedger: FieldLedgerEntry;
+  fieldBadges: FieldBadge;
+  fieldStations: FieldStation;
+  fieldFlags: FieldFlag;
+  fieldLevels: FieldLevelConfig;
+  questRuns: QuestRun;
 }
 
 export type CollectionName = keyof Collections;
@@ -206,4 +364,13 @@ export const COLLECTION_NAMES: readonly CollectionName[] = [
   'calls',
   'games',
   'workflowRuns',
+  'fieldSeasons',
+  'fieldMissions',
+  'fieldAttempts',
+  'fieldLedger',
+  'fieldBadges',
+  'fieldStations',
+  'fieldFlags',
+  'fieldLevels',
+  'questRuns',
 ];
