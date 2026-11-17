@@ -11,6 +11,7 @@ import { DataRights } from '@/components/social/DataRights';
 import { AvailabilityControl } from '@/components/workplace/AvailabilityControl';
 import { SignOutButton } from '@/components/settings/SignOutButton';
 import { ResetDemoButton } from '@/components/settings/ResetDemoButton';
+import { TokenManager } from '@/components/settings/TokenManager';
 
 export const dynamic = 'force-dynamic';
 
@@ -71,6 +72,11 @@ export default async function SettingsPage({ params }: { params: Promise<{ event
             <DataRights userId={viewer.userId} />
           </section>
 
+          <section id="tokens" className="card card__body stack" aria-labelledby="tokens-heading">
+            <h2 id="tokens-heading">Connect an assistant (MCP)</h2>
+            <TokenManager eventId={eventId} now={viewer.ctx.now()} endpoint="/api/mcp" />
+          </section>
+
           {isStaff ? (
             <section className="card card__body stack" aria-labelledby="availability-heading">
               <div>
@@ -102,15 +108,13 @@ export default async function SettingsPage({ params }: { params: Promise<{ event
             </ul>
           </section>
 
-          {demoModeEnabled() ? (
-            <section className="card card__body stack" aria-labelledby="demo-heading">
-              <h2 id="demo-heading">Demo</h2>
-              <div className="row">
-                <SignOutButton />
-                <ResetDemoButton eventId={eventId} />
-              </div>
-            </section>
-          ) : null}
+          <section className="card card__body stack" aria-labelledby="session-heading">
+            <h2 id="session-heading">Session</h2>
+            <div className="row">
+              <SignOutButton />
+              {demoModeEnabled() && viewer.can('member.manage') ? <ResetDemoButton /> : null}
+            </div>
+          </section>
         </div>
       </div>
     </div>

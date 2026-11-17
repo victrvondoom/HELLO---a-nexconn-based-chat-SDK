@@ -29,6 +29,7 @@ export default async function EventLayout({
         canApprove={viewer.can('approval.decide')}
         canAudit={viewer.can('audit.read')}
         unread={feed.unread}
+        isDemo={viewer.event.isDemo}
       />
       <div className="workspace">
         <header className="topbar">

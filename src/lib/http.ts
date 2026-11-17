@@ -43,3 +43,15 @@ export async function readJson(request: Request): Promise<unknown> {
     throw new DomainError('VALIDATION_FAILED', 'The request body must be JSON.');
   }
 }
+
+/** Parses and validates a JSON body. Anything that does not match the schema never reaches a service. */
+export async function parseBody<T>(request: Request, schema: { safeParse(input: unknown): { success: true; data: T } | { success: false } }, message: string): Promise<T> {
+  const parsed = schema.safeParse(await readJson(request));
+  if (!parsed.success) throw new DomainError('VALIDATION_FAILED', message);
+  return parsed.data;
+}
+
+/** The caller's address as reported by the hosting proxy. Used only as a rate-limit key. */
+export function clientKey(request: Request): string {
+  return (request.headers.get('x-forwarded-for') ?? 'local').split(',')[0]?.trim().slice(0, 64) || 'local';
+}

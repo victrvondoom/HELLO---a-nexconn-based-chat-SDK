@@ -15,7 +15,7 @@ export function viewerRoute<P extends Params>(
   return async (request: Request, context: { params: Promise<P> }): Promise<NextResponse> => {
     const userId = await currentUserId();
     if (!userId) {
-      return jsonError('UNAUTHENTICATED', 'Choose a demo account to continue.', 401);
+      return jsonError('UNAUTHENTICATED', 'Sign in to continue.', 401);
     }
     try {
       const params = await context.params;

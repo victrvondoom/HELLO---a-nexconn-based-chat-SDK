@@ -20,6 +20,7 @@ import type {
   User,
 } from '../domain/types';
 import type { Venue } from '../domain/venue/types';
+import type { CollectionName, Collections } from '../domain/product';
 import { DomainError } from '../domain/errors';
 
 /**
@@ -119,6 +120,30 @@ export interface HelloStore {
 
   /** Number of open (not closed/cancelled) incidents each user is assigned to. */
   countOpenAssignments(eventId: string): Promise<Map<string, number>>;
+
+  // --- accounts: people who register join an event as attendees ---
+  insertUser(user: User): Promise<void>;
+  insertMembership(membership: Membership): Promise<void>;
+
+  // --- typed document collections for the product modules (src/domain/product.ts) ---
+  // `where` is an equality match on top-level fields and is only ever built by server code,
+  // so a caller can never smuggle a query operator into it.
+  docPut<K extends CollectionName>(collection: K, doc: Collections[K]): Promise<void>;
+  /** Inserts only when no document has this id. Returns false when one already exists. */
+  docPutIfAbsent<K extends CollectionName>(collection: K, doc: Collections[K]): Promise<boolean>;
+  docGet<K extends CollectionName>(collection: K, id: string): Promise<Collections[K] | null>;
+  docList<K extends CollectionName>(collection: K, where?: Partial<Collections[K]>): Promise<Collections[K][]>;
+  docDelete(collection: CollectionName, id: string): Promise<boolean>;
+  /**
+   * Atomic read-modify-write. `change` receives the stored document and returns the new one, or null
+   * to leave it untouched. Two simultaneous moves or likes therefore cannot overwrite each other.
+   */
+  docMutate<K extends CollectionName>(collection: K, id: string, change: (doc: Collections[K]) => Collections[K] | null): Promise<Collections[K] | null>;
+
+  // --- media bytes, kept apart from their metadata ---
+  blobPut(id: string, bytes: Uint8Array): Promise<void>;
+  blobGet(id: string): Promise<Uint8Array | null>;
+  blobDelete(id: string): Promise<void>;
 }
 
 export class VersionConflictError extends DomainError {

@@ -1,4 +1,4 @@
-/* global process, console, fetch, URL */
+/* global process, console, URL */
 /**
  * Captures the README screenshots from a running demo server, so they can be regenerated after UI changes.
  *
@@ -10,6 +10,7 @@
 import { mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
+import { resetDemo } from './reset.mjs';
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:3000';
 const EVENT = 'evt-demo-hello-summit';
@@ -17,7 +18,7 @@ const OUT = new URL('../../docs/screenshots/', import.meta.url);
 const launchOptions = process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH, args: ['--no-sandbox'] } : {};
 
 await mkdir(OUT, { recursive: true });
-const reset = await fetch(`${BASE}/api/demo/reset`, { method: 'POST' });
+const reset = await resetDemo(BASE);
 if (!reset.ok) throw new Error(`demo reset failed (${reset.status}); start the server with HELLO_DEMO_MODE=true`);
 
 const browser = await chromium.launch(launchOptions);
@@ -82,5 +83,5 @@ try {
   await phone.context.close();
 } finally {
   await browser.close();
-  await fetch(`${BASE}/api/demo/reset`, { method: 'POST' }).catch(() => undefined);
+  await resetDemo(BASE).catch(() => undefined);
 }

@@ -1,4 +1,4 @@
-/* global process, console, fetch, document */
+/* global process, console, document */
 /**
  * Workflow audit: runs the real flows across roles (report, follow-up, claim, resolve, confirm, reopen,
  * cancel, approvals, announcements, escalation, sign-out) in a browser, and reports each step.
@@ -6,6 +6,7 @@
  */
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
+import { resetDemo } from './reset.mjs';
 const BASE = process.env.BASE_URL ?? 'http://localhost:3000';
 const E = 'evt-demo-hello-summit';
 const results = [];
@@ -13,7 +14,7 @@ async function step(name, fn) {
   try { await fn(); results.push(['PASS', name]); console.log('PASS ', name); }
   catch (e) { results.push(['FAIL', name]); console.log('FAIL ', name, '\n       ', String(e).split('\n')[0].slice(0, 220)); }
 }
-await fetch(`${BASE}/api/demo/reset`, { method: 'POST' });
+await resetDemo(BASE);
 const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH, args: ['--no-sandbox'] } : {});
 const errors = [];
 async function as(userId) {
@@ -195,11 +196,11 @@ await step('W8 sessions page offers alternatives for a chosen session', async ()
   await nadia.page.getByRole('heading', { name: /Alternatives to/ }).waitFor({ timeout: 10000 });
 });
 
-// W9 sign out returns to demo sign in
-await step('W9 signing out returns to the demo picker', async () => {
+// W9 sign out returns to sign-in
+await step('W9 signing out returns to sign-in', async () => {
   await nadia.page.goto(`${BASE}/events/${E}/settings`, { waitUntil: 'networkidle' });
-  await nadia.page.getByRole('button', { name: 'Switch demo account' }).click();
-  await nadia.page.waitForURL('**/demo', { timeout: 10000 });
+  await nadia.page.getByRole('button', { name: 'Sign out' }).click();
+  await nadia.page.waitForURL('**/signin', { timeout: 10000 });
 });
 
 for (const c of [reporter, kiri, quiet, vol, marco, lena, nadia, dana, off]) await c.ctx.close();

@@ -10,8 +10,8 @@ export function SignOutButton() {
   async function signOut() {
     setBusy(true);
     try {
-      await fetch('/api/demo/session', { method: 'DELETE' });
-      router.push('/demo');
+      await fetch('/api/auth/logout', { method: 'POST' });
+      router.push('/signin');
       router.refresh();
     } finally {
       setBusy(false);
@@ -21,7 +21,7 @@ export function SignOutButton() {
   return (
     <div>
       <button type="button" className="button button--ghost" onClick={() => void signOut()} disabled={busy}>
-        {busy ? 'Signing out…' : 'Switch demo account'}
+        {busy ? 'Signing out…' : 'Sign out'}
       </button>
     </div>
   );
