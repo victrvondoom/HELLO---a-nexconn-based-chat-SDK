@@ -21,6 +21,7 @@ import type {
   User,
 } from '../domain/types';
 import type { Venue } from '../domain/venue/types';
+import { COLLECTION_NAMES, type CollectionName, type Collections } from '../domain/product';
 import { OPEN_STATUSES } from '../domain/incidents/lifecycle';
 import { DomainError } from '../domain/errors';
 import { VersionConflictError, type HelloStore } from './store';
@@ -56,7 +57,7 @@ export class MemoryHelloStore implements HelloStore {
   private follows: Follow[] = [];
   private keyBundles: KeyBundle[] = [];
   private sealed: SealedMessage[] = [];
-  private payments = new Map<string, Payment>();
+
 
   private static copy<T>(value: T): T {
     return structuredClone(value);
@@ -525,5 +526,111 @@ export class MemoryHelloStore implements HelloStore {
       counts.set(incident.assigneeUserId, (counts.get(incident.assigneeUserId) ?? 0) + 1);
     }
     return counts;
+  }
+
+  // --- accounts ---
+
+  async insertUser(user: User): Promise<void> {
+    if (this.users.has(user.id)) throw new DomainError('VALIDATION_FAILED', 'That account already exists.');
+    this.users.set(user.id, MemoryHelloStore.copy(user));
+  }
+
+  async insertMembership(membership: Membership): Promise<void> {
+    this.memberships.set(membership.id, MemoryHelloStore.copy(membership));
+  }
+
+  // --- document collections ---
+
+  private bucket<K extends CollectionName>(collection: K): Map<string, Collections[K]> {
+    const bucket = this.docs.get(collection);
+    if (!bucket) throw new DomainError('NOT_FOUND', 'Unknown collection.');
+    return bucket as Map<string, Collections[K]>;
+  }
+
+  async docPut<K extends CollectionName>(collection: K, doc: Collections[K]): Promise<void> {
+    this.bucket(collection).set(doc.id, MemoryHelloStore.copy(doc));
+  }
+
+  async docPutIfAbsent<K extends CollectionName>(collection: K, doc: Collections[K]): Promise<boolean> {
+    const bucket = this.bucket(collection);
+    if (bucket.has(doc.id)) return false;
+    bucket.set(doc.id, MemoryHelloStore.copy(doc));
+    return true;
+  }
+
+  async docGet<K extends CollectionName>(collection: K, id: string): Promise<Collections[K] | null> {
+    const doc = this.bucket(collection).get(id);
+    return doc ? MemoryHelloStore.copy(doc) : null;
+  }
+
+  async docList<K extends CollectionName>(collection: K, where: Partial<Collections[K]> = {}): Promise<Collections[K][]> {
+    const conditions = Object.entries(where) as Array<[keyof Collections[K], unknown]>;
+    const out: Collections[K][] = [];
+    for (const doc of this.bucket(collection).values()) {
+      if (conditions.every(([key, value]) => doc[key] === value)) out.push(MemoryHelloStore.copy(doc));
+    }
+    return out;
+  }
+
+  async docDelete(collection: CollectionName, id: string): Promise<boolean> {
+    return this.bucket(collection).delete(id);
+  }
+
+  async docMutate<K extends CollectionName>(collection: K, id: string, change: (doc: Collections[K]) => Collections[K] | null): Promise<Collections[K] | null> {
+    const bucket = this.bucket(collection);
+    const current = bucket.get(id);
+    if (!current) return null;
+    // Synchronous between read and write, so nothing else can run in the gap.
+    const next = change(MemoryHelloStore.copy(current));
+    if (next === null) return null;
+    bucket.set(id, MemoryHelloStore.copy(next));
+    return next;
+  }
+
+  // --- media bytes ---
+
+  async blobPut(id: string, bytes: Uint8Array): Promise<void> {
+    this.blobs.set(id, bytes);
+  }
+
+  async blobGet(id: string): Promise<Uint8Array | null> {
+    return this.blobs.get(id) ?? null;
+  }
+
+  async blobDelete(id: string): Promise<void> {
+    this.blobs.delete(id);
+  }
+
+  // --- durable snapshot (src/lib/persistence.ts). Media bytes are written separately. ---
+
+  snapshot(): string {
+    const state: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(this)) {
+      if (key !== 'blobs') state[key] = value;
+    }
+    return JSON.stringify(state, (_key, value: unknown) => {
+      if (value instanceof Map) return { $map: [...value.entries()] };
+      if (value instanceof Set) return { $set: [...value.values()] };
+      return value;
+    });
+  }
+
+  hydrate(json: string): void {
+    const state = JSON.parse(json, (_key, value: unknown) => {
+      if (value && typeof value === 'object' && '$map' in value) return new Map((value as { $map: Array<[unknown, unknown]> }).$map);
+      if (value && typeof value === 'object' && '$set' in value) return new Set((value as { $set: unknown[] }).$set);
+      return value;
+    }) as Record<string, unknown>;
+    const self = this as unknown as Record<string, unknown>;
+    for (const key of Object.keys(this)) {
+      if (key !== 'blobs' && key !== 'docs' && key in state) self[key] = state[key];
+    }
+    // Collections added after a snapshot was written must still exist.
+    const stored = state.docs instanceof Map ? (state.docs as Map<CollectionName, Map<string, { id: string }>>) : new Map<CollectionName, Map<string, { id: string }>>();
+    for (const name of COLLECTION_NAMES) this.docs.set(name, stored.get(name) ?? new Map<string, { id: string }>());
+  }
+
+  blobIds(): string[] {
+    return [...this.blobs.keys()];
   }
 }

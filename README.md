@@ -26,6 +26,23 @@ npm run dev
 Open <http://localhost:3000>, choose **Enter the demo**, and pick a demo role. Every person, room and incident
 in the demo is seeded, illustrative data. Full instructions are under [Installation and local run](#installation-and-local-run).
 
+## What was added: accounts, community and workflows
+
+| Area | What it does | Where |
+|---|---|---|
+| Accounts | Register and sign in with a handle and password; server-side sessions | `/signin`, `src/services/auth.ts` |
+| Durable storage | Everything saved to disk when `HELLO_DATA_DIR` is set | `src/lib/persistence.ts` |
+| Workflow canvas | Live graph of the event; one-click workflows that run with your own permissions | `/events/:id/flow` |
+| Feed | Posts, pictures, videos, likes, comments, shares, Following and Videos views | `/events/:id/feed` |
+| Communities | Open groups with their own feed and group calls | `/events/:id/communities` |
+| Calls | Video, voice and screen sharing for up to 8, browser to browser (WebRTC) | `/events/:id/calls` |
+| Games | Four in a row (two players, live) and a quiz written from the schedule | `/events/:id/games` |
+| Live map | World map by country; live location shared only by choice, with an expiry | `/events/:id/live-map` |
+| MCP | A Model Context Protocol endpoint with personal access tokens | `POST /api/mcp`, Settings |
+
+Security review of all of it: [docs/security-audit.md](docs/security-audit.md).
+End-to-end proof: `BASE_URL=http://localhost:3000 node tests/e2e/product-flow.mjs`.
+
 ## Screenshots
 
 All images are captured from the running demo by `npm run screenshots` (see [Commands](#commands)), so they show

@@ -2,6 +2,31 @@ import type { ReactNode } from 'react';
 
 /** Minimal stroke icon set (24px grid, 1.8px stroke). Decorative by default; pass a label to make it meaningful. */
 const PATHS: Record<IconName, ReactNode> = {
+  feed: <path d="M4 5h16M4 12h16M4 19h10" />,
+  video: (
+    <><rect x="3" y="6" width="13" height="12" rx="2" /><path d="m16 10 5-3v10l-5-3" /></>
+  ),
+  game: (
+    <><rect x="3" y="7" width="18" height="11" rx="4" /><path d="M8 11v3M6.5 12.5h3M15.5 11.5h.01M17.5 13.5h.01" /></>
+  ),
+  flow: (
+    <><rect x="3" y="4" width="6" height="5" rx="1.5" /><rect x="15" y="4" width="6" height="5" rx="1.5" /><rect x="9" y="15" width="6" height="5" rx="1.5" /><path d="M9 6.5h6M6 9v3a3 3 0 0 0 3 3M18 9v3a3 3 0 0 1-3 3" /></>
+  ),
+  pin: (
+    <><path d="M12 21s7-6.2 7-11a7 7 0 0 0-14 0c0 4.8 7 11 7 11z" /><circle cx="12" cy="10" r="2.5" /></>
+  ),
+  heart: <path d="M12 20s-7-4.4-7-9.5A4 4 0 0 1 12 8a4 4 0 0 1 7 2.5C19 15.6 12 20 12 20z" />,
+  comment: <path d="M20 12a8 8 0 0 1-11.8 7L4 20l1-4.200A8 8 0 1 1 20 12z" />,
+  share: <path d="M7 7h11v11M7 17l4-4M17 3l4 4-4 4M21 7H10a4 4 0 0 0-4 4v2" />,
+  key: (
+    <><circle cx="8" cy="15" r="4" /><path d="m11 12 9-9M16 7l3 3" /></>
+  ),
+  play: <path d="M7 4v16l13-8z" />,
+  trash: <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" />,
+  plus: <path d="M12 5v14M5 12h14" />,
+  groups: (
+    <><circle cx="8" cy="9" r="3" /><circle cx="17" cy="10" r="2.5" /><path d="M2 20a6 6 0 0 1 12 0M14.5 20a4.5 4.5 0 0 1 7.5-3" /></>
+  ),
   conversation: <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />,
   incidents: (
     <>
@@ -82,6 +107,19 @@ const PATHS: Record<IconName, ReactNode> = {
 };
 
 export type IconName =
+  | 'feed'
+  | 'video'
+  | 'game'
+  | 'flow'
+  | 'pin'
+  | 'heart'
+  | 'comment'
+  | 'share'
+  | 'key'
+  | 'play'
+  | 'trash'
+  | 'plus'
+  | 'groups'
   | 'conversation'
   | 'mic'
   | 'search'

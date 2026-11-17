@@ -15,7 +15,7 @@ export async function POST(
 ): Promise<NextResponse> {
   const userId = await currentUserId();
   if (!userId) {
-    return jsonError('UNAUTHENTICATED', 'Choose a demo account to continue.', 401);
+    return jsonError('UNAUTHENTICATED', 'Sign in to continue.', 401);
   }
   const { eventId } = await context.params;
   try {

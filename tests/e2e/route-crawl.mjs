@@ -1,4 +1,4 @@
-/* global process, console, fetch */
+/* global process, console */
 /**
  * Route crawl: visits every page as every demo role and reports HTTP errors, error boundaries and page exceptions.
  * Some pages are deliberately hidden from some roles (they answer 404 so their existence is not revealed).
@@ -6,6 +6,7 @@
  * should be denied but loads, is reported as a problem.
  */
 import { chromium } from 'playwright';
+import { resetDemo } from './reset.mjs';
 const E = 'evt-demo-hello-summit';
 const BASE = process.env.BASE_URL ?? 'http://localhost:3000';
 const ROUTES = ['', '/conversation', '/incidents', '/incidents?filter=all', '/incidents?filter=attention', '/incidents/inc-seed-av-r3', '/incidents/inc-seed-cap-r3', '/incidents/inc-seed-fac-r2', '/operations', '/team', '/announcements', '/sessions', '/sessions?current=s-sat-power', '/people?q=satellite', '/notifications', '/settings', '/audit', '/audit?action=sla.sweep', '/agents', '/map', '/map?to=r-3', '/people?tab=network', '/people/u-att-ada', '/messages', '/messages/u-spk-ines'];
@@ -25,7 +26,7 @@ function expectDenied(who, route) {
   return false;
 }
 (async () => {
-  await fetch(`${BASE}/api/demo/reset`, { method: 'POST' });
+  await resetDemo(BASE);
   const b = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH, args: ['--no-sandbox'] } : {});
   const problems = [];
   let denied = 0;

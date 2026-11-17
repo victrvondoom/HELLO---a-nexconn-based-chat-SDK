@@ -24,7 +24,7 @@ export default async function DemoPage() {
       <div className="page" style={{ maxWidth: 640 }}>
         <h1>Sign-in unavailable</h1>
         <p className="muted" style={{ marginTop: 8 }}>
-          Demo accounts are disabled in this deployment. Real authentication must be configured first.
+          Demo accounts are disabled in this deployment. <Link href="/signin">Sign in or create an account</Link>.
         </p>
       </div>
     );
@@ -61,7 +61,7 @@ export default async function DemoPage() {
         </div>
       </div>
       <div className="notice notice--demo" role="note" style={{ marginBottom: 20 }}>
-        <strong>Demo only.</strong> These accounts are not real people, and this is not production sign-in.
+        <strong>Demo only.</strong> These accounts are not real people. To keep your own profile, posts and games, <Link href="/signin">create an account</Link>.
       </div>
       <DemoSignIn eventId={DEMO_EVENT_ID} accounts={accounts} />
     </div>

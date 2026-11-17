@@ -11,6 +11,7 @@ const csp = [
   `script-src 'self' 'unsafe-inline'${isProd ? '' : " 'unsafe-eval'"}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
+  "media-src 'self' blob:",
   "font-src 'self'",
   `connect-src 'self'${isProd ? '' : ' ws: wss:'}`,
   "object-src 'none'",
@@ -23,6 +24,9 @@ const csp = [
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // The request check in src/proxy.ts buffers bodies. Video uploads are allowed up to 24 MB
+  // (enforced again, exactly, in the upload route), so the buffer must be at least that large.
+  experimental: { proxyClientMaxBodySize: '25mb' },
   async headers() {
     return [
       {
@@ -35,7 +39,9 @@ const nextConfig = {
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(self), geolocation=()',
+            // Calls use the camera, microphone and screen; the live map uses location. Each still needs the
+            // person's own browser permission, and no embedded third-party frame can ask for any of them.
+            value: 'camera=(self), microphone=(self), geolocation=(self), display-capture=(self)',
           },
         ],
       },
