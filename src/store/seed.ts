@@ -16,6 +16,7 @@ import type {
 import type { MemoryHelloStore } from './memory';
 import type { Vault } from '../lib/vault';
 import { buildDemoVenue } from './venue-seed';
+import { seedFieldAtlas } from './field-seed';
 
 /**
  * DEMO SEED DATA — every record here is fictional and exists only to demonstrate
@@ -415,6 +416,7 @@ export async function loadDemoEvent(store: MemoryHelloStore, options: { vault?: 
   for (const approval of data.approvals) {
     await store.insertApproval(approval);
   }
+  await seedFieldAtlas(store, DEMO_EVENT_ID, DEMO_T0);
 }
 
 export const DEMO_NOW = DEMO_T0 + 3 * HOUR;
