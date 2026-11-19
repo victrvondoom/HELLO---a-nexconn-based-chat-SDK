@@ -158,6 +158,29 @@ export interface HelloStore {
   blobDelete(id: string): Promise<void>;
 }
 
+/** Initial data for an empty store: the demo event, or a test fixture. */
+export interface SeedData {
+  events: EventRecord[];
+  users: User[];
+  memberships: Membership[];
+  rooms: Room[];
+  sessions: Session[];
+  incidents?: Incident[];
+  reports?: IncidentReport[];
+  timeline?: IncidentTimelineEntry[];
+  announcements?: Announcement[];
+  notifications?: Notification[];
+  referenceDocs?: ReferenceDoc[];
+  venues?: Venue[];
+  profiles?: ProfileRecord[];
+  follows?: Follow[];
+}
+
+/** A store that can be loaded with seed data. Both the in-memory and the Postgres store are. */
+export interface SeedableStore extends HelloStore {
+  seed(data: SeedData): void | Promise<void>;
+}
+
 export class VersionConflictError extends DomainError {
   constructor(entity: string) {
     super('VERSION_CONFLICT', `The ${entity} was changed by someone else. Refresh and try again.`);

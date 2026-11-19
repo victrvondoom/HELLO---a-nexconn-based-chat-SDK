@@ -193,7 +193,7 @@ describe('visibility and cross-event isolation', () => {
   });
 
   it('never reveals an incident that belongs to a different event', async () => {
-    h.store.seed({
+    await h.store.seed({
       events: [{ id: 'evt-other', name: 'Other event', timezone: 'UTC', isDemo: true }],
       users: [],
       memberships: [],

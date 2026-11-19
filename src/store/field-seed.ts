@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from 'node:crypto';
-import type { MemoryHelloStore } from './memory';
+import type { HelloStore } from './store';
 import type { FieldMission, FieldSeason, FieldStation } from '../domain/product';
 import { monthWindow } from '../domain/field/rules';
 
@@ -10,7 +10,7 @@ import { monthWindow } from '../domain/field/rules';
  * organiser issues a code from the Field Atlas manage page. That is deliberate: no demo check-in can succeed
  * without a staff action.
  */
-export async function seedFieldAtlas(store: MemoryHelloStore, eventId: string, now: number): Promise<void> {
+export async function seedFieldAtlas(store: HelloStore, eventId: string, now: number): Promise<void> {
   const window = monthWindow(2026, 11);
   const season: FieldSeason = {
     id: 'season-2026-11',

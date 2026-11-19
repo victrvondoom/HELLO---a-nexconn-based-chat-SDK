@@ -24,7 +24,7 @@ import type { Venue } from '../domain/venue/types';
 import { COLLECTION_NAMES, type CollectionName, type Collections } from '../domain/product';
 import { OPEN_STATUSES } from '../domain/incidents/lifecycle';
 import { DomainError } from '../domain/errors';
-import { VersionConflictError, type HelloStore } from './store';
+import { VersionConflictError, type SeedableStore, type SeedData } from './store';
 
 /**
  * In-memory implementation of `HelloStore`. Used for local demo mode and for tests.
@@ -35,7 +35,7 @@ import { VersionConflictError, type HelloStore } from './store';
  * durable and NOT shared across processes: production must use the Postgres
  * implementation described in docs/database.md.
  */
-export class MemoryHelloStore implements HelloStore {
+export class MemoryHelloStore implements SeedableStore {
   private events = new Map<string, EventRecord>();
   private users = new Map<string, User>();
   private memberships = new Map<string, Membership>();
@@ -74,22 +74,7 @@ export class MemoryHelloStore implements HelloStore {
 
   // --- seeding helpers (used by the seed loader only) ---
 
-  seed(data: {
-    events: EventRecord[];
-    users: User[];
-    memberships: Membership[];
-    rooms: Room[];
-    sessions: Session[];
-    incidents?: Incident[];
-    reports?: IncidentReport[];
-    timeline?: IncidentTimelineEntry[];
-    announcements?: Announcement[];
-    notifications?: Notification[];
-    referenceDocs?: ReferenceDoc[];
-    venues?: Venue[];
-    profiles?: ProfileRecord[];
-    follows?: Follow[];
-  }): void {
+  seed(data: SeedData): void {
     for (const p of data.profiles ?? []) this.profiles.set(p.userId, MemoryHelloStore.copy(p));
     for (const f of data.follows ?? []) this.follows.push(MemoryHelloStore.copy(f));
     for (const v of data.venues ?? []) this.venues.set(v.eventId, MemoryHelloStore.copy(v));

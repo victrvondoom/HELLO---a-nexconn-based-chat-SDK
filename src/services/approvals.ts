@@ -40,6 +40,16 @@ export function validatePayload(actionType: ConsequentialActionType, payload: Re
   }
 }
 
+/**
+ * Two payloads are the same request when they have the same keys and values, in any order. This used to
+ * compare JSON strings, which depend on key order: a store that does not keep key order (Postgres JSONB
+ * sorts keys) made every repeat look new, and organisers got the same request again and again.
+ */
+export function samePayload(a: Record<string, string>, b: Record<string, string>): boolean {
+  const keys = Object.keys(a);
+  return keys.length === Object.keys(b).length && keys.every((k) => Object.hasOwn(b, k) && a[k] === b[k]);
+}
+
 export interface RequestApprovalInput {
   eventId: string;
   /** A user id, or SYSTEM_ACTOR_ID for proposals raised by HELLO itself. */
@@ -65,7 +75,7 @@ export async function requestApproval(ctx: ServiceContext, input: RequestApprova
     (a) =>
       a.status === 'PENDING' &&
       a.actionType === input.actionType &&
-      JSON.stringify(a.payload) === JSON.stringify(input.payload),
+      samePayload(a.payload, input.payload),
   );
   if (existing) {
     return existing;
