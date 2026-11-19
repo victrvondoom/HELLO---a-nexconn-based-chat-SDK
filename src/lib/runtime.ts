@@ -12,6 +12,8 @@ import { liveBus } from '@/lib/live/bus';
 import { withLiveEvents } from '@/lib/live/store';
 import { presenceRegistry } from '@/lib/live/presence';
 import { startFanout, type Fanout } from '@/lib/live/fanout';
+import { chatTransportFromEnv, type ChatTransport } from '@/integrations/chat/transport';
+import { enqueueNotification, processDeliveries } from '@/services/chat-gateway';
 
 /**
  * Process-wide runtime. The store is chosen from the environment:
@@ -35,6 +37,8 @@ export interface Runtime {
   database: PostgresHelloStore | null;
   /** Live events across instances (Postgres only). Null with the in-memory store: one instance, one bus. */
   fanout: Fanout | null;
+  /** The chat network transport (src/integrations/chat/transport.ts). In-app only unless configured. */
+  chat: ChatTransport;
   clock: 'LIVE_FROM_SEEDED_EVENT_TIME';
   /** Stops background work (the clock save). Called before the runtime is discarded. */
   stop: () => void;
@@ -64,6 +68,36 @@ function contextFor(store: HelloStore, now: () => number, vault: ReturnType<type
   });
 }
 
+const DELIVERY_EVERY_MS = 3_000;
+
+/**
+ * Connects the chat gateway: new notifications are queued for linked chat accounts, and a worker drains the
+ * queue. Nothing runs with the in-app transport. Returns a function that stops the worker.
+ */
+function startChatGateway(ctx: ServiceContext, chat: ChatTransport): () => void {
+  if (!chat.external) return () => undefined;
+  let running = false;
+  const drain = () => {
+    if (running) return;
+    running = true;
+    processDeliveries(ctx, chat)
+      .catch((error: unknown) => {
+        logError('chat_delivery_failed', { detail: error instanceof Error ? error.message : 'unknown' });
+      })
+      .finally(() => {
+        running = false;
+      });
+  };
+  ctx.afterNotify = async (notification) => {
+    if ((await enqueueNotification(ctx, chat, notification)) > 0) drain();
+  };
+  const timer = setInterval(drain, DELIVERY_EVERY_MS);
+  timer.unref();
+  return () => {
+    clearInterval(timer);
+  };
+}
+
 async function createPostgresRuntime(connectionString: string, vault: ReturnType<typeof vaultFromEnv>): Promise<Runtime> {
   const schema = (process.env.HELLO_DB_SCHEMA ?? '').trim() || 'public';
   const database = await PostgresHelloStore.connect({ connectionString, schema });
@@ -88,16 +122,21 @@ async function createPostgresRuntime(connectionString: string, vault: ReturnType
     return null;
   });
   const store = live(database, now);
+  const ctx = contextFor(store, now, vault);
+  const chat = chatTransportFromEnv(process.env);
+  const stopChat = startChatGateway(ctx, chat);
   return {
     store,
-    ctx: contextFor(store, now, vault),
+    ctx,
     persistence: 'POSTGRES',
     disk: null,
     database,
     fanout,
+    chat,
     clock: 'LIVE_FROM_SEEDED_EVENT_TIME',
     stop: () => {
       clearInterval(timer);
+      stopChat();
       void fanout?.stop();
     },
   };
@@ -117,7 +156,10 @@ async function createRuntime(): Promise<Runtime> {
   const bootedAt = Date.now();
   const now = () => base + (Date.now() - bootedAt);
   const store = live(disk ? disk.attach(memory, now) : memory, now);
-  return { store, ctx: contextFor(store, now, vault), persistence: disk ? 'DISK' : 'MEMORY_DEMO', disk, database: null, fanout: null, clock: 'LIVE_FROM_SEEDED_EVENT_TIME', stop: () => undefined };
+  const ctx = contextFor(store, now, vault);
+  const chat = chatTransportFromEnv(process.env);
+  const stopChat = startChatGateway(ctx, chat);
+  return { store, ctx, persistence: disk ? 'DISK' : 'MEMORY_DEMO', disk, database: null, fanout: null, chat, clock: 'LIVE_FROM_SEEDED_EVENT_TIME', stop: stopChat };
 }
 
 /** Returns the same runtime for the life of the process, including across dev hot-reloads. */

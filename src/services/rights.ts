@@ -85,6 +85,7 @@ export async function exportMyData(ctx: ServiceContext, userId: string) {
     liveLocation: (await ctx.store.docList('locations', { userId })).map((l) => ({ audience: l.audience, approximate: l.approximate, until: new Date(l.expiresAt).toISOString() })),
     accessTokens: (await ctx.store.docList('apiTokens', { userId })).map((t) => ({ name: t.name, scope: t.scope, createdAt: new Date(t.createdAt).toISOString() })),
     workflowRuns: (await ctx.store.docList('workflowRuns', { actorId: userId })).map((r) => ({ workflow: r.workflowId, status: r.status, at: new Date(r.startedAt).toISOString() })),
+    linkedChatAccounts: (await ctx.store.docList('chatLinks', { userId })).map((l) => ({ transport: l.transport, account: l.externalUserId, linkedAt: new Date(l.createdAt).toISOString() })),
     notifications: notifications.map((n) => ({ at: new Date(n.createdAt).toISOString(), body: n.body, read: n.readAt !== null })),
     events: perEvent,
   };
@@ -169,6 +170,11 @@ export async function eraseMe(ctx: ServiceContext, userId: string): Promise<Eras
   }
   for (const l of await ctx.store.docList('locations', { userId })) await ctx.store.docDelete('locations', l.id);
   for (const t of await ctx.store.docList('apiTokens', { userId })) await ctx.store.docDelete('apiTokens', t.id);
+  // Chat gateway: linked accounts, unused link codes, queued deliveries and the record of handled messages.
+  for (const l of await ctx.store.docList('chatLinks', { userId })) await ctx.store.docDelete('chatLinks', l.id);
+  for (const c of await ctx.store.docList('chatLinkCodes', { userId })) await ctx.store.docDelete('chatLinkCodes', c.id);
+  for (const d of await ctx.store.docList('chatDeliveries', { recipientUserId: userId })) await ctx.store.docDelete('chatDeliveries', d.id);
+  for (const i of await ctx.store.docList('chatInbound', { userId })) await ctx.store.docDelete('chatInbound', i.id);
   for (const a of await ctx.store.docList('accounts', { userId })) await ctx.store.docDelete('accounts', a.id);
   await ctx.store.docDelete('prefs', userId);
   await endAllSessions(ctx, userId);

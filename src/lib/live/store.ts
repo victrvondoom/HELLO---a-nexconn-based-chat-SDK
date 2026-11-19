@@ -26,7 +26,7 @@ import { EVERYONE, people, type LiveAudience, type LiveEvent } from './bus';
 
 type Draft = Omit<LiveEvent, 'at' | 'origin'>;
 
-const PERSONAL_DOCS = new Set<CollectionName>(['fieldAttempts', 'fieldLedger', 'fieldBadges']);
+const PERSONAL_DOCS = new Set<CollectionName>(['fieldAttempts', 'fieldLedger', 'fieldBadges', 'chatLinks']);
 const EVENT_DOCS = new Set<CollectionName>(['posts', 'comments', 'communities', 'calls', 'games', 'locations', 'fieldMissions', 'fieldSeasons', 'fieldStations', 'fieldLevels', 'questRuns']);
 /** Sign-in records, tokens and raw media metadata never produce events: their timing alone is sensitive. */
 

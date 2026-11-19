@@ -19,6 +19,7 @@ const API_TOPICS: Record<string, readonly string[]> = {
   presence: ['presence', 'social'],
   messages: ['messages'],
   notifications: ['notifications'],
+  chat: ['chatLinks'],
 };
 
 const PAGE_TOPICS: Record<string, readonly string[]> = {
