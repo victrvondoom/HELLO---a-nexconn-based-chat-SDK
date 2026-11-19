@@ -5,6 +5,7 @@ import { getRuntime } from '@/lib/runtime';
 import { SendMessageBody } from '@/lib/validation/api';
 import { consumeAction } from '@/lib/action-limits';
 import { handleMessage } from '@/services/pipeline';
+import { handleMessageOnce } from '@/services/chat-gateway';
 
 export async function POST(
   request: Request,
@@ -23,7 +24,13 @@ export async function POST(
     const runtime = await getRuntime();
     // Shared with the MCP tool that sends messages (src/lib/action-limits.ts).
     consumeAction('message.send', userId, eventId, runtime.ctx.now());
-    const result = await handleMessage(runtime.ctx, { eventId, userId, text: parsed.data.text });
+    const { text, clientId } = parsed.data;
+    if (clientId) {
+      const once = await handleMessageOnce(runtime.ctx, { eventId, userId, text, clientId });
+      // Already handled (a resend from the outbox): the message is in the record, nothing runs again.
+      return once ? jsonOk(once, 201) : jsonOk({ replayed: true }, 200);
+    }
+    const result = await handleMessage(runtime.ctx, { eventId, userId, text });
     return jsonOk(result, 201);
   } catch (error: unknown) {
     return errorResponse(error, 'messages.create');

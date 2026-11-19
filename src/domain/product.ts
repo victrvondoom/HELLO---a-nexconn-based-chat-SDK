@@ -44,6 +44,8 @@ export interface UserPrefs {
   id: string;
   /** ISO 3166-1 numeric code, as used by the world map. Null when not declared. */
   country: string | null;
+  /** Field Atlas leaderboard: shown by name only when the person opted in. Absent means no. */
+  leaderboard?: boolean;
 }
 
 export type MediaKind = 'IMAGE' | 'VIDEO';

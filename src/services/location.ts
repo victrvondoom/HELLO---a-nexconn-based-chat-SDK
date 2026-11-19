@@ -61,7 +61,9 @@ export async function stopSharing(ctx: ServiceContext, eventId: string, userId: 
 
 export async function setCountry(ctx: ServiceContext, userId: string, country: string | null): Promise<void> {
   if (country !== null && !isCountry(country)) throw new DomainError('VALIDATION_FAILED', 'Choose a country from the list.');
-  await ctx.store.docPut('prefs', { id: userId, country });
+  // Merged, not replaced: prefs hold other choices too (the leaderboard opt-in).
+  const existing = await ctx.store.docGet('prefs', userId);
+  await ctx.store.docPut('prefs', { ...existing, id: userId, country });
 }
 
 export interface MapPerson {

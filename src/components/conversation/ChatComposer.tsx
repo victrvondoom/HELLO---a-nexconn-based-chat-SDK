@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { Icon } from '@/components/ui/Icon';
+import { enqueue, flush, readOutbox, sendQueued } from './outbox';
 
 const MAX = 2000;
 
@@ -42,6 +43,7 @@ export function ChatComposer({ eventId }: { eventId: string }) {
   const [text, setText] = useState('');
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [waiting, setWaiting] = useState(0);
   const areaRef = useRef<HTMLTextAreaElement>(null);
   // Voice input: detected after mount so server and client render the same markup.
   const [canSpeak, setCanSpeak] = useState(false);
@@ -88,6 +90,24 @@ export function ChatComposer({ eventId }: { eventId: string }) {
     el.style.height = `${Math.min(el.scrollHeight, 180)}px`;
   }, [text]);
 
+  // Messages saved while offline are sent when the connection returns, and when the page opens again.
+  useEffect(() => {
+    const run = () => {
+      if (readOutbox(eventId).length === 0) return;
+      void flush(eventId).then((r) => {
+        setWaiting(r.waiting);
+        if (r.refused[0]) setError(`A saved message was not accepted: ${r.refused[0]}`);
+        if (r.sent > 0) router.refresh();
+      });
+    };
+    setWaiting(readOutbox(eventId).length);
+    run();
+    window.addEventListener('online', run);
+    return () => {
+      window.removeEventListener('online', run);
+    };
+  }, [eventId, router]);
+
   async function send() {
     const trimmed = text.trim();
     if (trimmed.length === 0 || pending) {
@@ -96,24 +116,25 @@ export function ChatComposer({ eventId }: { eventId: string }) {
     }
     setPending(true);
     setError(null);
+    // Saved before it is sent, so a dropped connection cannot lose it.
+    const item = enqueue(eventId, trimmed);
     try {
-      const response = await fetch(`/api/events/${eventId}/messages`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ text: trimmed }),
-      });
-      const body = (await response.json()) as { ok: true } | { ok: false; error: { message: string } };
-      if (!body.ok) {
-        setError(body.error.message);
+      const outcome = await sendQueued(eventId, item);
+      if (outcome.kind === 'refused') {
+        setError(outcome.message);
         return;
       }
       setText('');
+      if (outcome.kind === 'offline') {
+        setWaiting(readOutbox(eventId).length);
+        setError(null);
+        return;
+      }
+      setWaiting(readOutbox(eventId).length);
       router.refresh();
       requestAnimationFrame(() => {
         document.getElementById('thread-end')?.scrollIntoView({ behavior: 'smooth' });
       });
-    } catch {
-      setError('Not sent: the connection failed. Your text is still here, so you can try again.');
     } finally {
       setPending(false);
     }
@@ -191,6 +212,11 @@ export function ChatComposer({ eventId }: { eventId: string }) {
         <span id="composer-help" className="xs faint">
           <span className="plane-tag plane-tag--open">Read by HELLO and event staff, so they can act</span> Enter to send · {text.length}/{MAX}
         </span>
+        {waiting > 0 ? (
+          <span role="status" className="xs" data-testid="outbox-waiting">
+            {waiting} {waiting === 1 ? 'message is' : 'messages are'} saved and will send when you are back online.
+          </span>
+        ) : null}
         {error ? (
           <span role="alert" className="xs" style={{ color: 'var(--danger)' }}>
             {error}

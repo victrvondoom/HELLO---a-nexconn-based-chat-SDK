@@ -10,6 +10,7 @@ import type { MissionPulse, SeasonPulse, SpaceCondition } from '@/domain/field/l
 import type { Answer, Recommendation } from '@/services/quest-director';
 import { AtlasMap, type AtlasRoute } from './AtlasMap';
 import { BadgeArt } from './BadgeArt';
+import { LeaderboardPanel } from './LeaderboardPanel';
 
 /** Built by `atlasHome` (src/services/field-live.ts) for both the first render and every poll. */
 export type AtlasHome = AtlasHomeData;
@@ -411,7 +412,10 @@ export function FieldAtlas({ eventId, initial, cabinetHref }: { eventId: string;
           </div>
         </div>
       ) : (
-        <CabinetView cabinet={cabinet} error={cabinetError} />
+        <div className="stack" style={{ gap: 18 }}>
+          <CabinetView cabinet={cabinet} error={cabinetError} />
+          <LeaderboardPanel eventId={eventId} />
+        </div>
       )}
     </div>
   );
