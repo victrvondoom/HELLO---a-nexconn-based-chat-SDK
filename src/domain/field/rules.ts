@@ -141,12 +141,42 @@ export interface SeasonWindow {
   endsAt: number;
 }
 
-/** The UTC calendar month containing `year`/`month` (1-12). The end is the last millisecond of the month. */
-export function monthWindow(year: number, month: number): SeasonWindow {
+/** How far `timeZone` is ahead of UTC at the instant `utcMs`, in milliseconds (daylight saving included). */
+export function zoneOffsetMs(timeZone: string, utcMs: number): number {
+  const parts = new Intl.DateTimeFormat('en-US', { timeZone, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).formatToParts(new Date(utcMs));
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? 0);
+  const asUtc = Date.UTC(get('year'), get('month') - 1, get('day'), get('hour'), get('minute'), get('second'));
+  return asUtc - Math.floor(utcMs / 1000) * 1000;
+}
+
+/** The UTC instant of local midnight at the start of `year`-`month`-`day` in `timeZone`. */
+function localMidnight(timeZone: string, year: number, month: number, day: number): number {
+  const wall = Date.UTC(year, month - 1, day);
+  // Two passes: the offset at the guessed instant can differ from the one at the true instant near a DST change.
+  const first = wall - zoneOffsetMs(timeZone, wall);
+  return wall - zoneOffsetMs(timeZone, first);
+}
+
+export function isTimeZone(timeZone: string): boolean {
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone }).format(0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * The calendar month `year`/`month` (1-12) in the event's time zone, as UTC instants. The end is the last
+ * millisecond of the month. A season in an event in Tokyo starts at midnight in Tokyo, not at midnight UTC
+ * (which used to be the rule for every event, so a non-UTC event's season opened and closed hours off).
+ */
+export function monthWindow(year: number, month: number, timeZone = 'UTC'): SeasonWindow {
   if (!Number.isInteger(year) || year < 2000 || year > 2200) throw new RangeError('Season year is out of range.');
   if (!Number.isInteger(month) || month < 1 || month > 12) throw new RangeError('Season month must be 1 to 12.');
-  const startsAt = Date.UTC(year, month - 1, 1);
-  const endsAt = Date.UTC(year, month, 1) - 1;
+  if (!isTimeZone(timeZone)) throw new RangeError(`Unknown time zone: ${timeZone}.`);
+  const startsAt = localMidnight(timeZone, year, month, 1);
+  const endsAt = localMidnight(timeZone, month === 12 ? year + 1 : year, month === 12 ? 1 : month + 1, 1) - 1;
   return { startsAt, endsAt };
 }
 

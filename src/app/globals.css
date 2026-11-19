@@ -4444,3 +4444,7 @@ body {
 .presence-pill { display: inline-flex; align-items: center; gap: 6px; margin-left: 10px; font-size: 0.78rem; font-weight: 600; color: var(--success); }
 .presence-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); box-shadow: 0 0 0 3px var(--success-soft); }
 .typing-line { margin: 4px 0 0; color: var(--plain); font-style: italic; }
+
+/* Search results in the command palette */
+.palette__kind { min-width: 84px; padding: 2px 6px; border-radius: 6px; background: var(--well); color: var(--plain); text-align: center; font-weight: 600; }
+.palette__detail { display: block; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 52ch; }

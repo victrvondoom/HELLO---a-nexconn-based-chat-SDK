@@ -157,6 +157,27 @@ async function handleInbound(ctx: ServiceContext, transport: string, input: z.in
   return { reply: result.reply, userId: link.userId };
 }
 
+// ---------- the app's own offline outbox ----------
+
+/**
+ * A message typed in the app, sent with a browser-generated id. The browser's outbox resends a message whose
+ * reply it never saw (the connection dropped); the same id is handled once, as with chat-network messages.
+ * Returns null when the id was already handled or is still running.
+ */
+export async function handleMessageOnce(ctx: ServiceContext, input: { eventId: string; userId: string; text: string; clientId: string }): Promise<Awaited<ReturnType<typeof handleMessage>> | null> {
+  const id = `app:${input.userId}:${input.clientId}`;
+  const claim: ChatInbound = { id, transport: 'app', state: 'PROCESSING', userId: input.userId, reply: '', receivedAt: ctx.now() };
+  if (!(await ctx.store.docPutIfAbsent('chatInbound', claim))) return null;
+  try {
+    const result = await handleMessage(ctx, { eventId: input.eventId, userId: input.userId, text: input.text });
+    await ctx.store.docMutate('chatInbound', id, (doc) => ({ ...doc, state: 'DONE', reply: result.reply }));
+    return result;
+  } catch (error: unknown) {
+    await ctx.store.docDelete('chatInbound', id);
+    throw error;
+  }
+}
+
 // ---------- outbound ----------
 
 /** Queues a notification for every chat account the recipient linked on this transport. */

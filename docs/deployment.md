@@ -10,10 +10,10 @@
 
 Do not deploy this build as a live event service. In particular:
 
-1. **Persistence.** The data store is in-memory. On Vercel or any serverless platform each instance has its own,
-   empty, copy of the demo. Real use needs the Postgres store (see docs/database.md).
+1. **Persistence.** Set `DATABASE_URL` to use Postgres: durable and safe for several instances. Without it the store
+   is in-memory, and each serverless instance has its own empty copy. Rate limits are still per instance.
 2. **Authentication.** Demo sign-in must be replaced (see docs/security.md).
-3. **Messaging.** Nexconn is not connected (see docs/nexconn-integration.md).
+3. **Messaging.** Nexconn connects through the chat gateway: set `HELLO_CHAT_SECRET` and `HELLO_CHAT_OUTBOUND_URL` and run the bridge (see docs/nexconn-integration.md).
 4. **AI.** No provider is connected. The deterministic interpreter answers, and the UI says so.
 
 ## Demo deployment (for review only)
@@ -29,7 +29,7 @@ Build command: `npm run build`. Start command: `npm start`. Node.js 20.9 or late
 
 ## Checklist before a real event
 
-- [ ] Postgres repository implemented and tested against the migration.
+- [x] Postgres store implemented and tested (`npm run test:postgres`).
 - [ ] Real authentication in place; `HELLO_DEMO_MODE` set to `false`.
 - [ ] CSRF protection and a shared rate limiter.
 - [ ] Nexconn connection implemented behind `ChatTransport`, and verified end to end.

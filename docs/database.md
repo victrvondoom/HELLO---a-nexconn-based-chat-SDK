@@ -7,7 +7,7 @@
 | `supabase/migrations/0001_core_schema.sql` | Written. Applied to a fresh PostgreSQL 16 database and verified (see below). |
 | `supabase/tests/0001_constraints_and_rls.sql` | Written and passing: constraint, append-only audit and RLS checks. |
 | `supabase/seed.sql` | Written and applied. Event, rooms and sessions only. |
-| Postgres-backed `HelloStore` | **Not written.** The app runs on `MemoryHelloStore`, which is not durable. |
+| Postgres-backed `HelloStore` | **Written and used**: `src/store/postgres.ts`, schema `src/store/postgres-schema.ts`. Set `DATABASE_URL`. `npm run test:postgres` runs the whole integration suite on it. |
 | Demo people in the database | **Not seeded.** They need Supabase Auth accounts, which the seed cannot create. The in-memory demo provides them. |
 
 ## Verified
@@ -50,3 +50,25 @@ features that need them exist.
 2. Run `supabase/tests/0001_constraints_and_rls.sql` against a non-production branch.
 3. Create demo auth accounts if you want the demo people, then insert their `profiles` and `memberships`.
 4. Do not run `supabase/seed.sql` against a production project.
+
+## The app's store on Postgres (2026-11-19)
+
+`src/store/postgres.ts` implements the full `HelloStore` contract with the in-memory store's exact semantics:
+
+- One table per record kind: the columns the store queries and indexes, plus the whole record as `data jsonb`, so a
+  record comes back exactly as written. `seq` keeps insertion order, which several lists rely on.
+- Every read-modify-write (`docMutate`, the version-checked updates of incidents, approvals and payments) runs in a
+  transaction that locks the row first. That also holds across several app instances.
+- The database enforces one notification per (event, dedupe key), one follow per pair, one document per id.
+- The schema is created on first start under an advisory lock, so instances can start together. An empty database
+  gets the demo event. The demo reset truncates every table.
+- `LISTEN/NOTIFY` carries live updates and presence between instances (`src/lib/live/fanout.ts`).
+
+Verified: `npm run test:postgres` (every integration test, one schema per test); `tests/integration/store-contract.test.ts`
+(25 concurrent mutations, one winner of insert-if-absent and of a version race); all browser journeys against `next start`
+on Postgres; an account and a post survive a restart; two server processes share live updates.
+
+Found by running on Postgres: approval de-duplication compared JSON strings, which depend on key order, and JSONB sorts
+keys. Payloads are now compared by content.
+
+The Supabase migration in `supabase/` is a separate relational design for a Supabase Auth deployment.
