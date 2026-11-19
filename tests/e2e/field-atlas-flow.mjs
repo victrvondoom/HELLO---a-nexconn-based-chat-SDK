@@ -9,12 +9,15 @@
  */
 import assert from 'node:assert/strict';
 import { mkdirSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { chromium } from 'playwright';
 import { resetDemo } from './reset.mjs';
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:3000';
 const EVENT = 'evt-demo-hello-summit';
-const SHOTS = process.env.SHOT_DIR ?? '/tmp/claude-0/-home-user-HELLO---a-nexconn-based-chat-SDK/df22a325-d6fc-55fb-ace9-49ef84c1a4eb/scratchpad/shots';
+// Screenshots go to SHOT_DIR, or the system temp directory (this used to be a path from one machine).
+const SHOTS = process.env.SHOT_DIR ?? join(tmpdir(), 'hello-field-atlas-shots');
 mkdirSync(SHOTS, { recursive: true });
 const launchOptions = process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH, args: ['--no-sandbox'] } : { args: ['--no-sandbox'] };
 

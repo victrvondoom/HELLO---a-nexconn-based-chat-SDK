@@ -9,7 +9,7 @@ import { chromium } from 'playwright';
 import { resetDemo } from './reset.mjs';
 const E = 'evt-demo-hello-summit';
 const BASE = process.env.BASE_URL ?? 'http://localhost:3000';
-const ROUTES = ['', '/conversation', '/incidents', '/incidents?filter=all', '/incidents?filter=attention', '/incidents/inc-seed-av-r3', '/incidents/inc-seed-cap-r3', '/incidents/inc-seed-fac-r2', '/operations', '/team', '/announcements', '/sessions', '/sessions?current=s-sat-power', '/people?q=satellite', '/notifications', '/settings', '/audit', '/audit?action=sla.sweep', '/agents', '/map', '/map?to=r-3', '/people?tab=network', '/people/u-att-ada', '/messages', '/messages/u-spk-ines'];
+const ROUTES = ['', '/conversation', '/incidents', '/incidents?filter=all', '/incidents?filter=attention', '/incidents/inc-seed-av-r3', '/incidents/inc-seed-cap-r3', '/incidents/inc-seed-fac-r2', '/operations', '/team', '/announcements', '/sessions', '/sessions?current=s-sat-power', '/people?q=satellite', '/notifications', '/settings', '/audit', '/audit?action=sla.sweep', '/agents', '/map', '/map?to=r-3', '/people?tab=network', '/people/u-att-ada', '/messages', '/messages/u-spk-ines', '/atlas', '/atlas/manage', '/communities', '/calls', '/games', '/feed', '/flow', '/live-map'];
 const USERS = { ada: 'u-att-ada', ben: 'u-att-ben', fatima: 'u-att-fatima', chloe: 'u-att-chloe', speaker: 'u-spk-ines', volunteer: 'u-vol-jamal', kiri: 'u-ops-kiri', lena: 'u-ops-lena', nadia: 'u-org-nadia', owen: 'u-org-owen' };
 const PUBLIC_ROLES = new Set(['ada', 'ben', 'fatima', 'chloe', 'speaker']);
 const ORGANISERS = new Set(['nadia', 'owen']);
