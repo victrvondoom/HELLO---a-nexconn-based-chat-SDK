@@ -1,0 +1,111 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Typecheck, lint, tests, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+
+  postgres:
+    name: Integration suite on Postgres 16
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: hello
+          POSTGRES_PASSWORD: hello
+          POSTGRES_DB: hello_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U hello" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      HELLO_TEST_DATABASE_URL: postgres://hello:hello@localhost:5432/hello_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run test:postgres
+
+  browser:
+    name: Browser journeys
+    runs-on: ubuntu-latest
+    needs: checks
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: hello
+          POSTGRES_PASSWORD: hello
+          POSTGRES_DB: hello_app
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U hello" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      HELLO_DEMO_MODE: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+
+      - name: Journeys on the in-memory store
+        run: |
+          npx next start -p 3000 > server.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://localhost:3000/ > /dev/null && break; sleep 1; done
+          npm run test:e2e
+          npm run test:routes
+          pkill -f next-server || true
+
+      - name: Chat gateway with a bridge
+        env:
+          HELLO_CHAT_SECRET: ci-only-secret-that-is-long-enough-1234567890
+          HELLO_CHAT_OUTBOUND_URL: http://localhost:4100/hello
+        run: |
+          npx next start -p 3000 > server-chat.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://localhost:3000/ > /dev/null && break; sleep 1; done
+          node tests/e2e/chat-bridge-flow.mjs
+          pkill -f next-server || true
+
+      - name: Live updates across two instances on Postgres
+        env:
+          DATABASE_URL: postgres://hello:hello@localhost:5432/hello_app
+        run: |
+          npx next start -p 3000 > server-a.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://localhost:3000/ > /dev/null && break; sleep 1; done
+          npx next start -p 3001 > server-b.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://localhost:3001/ > /dev/null && break; sleep 1; done
+          BASE_URL=http://localhost:3000 BASE_URL_B=http://localhost:3001 node tests/e2e/live-flow.mjs
+          node tests/e2e/field-atlas-flow.mjs
+
+      - name: Server logs
+        if: failure()
+        run: tail -n 200 server*.log || true
