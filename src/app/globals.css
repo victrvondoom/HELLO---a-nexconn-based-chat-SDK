@@ -4439,3 +4439,8 @@ body {
 .atlas-form .wide { grid-column: 1 / -1; }
 .atlas-once { font-family: var(--font-mono); font-size: 1.4rem; letter-spacing: 0.18em; padding: 10px 14px; border: 1px dashed var(--accent); border-radius: var(--r-sm); display: inline-block; }
 @media (prefers-reduced-motion: reduce) { .atlas-bar > span { transition: none; } }
+
+/* Live presence and typing (src/components/social/SecureThread.tsx) */
+.presence-pill { display: inline-flex; align-items: center; gap: 6px; margin-left: 10px; font-size: 0.78rem; font-weight: 600; color: var(--success); }
+.presence-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); box-shadow: 0 0 0 3px var(--success-soft); }
+.typing-line { margin: 4px 0 0; color: var(--plain); font-style: italic; }

@@ -24,7 +24,7 @@ import type { Venue } from '../domain/venue/types';
 import { COLLECTION_NAMES, type CollectionName, type Collections } from '../domain/product';
 import { OPEN_STATUSES } from '../domain/incidents/lifecycle';
 import { DomainError } from '../domain/errors';
-import { VersionConflictError, type HelloStore } from './store';
+import { VersionConflictError, type SeedableStore, type SeedData } from './store';
 
 /**
  * In-memory implementation of `HelloStore`. Used for local demo mode and for tests.
@@ -35,7 +35,7 @@ import { VersionConflictError, type HelloStore } from './store';
  * durable and NOT shared across processes: production must use the Postgres
  * implementation described in docs/database.md.
  */
-export class MemoryHelloStore implements HelloStore {
+export class MemoryHelloStore implements SeedableStore {
   private events = new Map<string, EventRecord>();
   private users = new Map<string, User>();
   private memberships = new Map<string, Membership>();
@@ -74,22 +74,7 @@ export class MemoryHelloStore implements HelloStore {
 
   // --- seeding helpers (used by the seed loader only) ---
 
-  seed(data: {
-    events: EventRecord[];
-    users: User[];
-    memberships: Membership[];
-    rooms: Room[];
-    sessions: Session[];
-    incidents?: Incident[];
-    reports?: IncidentReport[];
-    timeline?: IncidentTimelineEntry[];
-    announcements?: Announcement[];
-    notifications?: Notification[];
-    referenceDocs?: ReferenceDoc[];
-    venues?: Venue[];
-    profiles?: ProfileRecord[];
-    follows?: Follow[];
-  }): void {
+  seed(data: SeedData): void {
     for (const p of data.profiles ?? []) this.profiles.set(p.userId, MemoryHelloStore.copy(p));
     for (const f of data.follows ?? []) this.follows.push(MemoryHelloStore.copy(f));
     for (const v of data.venues ?? []) this.venues.set(v.eventId, MemoryHelloStore.copy(v));
@@ -131,7 +116,8 @@ export class MemoryHelloStore implements HelloStore {
       throw new DomainError('NOT_FOUND', 'User not found.');
     }
     const next = { ...current, ...patch };
-    this.users.set(userId, next);
+    // Copied on the way in: a patch carries arrays (interests) the caller still holds.
+    this.users.set(userId, MemoryHelloStore.copy(next));
     return MemoryHelloStore.copy(next);
   }
 
@@ -158,7 +144,7 @@ export class MemoryHelloStore implements HelloStore {
       throw new DomainError('NOT_FOUND', 'Membership not found.');
     }
     const next = { ...current, ...patch };
-    this.memberships.set(membershipId, next);
+    this.memberships.set(membershipId, MemoryHelloStore.copy(next));
     return MemoryHelloStore.copy(next);
   }
 
@@ -232,7 +218,7 @@ export class MemoryHelloStore implements HelloStore {
       throw new VersionConflictError('incident');
     }
     const next: Incident = { ...current, ...patch, version: current.version + 1, updatedAt: now };
-    this.incidents.set(incidentId, next);
+    this.incidents.set(incidentId, MemoryHelloStore.copy(next));
     return MemoryHelloStore.copy(next);
   }
 
@@ -301,7 +287,7 @@ export class MemoryHelloStore implements HelloStore {
       throw new VersionConflictError('approval request');
     }
     const next: ApprovalRequest = { ...current, ...patch, version: current.version + 1 };
-    this.approvals.set(approvalId, next);
+    this.approvals.set(approvalId, MemoryHelloStore.copy(next));
     return MemoryHelloStore.copy(next);
   }
 
@@ -339,6 +325,14 @@ export class MemoryHelloStore implements HelloStore {
       return n;
     });
     return changed;
+  }
+
+  async deleteNotificationsFor(recipientUserId: string): Promise<number> {
+    const removed = this.notifications.filter((n) => n.recipientUserId === recipientUserId);
+    this.notifications = this.notifications.filter((n) => n.recipientUserId !== recipientUserId);
+    // The dedupe keys name the recipient, so they go too.
+    for (const n of removed) this.notificationKeys.delete(`${n.eventId}::${n.dedupeKey}`);
+    return removed.length;
   }
 
   async listNotifications(recipientUserId: string): Promise<Notification[]> {
@@ -446,7 +440,7 @@ export class MemoryHelloStore implements HelloStore {
     if (!current) throw new DomainError('NOT_FOUND', 'Payment not found.');
     if (current.version !== expectedVersion) throw new VersionConflictError('payment');
     const next: Payment = { ...current, ...patch, version: current.version + 1 };
-    this.payments.set(paymentId, next);
+    this.payments.set(paymentId, MemoryHelloStore.copy(next));
     return MemoryHelloStore.copy(next);
   }
 
@@ -495,6 +489,16 @@ export class MemoryHelloStore implements HelloStore {
     return n;
   }
 
+  async redactPaymentNotesFrom(payerId: string, replacement: string): Promise<number> {
+    let n = 0;
+    for (const [id, p] of this.payments) {
+      if (p.payerId !== payerId || p.note === null) continue;
+      this.payments.set(id, { ...p, note: replacement });
+      n += 1;
+    }
+    return n;
+  }
+
   async getVenue(eventId: string): Promise<Venue | null> {
     const v = this.venues.get(eventId);
     return v ? MemoryHelloStore.copy(v) : null;
@@ -519,7 +523,7 @@ export class MemoryHelloStore implements HelloStore {
       throw new DomainError('NOT_FOUND', 'Signal pattern not found.');
     }
     const next = { ...current, ...patch };
-    this.patterns.set(patternId, next);
+    this.patterns.set(patternId, MemoryHelloStore.copy(next));
     return MemoryHelloStore.copy(next);
   }
 

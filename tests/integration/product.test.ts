@@ -11,7 +11,7 @@ import { flowSnapshot, runWorkflow } from '@/services/workflows';
 import { createToken, resolveToken, revokeToken } from '@/services/tokens';
 import { handleMcp } from '@/services/mcp';
 import { eraseMe } from '@/services/rights';
-import { createHarness } from './harness';
+import { createHarness, STORE_KIND } from './harness';
 
 const code = async (run: Promise<unknown>) => run.then(() => 'OK', (e: unknown) => (e instanceof DomainError ? e.code : 'THROWN'));
 const all = { scope: 'all', communityId: null, authorId: null } as const;
@@ -150,8 +150,10 @@ describe('erasure and durable storage', () => {
     expect(await code(signIn(h.ctx, { handle: 'gone', password: 'long enough password' }))).toBe('FORBIDDEN');
   });
 
-  it('restores everything from a snapshot', async () => {
+  // The snapshot is the in-memory store's disk format (src/lib/persistence.ts). Postgres needs no snapshot.
+  it.skipIf(STORE_KIND !== 'memory')('restores everything from a snapshot', async () => {
     const h = await createHarness();
+    if (!(h.store instanceof MemoryHelloStore)) throw new Error('expected the in-memory store');
     await register(h.ctx, { handle: 'kept', displayName: 'Kept', password: 'long enough password' });
     const post = await createPost(h.ctx, h.eventId, h.users.attendeeAda, text('still here'));
     await actOnPost(h.ctx, h.eventId, h.users.attendeeBen, post.id, { action: 'like', on: true });

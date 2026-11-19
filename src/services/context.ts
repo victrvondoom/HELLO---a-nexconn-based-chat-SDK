@@ -22,6 +22,11 @@ export interface ServiceContext {
   vault: Vault;
   /** Moves the money. The sandbox gateway moves none and says so. */
   payments: PaymentGateway;
+  /**
+   * Called after a new notification is stored. The chat gateway uses it to queue delivery to linked chat
+   * accounts (src/services/chat-gateway.ts). A failure here never fails the action that notified.
+   */
+  afterNotify?: (notification: Notification) => Promise<void>;
 }
 
 export function createContext(
@@ -38,6 +43,7 @@ export function createContext(
     webSearchTimeoutMs: options.webSearchTimeoutMs ?? 5000,
     vault: options.vault ?? vaultFromEnv({}),
     payments: options.payments ?? sandboxGateway(),
+    ...(options.afterNotify ? { afterNotify: options.afterNotify } : {}),
   };
 }
 
@@ -105,5 +111,7 @@ export async function notify(ctx: ServiceContext, input: NotifyInput): Promise<b
     createdAt: ctx.now(),
     readAt: null,
   };
-  return ctx.store.insertNotificationIfNew(notification);
+  const inserted = await ctx.store.insertNotificationIfNew(notification);
+  if (inserted && ctx.afterNotify) await ctx.afterNotify(notification).catch(() => undefined);
+  return inserted;
 }

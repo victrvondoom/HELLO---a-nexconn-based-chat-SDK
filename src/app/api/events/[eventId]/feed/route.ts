@@ -1,11 +1,9 @@
 import { viewerRoute } from '@/lib/api-handler';
 import { jsonOk, parseBody } from '@/lib/http';
 import { getRuntime } from '@/lib/runtime';
-import { FixedWindowRateLimiter } from '@/lib/rate-limit';
+import { consumeAction } from '@/lib/action-limits';
 import { DomainError } from '@/domain/errors';
 import { createPost, FeedQuerySchema, listFeed, PostSchema } from '@/services/feed';
-
-const limiter = new FixedWindowRateLimiter(20, 60_000);
 
 export const GET = viewerRoute<{ eventId: string }>('feed.list', async ({ userId, params, request }) => {
   const url = new URL(request.url);
@@ -18,7 +16,7 @@ export const GET = viewerRoute<{ eventId: string }>('feed.list', async ({ userId
 export const POST = viewerRoute<{ eventId: string }>('feed.create', async ({ userId, params, request }) => {
   const input = await parseBody(request, PostSchema, 'Write up to 1000 characters, or attach a picture or video.');
   const { ctx } = await getRuntime();
-  limiter.consume(`post:${userId}`, ctx.now());
+  consumeAction('post.create', userId, params.eventId, ctx.now());
   const post = await createPost(ctx, params.eventId, userId, input);
   return jsonOk({ id: post.id }, 201);
 });

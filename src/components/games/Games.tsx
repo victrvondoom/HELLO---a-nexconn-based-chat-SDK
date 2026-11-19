@@ -9,7 +9,8 @@ import type { GameView } from '@/services/games';
 const KIND = { FOUR: 'Four in a row', QUIZ: 'Schedule quiz' } as const;
 
 function statusText(g: GameView): string {
-  if (g.kind === 'QUIZ') return `${g.players.length} played · ${g.total} questions`;
+  if (g.kind === 'QUIZ') return `${g.status === 'FINISHED' ? 'Closed · ' : ''}${g.players.length} played · ${g.total} questions`;
+  if (g.status === 'FINISHED') return 'Closed';
   if (g.status === 'WAITING') return g.seat === 0 ? 'Waiting for an opponent' : 'Open: needs an opponent';
   if (g.status === 'WON') return g.youWon ? 'You won' : `${g.winner ?? 'Someone'} won`;
   if (g.status === 'DRAW') return 'Draw';
@@ -102,7 +103,7 @@ export function GameBoard({ eventId, initial }: { eventId: string; initial: Game
                       key={choice}
                       type="button"
                       className={`quiz-option${q.answer === choice ? ' is-right' : q.yours === choice ? ' is-wrong' : ''}`}
-                      disabled={q.yours !== null}
+                      disabled={q.yours !== null || g.status === 'FINISHED'}
                       onClick={() => void play({ action: 'answer', question: i, choice })}
                     >
                       {option}
@@ -114,6 +115,7 @@ export function GameBoard({ eventId, initial }: { eventId: string; initial: Game
             ),
           )}
           {next === -1 ? <p className="notice" role="status">You scored {mine?.score ?? 0} of {g.total}.</p> : null}
+          {g.status === 'FINISHED' && next !== -1 ? <p className="notice" role="status">This quiz has closed. The scores stand.</p> : null}
         </div>
         <Scores game={g} />
       </div>

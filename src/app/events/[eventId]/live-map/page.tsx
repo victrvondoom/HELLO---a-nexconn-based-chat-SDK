@@ -10,7 +10,7 @@ export default async function LiveMapPage({ params }: { params: Promise<{ eventI
   const { eventId } = await params;
   const viewer = await loadEventViewer(eventId);
   const map = await mapView(viewer.ctx, eventId, viewer.userId);
-  const view = { now: map.now, me: map.me, people: map.people, countries: map.countries, myCountry: map.myCountry };
+  const view = { now: map.now, me: map.me, people: map.people, countries: map.countries, myCountry: map.myCountry, hiddenCountries: map.hiddenCountries, minGroupSize: map.minGroupSize };
   return (
     <div className="page page--wide">
       <div className="page-header">

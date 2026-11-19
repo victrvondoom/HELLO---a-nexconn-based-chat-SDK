@@ -851,7 +851,9 @@ async function answerFromSchedule(ctx: ServiceContext, input: SendMessageInput, 
     if (inRoom.length === 0) {
       return { answered: true, outcome: emptyOutcome(`${room.name} has no sessions in the schedule. ${occupancy}`), reference };
     }
-    const lines = inRoom.map((s) => `${s.title} at ${formatUtc(s.startsAt).slice(11)}`);
+    // formatUtc already returns "HH:MM UTC". The old `.slice(11)` cut that 9-character string to nothing, so
+    // every reply read "Keynote at ; Workshop at ."
+    const lines = inRoom.map((s) => `${s.title} at ${formatUtc(s.startsAt)}`);
     return { answered: true, outcome: emptyOutcome(`${room.name} hosts: ${lines.join('; ')}. ${occupancy}`), reference };
   }
 

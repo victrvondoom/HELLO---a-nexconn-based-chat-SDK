@@ -15,6 +15,9 @@ interface MapData {
   me: MapPerson | null;
   people: MapPerson[];
   countries: Array<{ code: string; name: string; members: number }>;
+  /** Countries with fewer than `minGroupSize` people, held back so a count cannot identify someone. */
+  hiddenCountries: number;
+  minGroupSize: number;
   myCountry: string | null;
 }
 type Audience = 'CONNECTIONS' | 'EVENT';
@@ -254,6 +257,11 @@ export function LiveMap({ eventId, shapes, initial }: { eventId: string; shapes:
               <span className="xs faint">Counted in the country total. Your name is never listed against it.</span>
             </label>
           </div>
+          {data.hiddenCountries > 0 ? (
+            <p className="xs faint" style={{ margin: 0 }}>
+              {data.hiddenCountries} {data.hiddenCountries === 1 ? 'country has' : 'countries have'} fewer than {data.minGroupSize} people and {data.hiddenCountries === 1 ? 'is' : 'are'} not shown, so nobody can be picked out.
+            </p>
+          ) : null}
           {data.countries.length > 0 ? (
             <ul className="score-list">
               {data.countries.map((c) => (

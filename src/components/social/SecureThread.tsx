@@ -4,6 +4,11 @@ import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent }
 import { deriveConversationKey, open, safetyNumber, seal, type Identity, type PublicJwk } from '@/lib/e2ee/crypto';
 import { deviceIdentity, e2eeSupported } from '@/lib/e2ee/keystore';
 import { Icon } from '@/components/ui/Icon';
+import { subscribeStream } from '@/components/live/stream';
+
+/** How long "typing…" stays up after the last signal, and how often this browser sends one. */
+const TYPING_SHOWN_MS = 5000;
+const TYPING_SEND_EVERY_MS = 3000;
 
 interface Bundle {
   id: string;
@@ -45,6 +50,11 @@ export function SecureThread({ eventId, me, peer }: { eventId: string; me: { id:
   const [safety, setSafety] = useState<string | null>(null);
   const keys = useRef(new Map<string, CryptoKey>());
   const endRef = useRef<HTMLDivElement>(null);
+  const [live, setLive] = useState(false);
+  const [peerTyping, setPeerTyping] = useState(false);
+  const [peerOnline, setPeerOnline] = useState(false);
+  const typingTimer = useRef<number | null>(null);
+  const lastTypingSent = useRef(0);
 
   const keyFor = useCallback(
     async (peerBundle: Bundle, id: Identity) => {
@@ -112,16 +122,71 @@ export function SecureThread({ eventId, me, peer }: { eventId: string; me: { id:
     };
   }, [me.id, refresh]);
 
-  // Poll while the tab is visible. Each poll fetches ciphertext and opens it locally.
+  const loadPresence = useCallback(async () => {
+    const response = await fetch(`/api/events/${eventId}/presence`, { cache: 'no-store' }).catch(() => null);
+    const body = (await response?.json().catch(() => null)) as { ok: true; data: { connectionsOnline: string[] } } | { ok: false } | null;
+    if (body?.ok) setPeerOnline(body.data.connectionsOnline.includes(peer.id));
+  }, [eventId, peer.id]);
+
+  // Live: a new message, a key or a presence change arrives as a nudge, and "typing…" as a signal.
+  // Each nudge re-reads the thread, which is ciphertext, and opens it on this device.
+  useEffect(() => {
+    if (!identity) return;
+    let pending: number | null = null;
+    const reread = () => {
+      pending ??= window.setTimeout(() => {
+        pending = null;
+        void refresh(identity);
+      }, 100);
+    };
+    void loadPresence();
+    const unsubscribe = subscribeStream(eventId, (message) => {
+      if (message.kind === 'state') {
+        setLive(message.connected);
+        if (message.connected) reread();
+        return;
+      }
+      if (message.kind === 'typing') {
+        if (message.from !== peer.id) return;
+        setPeerTyping(true);
+        if (typingTimer.current !== null) window.clearTimeout(typingTimer.current);
+        typingTimer.current = window.setTimeout(() => {
+          setPeerTyping(false);
+        }, TYPING_SHOWN_MS);
+        return;
+      }
+      if (message.topic === 'dm') {
+        // Their message has arrived, so they have stopped typing it.
+        setPeerTyping(false);
+        reread();
+      }
+      if (message.topic === 'presence' || message.topic === 'social') void loadPresence();
+    });
+    return () => {
+      if (pending !== null) window.clearTimeout(pending);
+      if (typingTimer.current !== null) window.clearTimeout(typingTimer.current);
+      unsubscribe();
+    };
+  }, [identity, refresh, eventId, peer.id, loadPresence]);
+
+  // Polling is the fallback while the live stream is down, and a slow safety net while it is up.
   useEffect(() => {
     if (!identity) return;
     const timer = setInterval(() => {
       if (document.visibilityState === 'visible') void refresh(identity);
-    }, 4000);
+    }, live ? 60_000 : 4000);
     return () => {
       clearInterval(timer);
     };
-  }, [identity, refresh]);
+  }, [identity, refresh, live]);
+
+  /** Tells the other person "typing…", at most every few seconds. Never says what. */
+  const signalTyping = () => {
+    const now = Date.now();
+    if (now - lastTypingSent.current < TYPING_SEND_EVERY_MS) return;
+    lastTypingSent.current = now;
+    void fetch(`/api/events/${eventId}/dm/${peer.id}/typing`, { method: 'POST' }).catch(() => undefined);
+  };
 
   const peerKey = peerKeys[peerKeys.length - 1] ?? null;
 
@@ -176,6 +241,11 @@ export function SecureThread({ eventId, me, peer }: { eventId: string; me: { id:
         </span>
         <div style={{ minWidth: 0, flex: 1 }}>
           <strong>End-to-end encrypted</strong>
+          {peerOnline ? (
+            <span className="presence-pill" data-testid="peer-online">
+              <span className="presence-dot" aria-hidden="true" /> {peer.name} is online
+            </span>
+          ) : null}
           <span className="small muted" style={{ display: 'block' }}>
             Only you and {peer.name} can read these messages. HELLO relays scrambled text it has no key for.
           </span>
@@ -236,6 +306,11 @@ export function SecureThread({ eventId, me, peer }: { eventId: string; me: { id:
             </div>
           );
         })}
+        {peerTyping ? (
+          <p className="typing-line xs" data-testid="peer-typing" aria-live="polite">
+            {peer.name} is typing…
+          </p>
+        ) : null}
         <div ref={endRef} />
       </div>
 
@@ -262,6 +337,7 @@ export function SecureThread({ eventId, me, peer }: { eventId: string; me: { id:
             maxLength={MAX}
             onChange={(e) => {
               setText(e.target.value);
+              if (e.target.value.trim().length > 0) signalTyping();
             }}
             onKeyDown={onKeyDown}
             placeholder={`Private message to ${peer.name}`}

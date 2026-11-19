@@ -60,7 +60,8 @@ async function connected(ctx: ServiceContext, a: string, b: string): Promise<boo
   return aFollows.some((f) => f.followeeId === b) && bFollows.some((f) => f.followeeId === a);
 }
 
-async function requireConnection(ctx: ServiceContext, eventId: string, viewerId: string, peerId: string): Promise<void> {
+/** Both people are in the event and follow each other. Private messages, typing signals and presence need it. */
+export async function assertConnected(ctx: ServiceContext, eventId: string, viewerId: string, peerId: string): Promise<void> {
   await requireCapability(ctx, eventId, viewerId, 'event.read');
   if (viewerId === peerId) throw new DomainError('VALIDATION_FAILED', 'You cannot message yourself.');
   const peer = await ctx.store.findMembership(eventId, peerId);
@@ -77,7 +78,7 @@ export interface ThreadData {
 }
 
 export async function getThread(ctx: ServiceContext, eventId: string, viewerId: string, peerId: string): Promise<ThreadData> {
-  await requireConnection(ctx, eventId, viewerId, peerId);
+  await assertConnected(ctx, eventId, viewerId, peerId);
   const [myKeys, peerKeys, messages] = await Promise.all([
     ctx.store.listKeyBundles(viewerId),
     ctx.store.listKeyBundles(peerId),
@@ -93,7 +94,7 @@ export async function sendSealed(
   recipientId: string,
   raw: unknown,
 ): Promise<SealedMessage> {
-  await requireConnection(ctx, eventId, senderId, recipientId);
+  await assertConnected(ctx, eventId, senderId, recipientId);
   const parsed = SealedBodySchema.safeParse(raw);
   if (!parsed.success) throw new DomainError('VALIDATION_FAILED', 'The encrypted message is malformed.');
   const [mine, theirs] = await Promise.all([ctx.store.listKeyBundles(senderId), ctx.store.listKeyBundles(recipientId)]);

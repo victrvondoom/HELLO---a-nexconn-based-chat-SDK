@@ -161,7 +161,9 @@ check('out-of-range coordinates refused', (await ana.call(`${E}/location`, 'POST
 await ana.call(`${E}/location`, 'DELETE');
 check('stopping removes the location for everyone', !(await bo.call(`${E}/location`)).data.people.some((p) => p.name === 'Ana Test'));
 await ana.call(`${BASE}/api/me/country`, 'POST', { country: '356' });
-check('country shown as a count only', (await bo.call(`${E}/location`)).data.countries.some((c) => c.code === '356' && c.members === 1));
+// One person from a country is a person, not a statistic: the country is held back until at least three share it.
+const countryView = (await bo.call(`${E}/location`)).data;
+check('a country with fewer than three people is held back, not listed', !countryView.countries.some((c) => c.code === '356') && countryView.hiddenCountries >= 1);
 
 // --- calls: signalling is limited to people in the call ---
 const callRoom = await ana.call(`${E}/calls`, 'POST', { title: 'Flow test call' });

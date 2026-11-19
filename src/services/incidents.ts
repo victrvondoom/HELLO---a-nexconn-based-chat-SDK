@@ -433,9 +433,8 @@ export async function ingestReport(ctx: ServiceContext, input: IngestInput): Pro
       matchConfidence: duplicate.confidence,
       matchSignals: duplicate.signals,
     });
-    const mergedEquipment = [...new Set([...existing.equipment, ...input.equipment])];
     const reportCount = reports.filter((r) => r.incidentId === existing.id).length + 1;
-    const updated = await ctx.store.updateIncident(existing.id, existing.version, { equipment: mergedEquipment }, now);
+    const updated = await mergeEquipment(ctx, existing, input.equipment, now);
     await ctx.store.appendTimeline({
       id: ctx.newId('tl'),
       incidentId: existing.id,
@@ -520,6 +519,29 @@ export async function ingestReport(ctx: ServiceContext, input: IngestInput): Pro
   await notifyOperations(ctx, incident, input.reporterUserId, `New report: ${title}`);
 
   return { incident, attached: false, duplicate: null, reportId };
+}
+
+/**
+ * Adds a duplicate report's equipment to the incident. When two people report the same problem at the same
+ * moment, both match the open incident and both write it with the version they read; the second write used
+ * to fail with VERSION_CONFLICT, so a person was told "changed by someone else" for simply reporting, and
+ * their report stayed attached without a timeline entry. A union of equipment is the same in either order,
+ * so the merge is re-read and retried instead.
+ */
+async function mergeEquipment(ctx: ServiceContext, incident: Incident, equipment: readonly string[], now: number): Promise<Incident> {
+  let current = incident;
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const merged = [...new Set([...current.equipment, ...equipment])];
+    try {
+      return await ctx.store.updateIncident(current.id, current.version, { equipment: merged }, now);
+    } catch (error: unknown) {
+      if (!(error instanceof VersionConflictError)) throw error;
+      const latest = await ctx.store.getIncident(current.id);
+      if (!latest) throw new DomainError('NOT_FOUND', 'Matched incident disappeared.');
+      current = latest;
+    }
+  }
+  throw new VersionConflictError('incident');
 }
 
 export function buildTitle(category: IncidentCategory, roomName: string | null, equipment: readonly string[]): string {

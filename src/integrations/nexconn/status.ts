@@ -6,7 +6,7 @@
  * whether the configuration needed for a connection is present, and it never returns the key itself.
  *
  * States:
- *   NOT_CONFIGURED         — NEXCONN_APP_KEY is missing. Messages are kept by the local demo store only.
+ *   NOT_CONFIGURED         — NEXCONN_APP_KEY is missing. HELLO works in the app; the chat gateway connects networks.
  *   CONFIGURED_NOT_CONNECTED — the key is present, but no SDK connection has been made by this build.
  */
 export type NexconnState = 'NOT_CONFIGURED' | 'CONFIGURED_NOT_CONNECTED';
@@ -27,7 +27,7 @@ export function nexconnStatus(env: Record<string, string | undefined> = process.
       appKeyConfigured: false,
       sdkPackage: '@nexconn/chat',
       message:
-        'Nexconn is not configured. Messages are stored in the local demo store, not sent through Nexconn.',
+        'Nexconn is not configured. HELLO works in the app; connect Nexconn through the chat gateway (docs/nexconn-integration.md).',
     };
   }
   return {
@@ -35,6 +35,6 @@ export function nexconnStatus(env: Record<string, string | undefined> = process.
     appKeyConfigured: true,
     sdkPackage: '@nexconn/chat',
     message:
-      'A Nexconn app key is configured, but this build does not open an SDK connection yet. Messages are not delivered through Nexconn.',
+      'A Nexconn app key is configured. Messages reach Nexconn through the chat gateway once its bridge is set up (docs/nexconn-integration.md).',
   };
 }

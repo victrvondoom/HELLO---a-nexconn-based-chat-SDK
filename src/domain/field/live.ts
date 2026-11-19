@@ -11,6 +11,7 @@
  */
 
 import type { DataSource, IncidentCategory, Urgency } from '../types';
+import { MIN_GROUP_SIZE, suppressSmall } from '../privacy';
 
 export type ConditionLevel = 'CLEAR' | 'BUSY' | 'CAUTION' | 'AVOID';
 
@@ -149,12 +150,12 @@ export function conditionPenalty(condition: SpaceCondition | undefined, stepFree
 // ---------- season pulse ----------
 
 /** Counts below this are shown as "fewer than 3", so no count can identify one person. */
-export const PULSE_MIN_COUNT = 3;
+export const PULSE_MIN_COUNT = MIN_GROUP_SIZE;
 export const PULSE_WINDOW_MS = 60 * 60 * 1000;
 
 /** A suppressed count: the number when it is at least PULSE_MIN_COUNT, otherwise null. */
 export function suppress(count: number): number | null {
-  return count >= PULSE_MIN_COUNT ? count : null;
+  return suppressSmall(count);
 }
 
 export interface PulseAttempt {
