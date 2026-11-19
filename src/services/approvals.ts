@@ -13,6 +13,14 @@ import { audit, notify, requireCapability, type ServiceContext } from './context
  * UI shows both facts.
  */
 
+/**
+ * Where approval notifications point: the approval queue on the operations page. They used to link to
+ * `/operations/approvals`, which has no page, so every "Approval needed" notification opened a 404.
+ */
+export function approvalsHref(eventId: string): string {
+  return `/events/${eventId}/operations#approvals`;
+}
+
 /** Pseudo-user for proposals raised automatically by HELLO's own coordination logic. */
 export const SYSTEM_ACTOR_ID = 'system:hello-coordinator';
 
@@ -105,7 +113,7 @@ export async function requestApproval(ctx: ServiceContext, input: RequestApprova
       recipientUserId: m.userId,
       kind: 'APPROVAL_REQUESTED',
       body: `Approval needed: ${input.actionType}. ${input.justification}`,
-      href: `/events/${input.eventId}/operations/approvals`,
+      href: approvalsHref(input.eventId),
       dedupeParts: [approval.id],
     });
   }
@@ -279,7 +287,7 @@ async function notifyRequester(ctx: ServiceContext, approval: ApprovalRequest, b
     recipientUserId: approval.requestedByUserId,
     kind: 'APPROVAL_DECISION',
     body,
-    href: `/events/${approval.eventId}/operations/approvals`,
+    href: approvalsHref(approval.eventId),
     dedupeParts: [approval.id, approval.status, approval.executionStatus, approval.version],
   });
 }

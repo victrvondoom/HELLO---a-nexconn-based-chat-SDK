@@ -17,6 +17,8 @@ export interface Persistence {
   /** Wraps the store so every write is followed by a save. */
   attach(store: MemoryHelloStore, now: () => number): MemoryHelloStore;
   wipe(): void;
+  /** Writes a pending save now. Runs on process exit, so a change made just before a restart is kept. */
+  flush(): void;
 }
 
 const BLOB_ID = /^[a-z0-9_-]{1,80}$/;
@@ -30,8 +32,10 @@ export function persistenceFromEnv(env: Record<string, string | undefined>): Per
   mkdirSync(blobDir, { recursive: true, mode: 0o700 });
 
   let timer: ReturnType<typeof setTimeout> | null = null;
+  let pending: { store: MemoryHelloStore; now: () => number } | null = null;
   const save = (store: MemoryHelloStore, now: () => number) => {
     timer = null;
+    pending = null;
     try {
       const tmp = `${stateFile}.tmp`;
       writeFileSync(tmp, JSON.stringify({ v: 1, now: now(), state: store.snapshot() }), { mode: 0o600 });
@@ -41,7 +45,7 @@ export function persistenceFromEnv(env: Record<string, string | undefined>): Per
     }
   };
 
-  return {
+  const persistence: Persistence = {
     restore(store) {
       if (!existsSync(stateFile)) return null;
       const saved = JSON.parse(readFileSync(stateFile, 'utf8')) as { v: number; now: number; state: string };
@@ -64,21 +68,36 @@ export function persistenceFromEnv(env: Record<string, string | undefined>): Per
             const id = typeof args[0] === 'string' && BLOB_ID.test(args[0]) ? args[0] : null;
             if (name === 'blobPut' && id) writeFileSync(join(blobDir, id), args[1] as Uint8Array, { mode: 0o600 });
             else if (name === 'blobDelete' && id) rmSync(join(blobDir, id), { force: true });
-            else
+            else {
+              pending = { store: target, now };
               timer ??= setTimeout(() => {
                 save(target, now);
               }, 400);
+            }
             return result;
           };
         },
       });
     },
+    flush() {
+      if (timer) clearTimeout(timer);
+      timer = null;
+      if (pending) save(pending.store, pending.now);
+    },
     wipe() {
       if (timer) clearTimeout(timer);
       timer = null;
+      pending = null;
       rmSync(stateFile, { force: true });
       rmSync(blobDir, { recursive: true, force: true });
       mkdirSync(blobDir, { recursive: true, mode: 0o700 });
     },
   };
+
+  // Saves are debounced by 400 ms. Without this, a write made in the last moments before a deploy or a
+  // restart was lost. `next start` exits through process.exit on SIGTERM and SIGINT, which runs this.
+  process.once('exit', () => {
+    persistence.flush();
+  });
+  return persistence;
 }

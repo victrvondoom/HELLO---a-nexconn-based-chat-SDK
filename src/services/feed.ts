@@ -168,7 +168,9 @@ export async function deletePost(ctx: ServiceContext, post: Post): Promise<void>
   await ctx.store.docDelete('posts', post.id);
   for (const c of await ctx.store.docList('comments', { postId: post.id })) await ctx.store.docDelete('comments', c.id);
   for (const share of await ctx.store.docList('posts', { repostOf: post.id })) await deletePost(ctx, share);
-  if (post.mediaId) {
+  // A person can attach one upload to more than one post. The file used to be deleted with the first post,
+  // which broke the picture in the others. It goes only when no remaining post uses it.
+  if (post.mediaId && (await ctx.store.docList('posts', { mediaId: post.mediaId })).length === 0) {
     await ctx.store.docDelete('media', post.mediaId);
     await ctx.store.blobDelete(post.mediaId);
   }

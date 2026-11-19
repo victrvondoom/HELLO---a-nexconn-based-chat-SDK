@@ -143,7 +143,7 @@ export default async function OperationsPage({ params }: { params: Promise<{ eve
           </section>
 
           {showApprovals ? (
-          <section className="card card__body stack" aria-labelledby="approvals-heading">
+          <section id="approvals" className="card card__body stack" aria-labelledby="approvals-heading" style={{ scrollMarginTop: 80 }}>
             <h2 id="approvals-heading">Approval queue</h2>
             <p className="small muted">Changes that need an organiser. Execution is recorded separately from approval.</p>
             <ApprovalQueue

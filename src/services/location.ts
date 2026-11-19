@@ -3,6 +3,7 @@ import { DomainError } from '../domain/errors';
 import type { LocationAudience, LocationShare } from '../domain/product';
 import { COUNTRIES, countryName, isCountry, project } from '../lib/geo';
 import { audit, requireCapability, type ServiceContext } from './context';
+import { MIN_GROUP_SIZE } from '../domain/privacy';
 
 /**
  * Live location, shared only by choice.
@@ -120,11 +121,16 @@ export async function mapView(ctx: ServiceContext, eventId: string, userId: stri
     if (country) counts.set(country, (counts.get(country) ?? 0) + 1);
   }
   const myCountry = (await ctx.store.docGet('prefs', userId))?.country ?? null;
+  // A count of one or two identifies people ("the one attendee from Iceland"), so those countries are not
+  // shown. The response says how many were held back, so the map does not look emptier than it is.
+  const shown = [...counts.entries()].filter(([, members]) => members >= MIN_GROUP_SIZE);
   return {
     now,
     me: people.find((p) => p.isSelf) ?? null,
     people,
-    countries: [...counts.entries()].map(([code, members]) => ({ code, name: countryName(code) ?? code, members })).sort((a, b) => b.members - a.members),
+    countries: shown.map(([code, members]) => ({ code, name: countryName(code) ?? code, members })).sort((a, b) => b.members - a.members),
+    hiddenCountries: counts.size - shown.length,
+    minGroupSize: MIN_GROUP_SIZE,
     myCountry,
     countryOptions: COUNTRIES,
   };

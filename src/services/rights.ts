@@ -92,6 +92,10 @@ export async function exportMyData(ctx: ServiceContext, userId: string) {
 
 export interface ErasureReport {
   fieldAtlasRecords: number;
+  /** Notifications addressed to the person. They used to be left behind. */
+  notifications: number;
+  /** Notes the person wrote on payments they made. The payment record is kept for accountability. */
+  paymentNotesRedacted: number;
   follows: number;
   deviceKeys: number;
   privateMessages: number;
@@ -134,6 +138,8 @@ export async function eraseMe(ctx: ServiceContext, userId: string): Promise<Eras
   await ctx.store.deleteProfile(userId);
   const report: ErasureReport = {
     fieldAtlasRecords: await eraseFieldAtlas(ctx, userId, eventIds),
+    notifications: await ctx.store.deleteNotificationsFor(userId),
+    paymentNotesRedacted: await ctx.store.redactPaymentNotesFrom(userId, ERASED_TEXT),
     follows: await ctx.store.removeAllFollows(userId),
     deviceKeys: await ctx.store.deleteKeyBundles(userId),
     privateMessages: await ctx.store.deleteSealedInvolving(userId),
@@ -176,7 +182,7 @@ export async function eraseMe(ctx: ServiceContext, userId: string): Promise<Eras
       'privacy.erase',
       'user',
       userId,
-      `Erased on request: ${report.fieldAtlasRecords} Field Atlas records, ${report.follows} follows, ${report.deviceKeys} keys, ${report.privateMessages} private messages; ${report.messagesRedacted} messages and ${report.reportsRedacted} reports redacted.`,
+      `Erased on request: ${report.fieldAtlasRecords} Field Atlas records, ${report.notifications} notifications, ${report.follows} follows, ${report.deviceKeys} keys, ${report.privateMessages} private messages; ${report.messagesRedacted} messages, ${report.reportsRedacted} reports and ${report.paymentNotesRedacted} payment notes redacted.`,
     );
   }
   return report;

@@ -29,6 +29,7 @@ interface Thread {
 
 const STATUS: Record<Payment['status'], string> = {
   AWAITING_CONFIRMATION: 'Waiting for you to confirm',
+  PROCESSING: 'Processing',
   SUCCEEDED: 'Paid',
   FAILED: 'Failed',
   CANCELLED: 'Cancelled',
