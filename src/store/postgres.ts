@@ -1,4 +1,4 @@
-import { Pool, type PoolClient, type PoolConfig } from 'pg';
+import { Client, Pool, type PoolClient, type PoolConfig } from 'pg';
 import type {
   Announcement,
   ApprovalRequest,
@@ -63,6 +63,7 @@ export class PostgresHelloStore implements SeedableStore {
   private constructor(
     private readonly pool: Pool,
     readonly schema: string,
+    private readonly config: PoolConfig,
   ) {}
 
   /** Connects, creates the schema if needed (under an advisory lock, so instances can start together). */
@@ -79,7 +80,7 @@ export class PostgresHelloStore implements SeedableStore {
     const pool = new Pool(config);
     // An idle client that loses its connection must not crash the process.
     pool.on('error', () => undefined);
-    const store = new PostgresHelloStore(pool, schema);
+    const store = new PostgresHelloStore(pool, schema, config);
     await store.tx(async (c) => {
       await c.query('select pg_advisory_xact_lock(hashtext($1))', [`hello_store_schema:${schema}`]);
       if (schema !== 'public') await c.query(`create schema if not exists ${schema}`);
@@ -94,6 +95,42 @@ export class PostgresHelloStore implements SeedableStore {
       await this.pool.query(`drop schema if exists ${this.schema} cascade`);
     }
     await this.pool.end();
+  }
+
+  /** Sends a notification on a channel (Postgres NOTIFY). Payloads must stay under 8,000 bytes. */
+  async notify(channel: string, payload: string): Promise<void> {
+    await this.pool.query('select pg_notify($1, $2)', [channel, payload]);
+  }
+
+  /**
+   * Listens on a channel with a dedicated connection (LISTEN cannot share a pooled one). If the connection
+   * drops, it reconnects after a short wait. Returns a function that stops listening.
+   */
+  async listen(channel: string, onPayload: (payload: string) => void): Promise<() => Promise<void>> {
+    if (!IDENT.test(channel)) throw new Error('The channel name must be a plain identifier.');
+    let stopped = false;
+    let client: Client | null = null;
+    const open = async (): Promise<void> => {
+      const next = new Client({ connectionString: this.config.connectionString, options: this.config.options });
+      next.on('notification', (message) => {
+        if (message.channel === channel && message.payload) onPayload(message.payload);
+      });
+      next.on('error', () => {
+        if (stopped) return;
+        client = null;
+        setTimeout(() => {
+          if (!stopped) open().catch(() => undefined);
+        }, 2_000).unref();
+      });
+      await next.connect();
+      await next.query(`listen ${channel}`);
+      client = next;
+    };
+    await open();
+    return async () => {
+      stopped = true;
+      await client?.end().catch(() => undefined);
+    };
   }
 
   /** Empties every table. Used by the demo reset. */

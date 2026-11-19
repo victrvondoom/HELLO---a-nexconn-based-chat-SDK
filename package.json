@@ -13,7 +13,7 @@
     "test:watch": "vitest",
     "test:postgres": "node -e \"if(!process.env.HELLO_TEST_DATABASE_URL){console.error('Set HELLO_TEST_DATABASE_URL to an empty Postgres database, e.g. postgres://hello:hello@localhost:5432/hello_test');process.exit(1)}\" && vitest run tests/integration",
     "check": "npm run typecheck && npm run lint && npm run test && npm run build",
-    "test:e2e": "node tests/e2e/judge-flow.mjs && node tests/e2e/features-flow.mjs && node tests/e2e/workflow-audit.mjs && node tests/e2e/private-messages.mjs && node tests/e2e/product-flow.mjs && node tests/e2e/field-atlas-flow.mjs && node tests/e2e/field-live-flow.mjs",
+    "test:e2e": "node tests/e2e/judge-flow.mjs && node tests/e2e/features-flow.mjs && node tests/e2e/workflow-audit.mjs && node tests/e2e/private-messages.mjs && node tests/e2e/product-flow.mjs && node tests/e2e/field-atlas-flow.mjs && node tests/e2e/field-live-flow.mjs && node tests/e2e/live-flow.mjs",
     "test:routes": "node tests/e2e/route-crawl.mjs",
     "screenshots": "node tests/e2e/screenshots.mjs"
   },

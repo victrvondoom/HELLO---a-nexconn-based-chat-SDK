@@ -8,6 +8,10 @@ import { vaultFromEnv } from '@/lib/vault';
 import { persistenceFromEnv, type Persistence } from '@/lib/persistence';
 import { resetAllRateLimiters } from '@/lib/rate-limit';
 import { logError } from '@/lib/logger';
+import { liveBus } from '@/lib/live/bus';
+import { withLiveEvents } from '@/lib/live/store';
+import { presenceRegistry } from '@/lib/live/presence';
+import { startFanout, type Fanout } from '@/lib/live/fanout';
 
 /**
  * Process-wide runtime. The store is chosen from the environment:
@@ -29,6 +33,8 @@ export interface Runtime {
   persistence: 'MEMORY_DEMO' | 'DISK' | 'POSTGRES';
   disk: Persistence | null;
   database: PostgresHelloStore | null;
+  /** Live events across instances (Postgres only). Null with the in-memory store: one instance, one bus. */
+  fanout: Fanout | null;
   clock: 'LIVE_FROM_SEEDED_EVENT_TIME';
   /** Stops background work (the clock save). Called before the runtime is discarded. */
   stop: () => void;
@@ -39,6 +45,13 @@ const g = globalThis as GlobalWithRuntime;
 
 /** How often the Postgres runtime saves its clock. A restart resumes at least this far ahead, so time never runs backwards. */
 const CLOCK_SAVE_MS = 5_000;
+
+/** Every write through the returned store publishes live events (src/lib/live/store.ts). */
+function live(store: HelloStore, now: () => number): HelloStore {
+  return withLiveEvents(store, (event) => {
+    liveBus().publish(event);
+  }, now);
+}
 
 function contextFor(store: HelloStore, now: () => number, vault: ReturnType<typeof vaultFromEnv>): ServiceContext {
   return createContext(store, {
@@ -69,15 +82,23 @@ async function createPostgresRuntime(connectionString: string, vault: ReturnType
     });
   }, CLOCK_SAVE_MS);
   timer.unref();
+  // Live events reach pages served by other instances too.
+  const fanout = await startFanout(database, liveBus(), presenceRegistry()).catch((error: unknown) => {
+    logError('live_fanout_failed', { detail: error instanceof Error ? error.message : 'unknown' });
+    return null;
+  });
+  const store = live(database, now);
   return {
-    store: database,
-    ctx: contextFor(database, now, vault),
+    store,
+    ctx: contextFor(store, now, vault),
     persistence: 'POSTGRES',
     disk: null,
     database,
+    fanout,
     clock: 'LIVE_FROM_SEEDED_EVENT_TIME',
     stop: () => {
       clearInterval(timer);
+      void fanout?.stop();
     },
   };
 }
@@ -95,8 +116,8 @@ async function createRuntime(): Promise<Runtime> {
   const base = Math.max(DEMO_NOW, savedNow ?? 0);
   const bootedAt = Date.now();
   const now = () => base + (Date.now() - bootedAt);
-  const store = disk ? disk.attach(memory, now) : memory;
-  return { store, ctx: contextFor(store, now, vault), persistence: disk ? 'DISK' : 'MEMORY_DEMO', disk, database: null, clock: 'LIVE_FROM_SEEDED_EVENT_TIME', stop: () => undefined };
+  const store = live(disk ? disk.attach(memory, now) : memory, now);
+  return { store, ctx: contextFor(store, now, vault), persistence: disk ? 'DISK' : 'MEMORY_DEMO', disk, database: null, fanout: null, clock: 'LIVE_FROM_SEEDED_EVENT_TIME', stop: () => undefined };
 }
 
 /** Returns the same runtime for the life of the process, including across dev hot-reloads. */

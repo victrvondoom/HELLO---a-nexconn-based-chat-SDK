@@ -1,6 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { subscribeStream, topicMatches } from './stream';
+import { topicsForApi } from './topics';
 
 type Envelope<T> = { ok: true; data: T } | { ok: false; error: { code: string; message: string } };
 
@@ -27,13 +29,19 @@ export async function api<T>(url: string, method: 'GET' | 'POST' | 'DELETE' = 'G
 
 export const errorText = (error: unknown) => (error instanceof ApiError ? error.message : 'Something went wrong. Try again.');
 
+/** While the live stream is connected, polling is only a safety net. */
+export const LIVE_SAFETY_POLL_MS = 60_000;
+
 /**
- * Keeps a view in step with the server: loads `url`, then reloads it every `ms` while the tab is
- * visible. `refresh` reloads at once, for use right after the viewer changes something.
+ * Keeps a view in step with the server: loads `url`, then refreshes it when the live stream reports a
+ * change to a topic the view shows (src/components/live/topics.ts), within about 150 ms. While the stream
+ * is down it polls every `ms`, as before; while it is up it polls only every minute as a safety net.
+ * `refresh` reloads at once, for use right after the viewer changes something.
  */
-export function useLive<T>(url: string, initial: T, ms = 5000): { data: T; refresh: () => Promise<void>; stale: boolean } {
+export function useLive<T>(url: string, initial: T, ms = 5000): { data: T; refresh: () => Promise<void>; stale: boolean; live: boolean } {
   const [data, setData] = useState(initial);
   const [stale, setStale] = useState(false);
+  const [live, setLive] = useState(false);
   const latest = useRef(0);
 
   const refresh = useCallback(async () => {
@@ -50,11 +58,42 @@ export function useLive<T>(url: string, initial: T, ms = 5000): { data: T; refre
     }
   }, [url]);
 
+  // Live stream: refresh on a matching change, and catch up after a reconnect.
+  useEffect(() => {
+    const target = topicsForApi(url);
+    if (!target.eventId || target.topics.length === 0) return;
+    let pending: number | null = null;
+    let wasConnected: boolean | null = null;
+    const schedule = () => {
+      pending ??= window.setTimeout(() => {
+        pending = null;
+        void refresh();
+      }, 150);
+    };
+    const unsubscribe = subscribeStream(target.eventId, (message) => {
+      if (message.kind === 'state') {
+        setLive(message.connected);
+        // Changes made while the stream was down were missed: read once when it comes back.
+        if (message.connected && wasConnected === false) schedule();
+        wasConnected = message.connected;
+        return;
+      }
+      if (message.kind === 'change' && topicMatches(target.topics, message.topic)) schedule();
+    });
+    return () => {
+      if (pending !== null) window.clearTimeout(pending);
+      unsubscribe();
+    };
+  }, [url, refresh]);
+
   useEffect(() => {
     void refresh();
+  }, [refresh]);
+
+  useEffect(() => {
     const id = window.setInterval(() => {
       if (document.visibilityState === 'visible') void refresh();
-    }, ms);
+    }, live ? Math.max(ms, LIVE_SAFETY_POLL_MS) : ms);
     // A tab that was hidden skipped its polls. Refresh as soon as it is shown again instead of showing
     // data up to `ms` old until the next tick.
     const onVisible = () => {
@@ -65,9 +104,9 @@ export function useLive<T>(url: string, initial: T, ms = 5000): { data: T; refre
       window.clearInterval(id);
       document.removeEventListener('visibilitychange', onVisible);
     };
-  }, [refresh, ms]);
+  }, [refresh, ms, live]);
 
-  return { data, refresh, stale };
+  return { data, refresh, stale, live };
 }
 
 /** "just now", "5 min ago", "3 h ago", measured against the server's clock. */
