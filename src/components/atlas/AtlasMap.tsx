@@ -1,6 +1,7 @@
 'use client';
 
 import type { MissionView } from '@/services/field-atlas';
+import type { SpaceCondition } from '@/domain/field/live';
 
 export interface AtlasSpace {
   id: string;
@@ -67,6 +68,7 @@ export function AtlasMap({
   floor,
   selectedId,
   route,
+  conditions = {},
   onFloor,
   onSelect,
 }: {
@@ -75,6 +77,8 @@ export function AtlasMap({
   floor: number;
   selectedId: string | null;
   route: AtlasRoute | null;
+  /** Live field conditions by space id. Places with nothing reported are absent. */
+  conditions?: Record<string, SpaceCondition>;
   onFloor: (floor: number) => void;
   onSelect: (id: string) => void;
 }) {
@@ -82,6 +86,7 @@ export function AtlasMap({
   const spaceById = new Map(venue.spaces.map((s) => [s.id, s]));
   const onThisFloor = missions.filter((m) => m.spaceId && spaceById.get(m.spaceId)?.floor === floor);
   const numbered = new Map(missions.map((m, i) => [m.id, i + 1]));
+  const flagged = spaces.filter((s) => conditions[s.id]);
   const routePoints = route?.legs?.filter((leg) => leg.floor === floor).flatMap((leg) => leg.points.map((p) => `${p[0]},${p[1]}`)).join(' ') ?? '';
   return (
     <div className="atlas-map">
@@ -94,8 +99,13 @@ export function AtlasMap({
       </div>
       <svg viewBox={`0 0 ${venue.width} ${venue.depth}`} role="img" aria-label={`Plan of ${venue.name}, ${venue.floors.find((f) => f.id === floor)?.name ?? ''}. ${onThisFloor.length} missions on this floor.`}>
         {spaces.map((s) => (
-          <polygon key={s.id} className={`space space--${s.kind.toLowerCase()}`} points={s.outline.map((p) => `${p[0]},${p[1]}`).join(' ')} strokeDasharray={s.stepFree ? undefined : '1.2 1'}>
-            <title>{s.stepFree ? s.name : `${s.name} (not step-free)`}</title>
+          <polygon
+            key={s.id}
+            className={`space space--${s.kind.toLowerCase()}${conditions[s.id] ? ` space--cond-${conditions[s.id]?.level.toLowerCase()}` : ''}`}
+            points={s.outline.map((p) => `${p[0]},${p[1]}`).join(' ')}
+            strokeDasharray={s.stepFree ? undefined : '1.2 1'}
+          >
+            <title>{`${s.stepFree ? s.name : `${s.name} (not step-free)`}${conditions[s.id] ? `. ${conditions[s.id]?.signals.map((sig) => sig.text).join(' ')}` : ''}`}</title>
           </polygon>
         ))}
         {spaces.map((s) => {
@@ -104,6 +114,19 @@ export function AtlasMap({
             <text key={`${s.id}-label`} className="space-label" x={x} y={y + 2} textAnchor="middle">
               {s.name}
             </text>
+          );
+        })}
+        {flagged.map((s) => {
+          const box = bounds(s.outline);
+          const level = conditions[s.id]?.level ?? 'CLEAR';
+          // The advisory sits in the room's top-left corner; mission markers use the top-right.
+          const x = box.minX + Math.min(5, (box.maxX - box.minX) * 0.18);
+          const y = box.minY + Math.min(5, (box.maxY - box.minY) * 0.18);
+          return (
+            <g key={`${s.id}-cond`} className={`atlas-advisory atlas-advisory--${level.toLowerCase()}`} aria-hidden="true">
+              <circle cx={x} cy={y} r={2.4} />
+              <text x={x} y={y + 1}>!</text>
+            </g>
           );
         })}
         {routePoints ? <polyline className="route" points={routePoints} aria-hidden="true" /> : null}
@@ -143,7 +166,17 @@ export function AtlasMap({
         <span className="l-pending">Waiting for review</span>
         <span className="l-done">Completed</span>
         <span className="l-locked">Locked</span>
+        <span className="l-advisory">Live advisory</span>
       </div>
+      {flagged.length > 0 ? (
+        <ul className="atlas-advisories" aria-label="Live conditions on this floor">
+          {flagged.map((s) => (
+            <li key={s.id} className="xs">
+              <strong>{s.name}:</strong> {conditions[s.id]?.signals.map((sig) => sig.text).join(' ')}
+            </li>
+          ))}
+        </ul>
+      ) : null}
       <p className="xs faint" style={{ margin: '8px 0 0' }}>
         Schematic of the venue’s stored plan, not a street map. Your location is not tracked.
       </p>

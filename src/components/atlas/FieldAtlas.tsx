@@ -4,17 +4,29 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { api, errorText, useLive } from '@/components/live/client';
 import { useFeedback } from '@/components/ui/Feedback';
-import type { MissionView, PlayerState, SeasonView, cabinetFor } from '@/services/field-atlas';
+import type { MissionView, SeasonView, cabinetFor } from '@/services/field-atlas';
+import type { AtlasHomeData } from '@/services/field-live';
+import type { MissionPulse, SeasonPulse, SpaceCondition } from '@/domain/field/live';
 import type { Answer, Recommendation } from '@/services/quest-director';
-import { AtlasMap, type AtlasRoute, type AtlasVenue } from './AtlasMap';
+import { AtlasMap, type AtlasRoute } from './AtlasMap';
 import { BadgeArt } from './BadgeArt';
 
-export interface AtlasHome {
-  player: PlayerState;
-  missions: MissionView[];
-  season: SeasonView | null;
-  venue: AtlasVenue | null;
-  serverTime: number;
+/** Built by `atlasHome` (src/services/field-live.ts) for both the first render and every poll. */
+export type AtlasHome = AtlasHomeData;
+
+const CONDITION_WORD: Record<SpaceCondition['level'], string> = { CLEAR: 'Clear', BUSY: 'Busy', CAUTION: 'Caution', AVOID: 'Come back later' };
+
+/** "12" or "fewer than 3": the pulse never shows a count small enough to point at one person. */
+const pulseCount = (n: number | null, min: number) => (n === null ? `fewer than ${min}` : String(n));
+
+function momentumText(p: MissionPulse | undefined, min: number): string {
+  if (!p) return 'No activity recorded yet.';
+  const parts = [
+    p.verifiedLastHour !== null ? `${p.verifiedLastHour} verified in the last hour` : null,
+    p.underwayNow !== null ? `${p.underwayNow} working on it now` : null,
+    `${pulseCount(p.completedTotal, min)} completed in total`,
+  ].filter(Boolean);
+  return `${parts.join(' · ')}.`;
 }
 
 type Cabinet = Awaited<ReturnType<typeof cabinetFor>>;
@@ -79,6 +91,12 @@ export function FieldAtlas({ eventId, initial, cabinetHref }: { eventId: string;
   const defaultSelected = useMemo(() => missions.find((m) => m.attempt.status === 'STARTED' || m.attempt.status === 'REJECTED') ?? missions.find((m) => m.availability.state === 'AVAILABLE') ?? missions[0] ?? null, [missions]);
   const focus = current ?? defaultSelected;
 
+  // Changes whenever a place's condition or the pulse changes, so Quest Director re-ranks on the next poll.
+  const liveKey = useMemo(
+    () => JSON.stringify([Object.values(data.conditions).map((c) => [c.spaceId, c.level, c.accessIssue]), data.pulse.missions.map((p) => [p.missionId, p.verifiedLastHour, p.underwayNow])]),
+    [data.conditions, data.pulse],
+  );
+
   useEffect(() => {
     let live = true;
     const minuteValue = minutes === '' ? null : Number(minutes);
@@ -90,7 +108,7 @@ export function FieldAtlas({ eventId, initial, cabinetHref }: { eventId: string;
       .then((r) => { if (live) { setRecs(r); setRecError(null); } })
       .catch((e: unknown) => { if (live) setRecError(errorText(e)); });
     return () => { live = false; };
-  }, [eventId, startSpace, stepFree, minutes, data.player.xp]);
+  }, [eventId, startSpace, stepFree, minutes, data.player.xp, liveKey]);
 
   useEffect(() => {
     if (tab !== 'cabinet') return;
@@ -100,6 +118,23 @@ export function FieldAtlas({ eventId, initial, cabinetHref }: { eventId: string;
       .catch((e: unknown) => { if (live) setCabinetError(errorText(e)); });
     return () => { live = false; };
   }, [tab, eventId, data.player.xp]);
+
+  /**
+   * Selecting another mission clears the evidence and code typed for the previous one (they used to carry
+   * over, so a code meant for one station could be submitted for another) and shows the mission's floor.
+   */
+  const choose = (id: string) => {
+    setSelected(id);
+    setAnswers(null);
+    setResult(null);
+    setEvidence('');
+    setCode('');
+    const spaceId = missions.find((m) => m.id === id)?.spaceId;
+    const space = spaceId ? data.venue?.spaces.find((x) => x.id === spaceId) : undefined;
+    if (space) setFloor(space.floor);
+  };
+
+  const pulseOf = useMemo(() => new Map(data.pulse.missions.map((p) => [p.missionId, p])), [data.pulse]);
 
   const route: AtlasRoute | null = focus && recs?.routes[focus.id] ? recs.routes[focus.id] ?? null : null;
 
@@ -174,6 +209,19 @@ export function FieldAtlas({ eventId, initial, cabinetHref }: { eventId: string;
           <dt>Requirement</dt><dd>{m.verification.detail}</dd>
           <dt>Accessibility</dt><dd>{m.accessibilityNote || 'No note recorded.'}</dd>
           {route ? <><dt>Route</dt><dd>About {route.metres} m{route.stepFree ? ', step-free' : ''}. {route.steps.slice(0, 3).join(' ')}</dd></> : null}
+          {m.spaceId ? (
+            <>
+              <dt>Right now</dt>
+              <dd data-testid="mission-condition">
+                {(() => {
+                  const c = data.conditions[m.spaceId];
+                  if (!c) return 'Clear: nothing is reported there.';
+                  return <><span className={`atlas-cond atlas-cond--${c.level.toLowerCase()}`}>{CONDITION_WORD[c.level]}</span> {c.signals.map((sig) => sig.text).join(' ')}</>;
+                })()}
+              </dd>
+            </>
+          ) : null}
+          <dt>Momentum</dt><dd data-testid="mission-pulse">{momentumText(pulseOf.get(m.id), data.pulse.minCount)}</dd>
         </dl>
         {m.attempt.lastOutcome && m.attempt.status !== 'NONE' ? <p className={`atlas-note ${m.attempt.status === 'APPROVED' ? 'atlas-note--ok' : m.attempt.status === 'PENDING_REVIEW' ? 'atlas-note--warn' : ''}`} style={{ margin: 0 }}>{m.attempt.lastOutcome}</p> : null}
         {m.availability.state !== 'AVAILABLE' && m.attempt.status === 'NONE' ? (
@@ -268,6 +316,7 @@ export function FieldAtlas({ eventId, initial, cabinetHref }: { eventId: string;
           ) : (
             <span className="small muted">No challenge is running this month.</span>
           )}
+          {data.season ? <SeasonPulseLine pulse={data.pulse} /> : null}
         </div>
         <div className="atlas-chip" style={{ justifySelf: 'end' }}>
           {badgeGlyph ? <span style={{ width: 40, height: 40, display: 'inline-block' }}><BadgeArt artwork={badgeGlyph.artwork} label={`Latest badge: ${badgeGlyph.name}`} /></span> : <span className="xs faint">No badges yet</span>}
@@ -290,12 +339,9 @@ export function FieldAtlas({ eventId, initial, cabinetHref }: { eventId: string;
                 floor={floor}
                 selectedId={focus?.id ?? null}
                 route={route}
+                conditions={data.conditions}
                 onFloor={setFloor}
-                onSelect={(id) => {
-                  setSelected(id);
-                  setAnswers(null);
-                  setResult(null);
-                }}
+                onSelect={choose}
               />
             ) : (
               <div className="empty card"><strong>No venue plan yet</strong><span>Missions still appear in the list. An organiser has not drawn the venue.</span></div>
@@ -308,7 +354,7 @@ export function FieldAtlas({ eventId, initial, cabinetHref }: { eventId: string;
                 <ul className="atlas-list">
                   {missions.map((m) => (
                     <li key={m.id}>
-                      <button type="button" aria-current={focus?.id === m.id ? 'true' : undefined} onClick={() => { setSelected(m.id); setAnswers(null); setResult(null); }}>
+                      <button type="button" aria-current={focus?.id === m.id ? 'true' : undefined} onClick={() => { choose(m.id); }}>
                         <span><strong>{m.title}</strong><br /><span className="xs faint">{statusLabel(m)} · {m.xp} XP</span></span>
                         <span className="xs faint">{m.attempt.status === 'APPROVED' ? '✓' : ''}</span>
                       </button>
@@ -349,7 +395,7 @@ export function FieldAtlas({ eventId, initial, cabinetHref }: { eventId: string;
                   <ol className="stack" style={{ gap: 8, paddingLeft: 18, marginTop: 12 }}>
                     {recs.recommendations.map((r) => (
                       <li key={r.missionId}>
-                        <button type="button" className="button button--ghost button--sm" onClick={() => { setSelected(r.missionId); setAnswers(null); setResult(null); }}>{r.title}</button>
+                        <button type="button" className="button button--ghost button--sm" onClick={() => { choose(r.missionId); }}>{r.title}</button>
                         <div className="xs faint">{r.reason}</div>
                       </li>
                     ))}
@@ -465,5 +511,13 @@ function SeasonBlock({ season }: { season: SeasonView }) {
       </ul>
       <p className="xs faint" style={{ margin: 0 }}>{season.earned ? 'You have earned this month’s badge.' : `${season.requiredRemaining} required mission(s) left.`}</p>
     </div>
+  );
+}
+
+function SeasonPulseLine({ pulse }: { pulse: SeasonPulse }) {
+  return (
+    <span className="xs faint" data-testid="season-pulse">
+      Season pulse: {pulseCount(pulse.participants, pulse.minCount)} taking part · {pulseCount(pulse.badgesEarned, pulse.minCount)} badges earned
+    </span>
   );
 }

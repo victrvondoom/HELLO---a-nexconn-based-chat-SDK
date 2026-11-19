@@ -159,13 +159,19 @@ async function awardMission(ctx: ServiceContext, mission: FieldMission, userId: 
   };
   xpAwarded += await ledger({ id: `${userId}:mission:${mission.id}`, amount: mission.xp, kind: 'MISSION', sourceId: mission.id, reason: `Verified: ${mission.title}`, actorId: null });
 
-  if (mission.seasonId) {
-    const season = await ctx.store.docGet('fieldSeasons', mission.seasonId);
-    if (season && season.eventId === eventId && season.requiredMissionIds.length > 0) {
-      const approved = new Set((await approvedAttemptsOf(ctx, eventId, userId)).filter((a) => a.approvedAt !== null && inWindow(a.approvedAt, { startsAt: season.startsAt, endsAt: season.endsAt })).map((a) => a.missionId));
+  // Every published season that requires this mission is checked, not only `mission.seasonId`: an organiser
+  // can list any of the event's missions in a season, and completing the last required one must earn it.
+  const seasons = (await ctx.store.docList('fieldSeasons', { eventId })).filter(
+    (s) => s.status === 'PUBLISHED' && s.requiredMissionIds.includes(mission.id),
+  );
+  if (seasons.length > 0) {
+    const approvedAttempts = await approvedAttemptsOf(ctx, eventId, userId);
+    for (const season of seasons) {
+      const approved = new Set(approvedAttempts.filter((a) => a.approvedAt !== null && inWindow(a.approvedAt, { startsAt: season.startsAt, endsAt: season.endsAt })).map((a) => a.missionId));
       if (season.requiredMissionIds.every((m) => approved.has(m))) {
-        seasonBonus = await ledger({ id: `${userId}:season:${season.id}`, amount: season.bonusXp, kind: 'SEASON_BONUS', sourceId: season.id, reason: `Season complete: ${season.title}`, actorId: null });
-        xpAwarded += seasonBonus;
+        const bonus = await ledger({ id: `${userId}:season:${season.id}`, amount: season.bonusXp, kind: 'SEASON_BONUS', sourceId: season.id, reason: `Season complete: ${season.title}`, actorId: null });
+        seasonBonus += bonus;
+        xpAwarded += bonus;
         const badgeId = `season-${season.id}`;
         const badge: FieldBadge = { id: `${userId}:${badgeId}`, eventId, userId, badgeId, kind: 'MONTHLY', seasonId: season.id, name: season.title, artwork: season.artwork, earnedAt: now };
         if (await ctx.store.docPutIfAbsent('fieldBadges', badge)) {
@@ -316,7 +322,13 @@ export async function seasonsForViewer(ctx: ServiceContext, eventId: string, use
     .sort((a, b) => a.startsAt - b.startsAt)
     .map((s): SeasonView => {
       const required = new Set(s.requiredMissionIds);
-      const remaining = s.requiredMissionIds.filter((m) => byMission.get(m)?.status !== 'APPROVED').length;
+      // Same rule as the award: a mission counts toward a season only when it was approved inside the
+      // season's window. Counting any approval made the header say "0 left" while no badge could arrive.
+      const countsHere = (m: string) => {
+        const a = byMission.get(m);
+        return a?.status === 'APPROVED' && a.approvedAt !== null && inWindow(a.approvedAt, { startsAt: s.startsAt, endsAt: s.endsAt });
+      };
+      const remaining = s.requiredMissionIds.filter((m) => !countsHere(m)).length;
       return {
         id: s.id,
         title: s.title,
@@ -462,7 +474,13 @@ export async function submitMission(ctx: ServiceContext, eventId: string, userId
   }
 
   const now = ctx.now();
-  const bump = (status: FieldAttempt['status'], lastOutcome: string) =>
+  const bump = async (status: FieldAttempt['status'], lastOutcome: string) => {
+    // A concurrent submission can use the last attempt between the check above and this write. Reporting
+    // "submitted" for a write that did not happen would leave the person waiting for a review that never comes.
+    const written = await bumpRaw(status, lastOutcome);
+    if (!written) throw new DomainError('VERSION_CONFLICT', 'This mission changed while you were submitting. Refresh to see where it stands.');
+  };
+  const bumpRaw = (status: FieldAttempt['status'], lastOutcome: string) =>
     ctx.store.docMutate('fieldAttempts', id, (doc) => {
       if (doc.status === 'APPROVED') return null;
       if (doc.submissions >= MAX_SUBMISSIONS) return null;
@@ -509,8 +527,16 @@ async function notifyAward(ctx: ServiceContext, eventId: string, userId: string,
   }
 }
 
-async function flag(ctx: ServiceContext, eventId: string, userId: string | null, missionId: string | null, kind: FieldFlag['kind'], detail: string): Promise<void> {
-  await ctx.store.docPut('fieldFlags', { id: ctx.newId('flg'), eventId, userId, missionId, kind, detail, status: 'OPEN', createdAt: ctx.now() });
+/**
+ * Raises an integrity flag. At most one flag of a kind is open per person and mission: a person who keeps
+ * calling submit after their submissions run out used to add a new flag on every call, flooding the review
+ * queue. The id is derived from the source (hashed, so it does not carry the user id after erasure) and
+ * includes how many such flags were already dismissed, so a fresh occurrence after a dismissal is flagged again.
+ */
+async function flag(ctx: ServiceContext, eventId: string, userId: string, missionId: string, kind: FieldFlag['kind'], detail: string): Promise<void> {
+  const previous = (await ctx.store.docList('fieldFlags', { eventId, missionId, kind, userId })).filter((f) => f.status === 'DISMISSED').length;
+  const id = `flg_${sha(`${eventId}:${kind}:${missionId}:${userId}:${previous}`).slice(0, 20)}`;
+  await ctx.store.docPutIfAbsent('fieldFlags', { id, eventId, userId, missionId, kind, detail, status: 'OPEN', createdAt: ctx.now() });
 }
 
 // ---------- organiser: review queue ----------
@@ -694,6 +720,10 @@ export async function adjustXp(ctx: ServiceContext, eventId: string, actorId: st
   if (text.length < 10 || text.length > 300) throw new DomainError('VALIDATION_FAILED', 'Give a reason of 10 to 300 characters. It is kept in the audit trail.');
   const membership = await ctx.store.findMembership(eventId, userId);
   if (!membership) throw new DomainError('NOT_FOUND', 'That person is not in this event.');
+  // A negative adjustment cannot take a person below zero: a negative XP total has no level and showed
+  // as "-40 XP" in the header and the export.
+  const current = (await playerState(ctx, eventId, userId)).xp;
+  if (current + amount < 0) throw new DomainError('VALIDATION_FAILED', `That would take this person below 0 XP. They have ${current} XP.`);
   const entry: FieldLedgerEntry = { id: ctx.newId('adj'), eventId, userId, amount, kind: 'ADJUSTMENT', sourceId: actorId, reason: text, actorId, createdAt: ctx.now() };
   await ctx.store.docPut('fieldLedger', entry);
   await audit(ctx, eventId, actorId, 'field.xp.adjusted', 'user', userId, `${amount > 0 ? '+' : ''}${amount} XP: ${text}`);

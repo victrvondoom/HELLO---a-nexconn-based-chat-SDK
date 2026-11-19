@@ -17,10 +17,13 @@ export type DomainErrorCode =
 
 export class DomainError extends Error {
   readonly code: DomainErrorCode;
+  /** RATE_LIMITED only: seconds until the caller may retry. Sent as the HTTP Retry-After header. */
+  readonly retryAfterSeconds: number | null;
 
-  constructor(code: DomainErrorCode, message: string) {
+  constructor(code: DomainErrorCode, message: string, options: { retryAfterSeconds?: number } = {}) {
     super(message);
     this.name = 'DomainError';
     this.code = code;
+    this.retryAfterSeconds = options.retryAfterSeconds ?? null;
   }
 }

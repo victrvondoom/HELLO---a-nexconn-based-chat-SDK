@@ -55,8 +55,15 @@ export function useLive<T>(url: string, initial: T, ms = 5000): { data: T; refre
     const id = window.setInterval(() => {
       if (document.visibilityState === 'visible') void refresh();
     }, ms);
+    // A tab that was hidden skipped its polls. Refresh as soon as it is shown again instead of showing
+    // data up to `ms` old until the next tick.
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void refresh();
+    };
+    document.addEventListener('visibilitychange', onVisible);
     return () => {
       window.clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisible);
     };
   }, [refresh, ms]);
 

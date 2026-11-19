@@ -7,6 +7,8 @@ import { MissionSchema, monthWindow, seasonPhase, type MissionCategory } from '.
 import type { FieldMission, FieldSeason, QuestRun } from '../domain/product';
 import { listMissionsForViewer, saveMission, type MissionView } from './field-atlas';
 import { WORKFLOWS } from './workflows';
+import { fieldConditions, fieldPulse } from './field-live';
+import { conditionPenalty, pulsePenalty } from '../domain/field/live';
 
 /**
  * QUEST DIRECTOR: the planning and explanation layer for Field Atlas.
@@ -26,7 +28,8 @@ export const GENERATOR_ID = 'QUEST_DIRECTOR_TEMPLATES_V1';
 const AUTO_PUBLISH_MAX_XP = 50;
 
 export interface Citation {
-  kind: 'mission' | 'space' | 'workflow' | 'season' | 'session';
+  /** `condition` cites the live field condition of a place; `pulse` cites the aggregate season pulse. */
+  kind: 'mission' | 'space' | 'workflow' | 'season' | 'session' | 'condition' | 'pulse';
   id: string;
   field: string;
 }
@@ -102,6 +105,17 @@ export async function fieldGuide(ctx: ServiceContext, eventId: string, userId: s
     text: `You earn ${mission.xp} XP once it is verified.${season ? ` It counts toward “${season.title}”${season.requiredMissionIds.includes(mission.id) ? ', and it is one of the missions the badge requires' : ''}.` : ''}`,
     citations: [cite('mission', mission.id, 'xp'), ...(season ? [cite('season', season.id, 'requiredMissionIds')] : [])],
   });
+  // Live: incidents, occupancy and the schedule for the mission's place, read now rather than at publish time.
+  if (mission.spaceId) {
+    const condition = (await fieldConditions(ctx, eventId, userId))[mission.spaceId];
+    answers.push({
+      question: 'Is now a good time to go?',
+      text: !condition
+        ? 'Nothing is reported there right now: no open issue, no crowding figure above 80%, no session running.'
+        : `${condition.signals.map((sig) => sig.text).join(' ')}${condition.level === 'AVOID' ? ' Try another mission first and come back later.' : ''}`,
+      citations: [cite('condition', mission.spaceId, condition ? condition.signals.map((sig) => sig.kind.toLowerCase()).join('+') : 'clear')],
+    });
+  }
   answers.push({
     question: 'Is there a more accessible route?',
     text: mission.accessibilityNote
@@ -153,6 +167,12 @@ export async function recommendFor(
   const startSpace = startSpaceId && venue ? venue.spaces.find((s) => s.id === startSpaceId) ?? null : null;
   if (startSpaceId && !startSpace) throw new DomainError('VALIDATION_FAILED', 'That place is not on the venue map.');
 
+  // The live layer: what is happening in each place now, and anonymous momentum. Both change between polls,
+  // so the same request can rank differently a few minutes later. That is the point.
+  const conditions = await fieldConditions(ctx, eventId, userId);
+  const pulse = await fieldPulse(ctx, eventId, userId, null);
+  const pulseOf = new Map(pulse.missions.map((p) => [p.missionId, p]));
+
   const scored = views.map((v) => {
     let score = 0;
     const reasons: string[] = [];
@@ -187,6 +207,20 @@ export async function recommendFor(
       score += 1;
       reasons.push('can be done from anywhere');
     }
+    const condition = v.spaceId ? conditions[v.spaceId] : undefined;
+    if (condition) {
+      score += conditionPenalty(condition, stepFree);
+      if (condition.level !== 'CLEAR') reasons.push(condition.level === 'AVOID' ? 'busy or affected right now, so it is ranked lower' : 'a little busy right now');
+      if (stepFree && condition.accessIssue) reasons.push('an access issue is reported there');
+      citations.push({ kind: 'condition', id: condition.spaceId, field: 'level' });
+    }
+    const momentum = pulseOf.get(v.id);
+    const momentumScore = pulsePenalty(momentum, condition);
+    if (momentumScore !== 0 && momentum) {
+      score += momentumScore;
+      if (momentum.verifiedLastHour !== null) reasons.push(`${momentum.verifiedLastHour} people verified it in the last hour`);
+      citations.push({ kind: 'pulse', id: v.id, field: 'verifiedLastHour' });
+    }
     score += v.difficulty === 'EASY' ? 1 : 0;
     score += v.xp / 100;
     if (v.seasonId) reasons.push('part of the current monthly challenge');
@@ -202,9 +236,10 @@ export async function recommendFor(
     route: s.route,
     citations: s.citations,
   }));
+  const live = Object.keys(conditions).length > 0 ? ' Live conditions (open issues, crowding, sessions) are taken into account.' : '';
   const note = startSpace
-    ? 'Ranked from the place you chose and the venue map. Your location is not tracked.'
-    : 'No starting place chosen, so these are ranked by fit and reward. Choose a place to get routes. Your location is not tracked.';
+    ? `Ranked from the place you chose and the venue map.${live} Your location is not tracked.`
+    : `No starting place chosen, so these are ranked by fit and reward.${live} Choose a place to get routes. Your location is not tracked.`;
   return { recommendations, routes, note, generator: GENERATOR_ID };
 }
 
@@ -342,8 +377,9 @@ export async function draftMonthlyChallenge(ctx: ServiceContext, eventId: string
     endsAt: window.endsAt,
     artwork: 'compass',
     bonusXp: 100,
+    // Filled in after the missions are saved (below): the season lists only missions that exist.
     missionIds: drafts.map((d) => d.id),
-    requiredMissionIds: drafts.filter((d) => d.verification.method === 'WORKFLOW_RUN' || d.verification.method === 'CHECK_IN').map((d) => d.id),
+    requiredMissionIds: drafts.map((d) => d.id),
     status: 'DRAFT',
     source: 'QUEST_DIRECTOR',
     version: 1,
@@ -351,7 +387,7 @@ export async function draftMonthlyChallenge(ctx: ServiceContext, eventId: string
     updatedAt: now,
   };
 
-  if (!existingSeason) await ctx.store.docPut('fieldSeasons', { ...season, missionIds: drafts.map((d) => d.id), requiredMissionIds: drafts.map((d) => d.id) });
+  if (!existingSeason) await ctx.store.docPut('fieldSeasons', season);
 
   const autoPublished: string[] = [];
   const created: string[] = [];
@@ -368,13 +404,26 @@ export async function draftMonthlyChallenge(ctx: ServiceContext, eventId: string
     created.push(d.id);
     if (lowRisk) autoPublished.push(d.id);
   }
-  // The season is written after its missions, and lists only the missions that were actually saved.
+  // The season lists only the missions that were actually saved. Manual-review missions are optional: a badge
+  // must not wait on an organiser's queue.
+  const requiredOf = (ids: string[]) => drafts.filter((d) => ids.includes(d.id) && d.verification.method !== 'MANUAL_REVIEW').map((d) => d.id);
   if (!existingSeason) {
-    const savedIds = new Set(created);
     await ctx.store.docMutate('fieldSeasons', seasonId, (current) => ({
       ...current,
       missionIds: created,
-      requiredMissionIds: drafts.filter((d) => savedIds.has(d.id) && d.verification.method !== 'MANUAL_REVIEW').map((d) => d.id),
+      requiredMissionIds: requiredOf(created),
+      version: current.version + 1,
+      updatedAt: now,
+    }));
+  } else if (created.length > 0) {
+    // A re-draft (for example after a new check-in station was set up) used to save its new missions with
+    // this seasonId but leave them out of the season, so they were invisible in the challenge. They are now
+    // appended. Requirements change only while the season is still a draft, so a published challenge never
+    // becomes harder for people who are part-way through it.
+    await ctx.store.docMutate('fieldSeasons', seasonId, (current) => ({
+      ...current,
+      missionIds: [...current.missionIds, ...created.filter((id) => !current.missionIds.includes(id))],
+      requiredMissionIds: current.status === 'DRAFT' ? [...current.requiredMissionIds, ...requiredOf(created).filter((id) => !current.requiredMissionIds.includes(id))] : current.requiredMissionIds,
       version: current.version + 1,
       updatedAt: now,
     }));
