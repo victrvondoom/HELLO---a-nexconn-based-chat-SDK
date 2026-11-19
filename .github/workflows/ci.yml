@@ -1,8 +1,11 @@
 name: CI
 
 on:
+  # Pull requests run CI once; pushes run it only on the default branch, so a PR branch is not built twice.
   push:
+    branches: [claude/gracious-fermi-n258g5]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
