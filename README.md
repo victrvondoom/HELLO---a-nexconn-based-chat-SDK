@@ -8,8 +8,8 @@ team concerned, checks whether someone already reported it, routes it to staff w
 keeps a record of every step, and asks the reporter to confirm when it is fixed.
 
 > **Status: working prototype, not a production system.** The domain logic, workflows and UI are
-> implemented and tested. Persistence is an in-memory demo store, messaging is not connected to Nexconn,
-> and sign-in is a demo shortcut. See [Status](#status) before using this for a real event.
+> implemented and tested. Storage is Postgres (set `DATABASE_URL`) or an in-memory store, updates are pushed live,
+> Nexconn connects through a tested chat gateway once its bridge is written, and demo sign-in is a shortcut. See [Status](#status) before using this for a real event.
 
 **Contents:** [Quick start](#quick-start) · [Screenshots](#screenshots) · [What it does](#what-it-does-implemented) ·
 [Agent mesh](#agent-mesh) · [Architecture](#architecture) · [Demo walkthrough](#demo-walkthrough-judge-scenario) ·
@@ -197,7 +197,7 @@ UI (App Router pages, client components for interaction)
     → Services (permissions, use cases, optimistic concurrency)
       → Domain (pure rules: lifecycle, classification, duplicates, scoring, approvals, signals)
       → AI (validated intent routing; deterministic fallback)
-      → Store (HelloStore contract: in-memory now, Postgres planned)
+      → Store (HelloStore contract: Postgres or in-memory; every write publishes a live nudge)
 ```
 
 Details: [docs/architecture.md](docs/architecture.md).
@@ -207,8 +207,10 @@ Details: [docs/architecture.md](docs/architecture.md).
 - Next.js 16 (App Router), React 19, TypeScript in strict mode
 - Zod 4 for every external input
 - Vitest for unit and integration tests; ESLint with strict type-checked rules
-- PostgreSQL / Supabase: migration, constraints, RLS and tests written (see [docs/database.md](docs/database.md))
-- Nexconn: configuration boundary only (see [docs/nexconn-integration.md](docs/nexconn-integration.md))
+- PostgreSQL 16 via `pg`: the app's store (`DATABASE_URL`), the whole integration suite runs on it (see [docs/database.md](docs/database.md))
+- Server-Sent Events for live updates, fanned out across instances with Postgres LISTEN/NOTIFY
+- Nexconn: chat gateway with signed webhooks, account linking and a delivery outbox (see [docs/nexconn-integration.md](docs/nexconn-integration.md))
+- GitHub Actions CI: checks, the Postgres suite and every browser journey (`.github/workflows/ci.yml`)
 
 ## Repository structure
 
@@ -301,8 +303,8 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/seed.sql
 psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/0001_constraints_and_rls.sql
 ```
 
-The migration was applied to a fresh PostgreSQL 16 database and the test script passed. The app does not use this
-database yet. See [docs/database.md](docs/database.md).
+That is the separate Supabase Auth design. The app itself runs on Postgres through `src/store/postgres.ts`: set
+`DATABASE_URL` and its schema is created on first start. See [docs/database.md](docs/database.md).
 
 ## Nexconn setup
 
@@ -347,17 +349,20 @@ instance has its own copy, and demo sign-in is not authentication. See [docs/dep
 | Approvals with separate execution | Implemented and tested (one executor for room moves, one for announcements) |
 | Signal intelligence with human review | Implemented and tested |
 | People discovery with consent | Implemented and tested |
-| Notifications with dedupe (in-app list) | Implemented and tested; no email, push or Nexconn delivery |
+| Notifications with dedupe | Implemented and tested; in-app, pushed live, and delivered to linked chat accounts through the chat gateway |
 | Role-aware UI, operations view, incident detail | Implemented; checked in a browser (Playwright suites and a route crawl of every page as every role) |
-| Database schema, constraints, RLS | Written; verified on PostgreSQL 16; **not yet used by the app** |
-| Persistence | **In-memory demo store only** |
+| Persistence | **Postgres** (`DATABASE_URL`): durable, several instances; integration suite and all browser journeys pass on it. In-memory store otherwise |
+| Live updates, presence, typing | Implemented; Server-Sent Events, across instances via Postgres LISTEN/NOTIFY; tested across two server processes |
+| Search | Implemented; permission-aware, in the command palette |
+| Supabase schema, constraints, RLS | Written; verified on PostgreSQL 16; a separate design for Supabase Auth |
 | Sign-in | **Demo shortcut only**, not authentication |
-| Nexconn messaging | **Not connected** |
+| Nexconn messaging | Chat gateway built and tested (linking, signed inbound, delivery outbox); **the Nexconn-side bridge is yours to write** (docs/nexconn-integration.md) |
 | AI provider | **Not connected**; deterministic interpreter in use |
 | Agent mesh (triage, sentinel, context, event guide, web, coordinator, grounding) | Implemented and tested; event guide is seeded demo data |
 | Web research | Implemented behind a provider boundary (Tavily adapter); tested with fake providers, **not exercised against the live API** |
-| Event guide in Postgres | **Not written**: `listReferenceDocs` is on the store contract, memory store only |
-| Profiles, follows, data export and erasure | Implemented and tested; memory store only |
+| Profiles, follows, data export and erasure | Implemented and tested on both stores |
+| Video calls | Implemented; verified with two real browsers exchanging video peer to peer |
+| Offline outbox, opt-in leaderboard, time-zone seasons | Implemented and tested |
 | End-to-end encrypted private messages | Implemented; tested in Node and between two real browser profiles. **No forward secrecy**, one key per device |
 | Venue map (plan, 3D, heat) and step-free routing | Implemented and tested; the venue is hand-drawn demo data |
 | Content-Security-Policy and cross-site Origin check | Implemented (production builds) |

@@ -144,3 +144,21 @@ transport, Postgres store, real-time delivery and the advanced messaging feature
 | Notifications | `notify()` for mission, level and badge | in-app only | notifications page (existing) | `notifications` | dedupe keys | integration | **Partial**: no Nexconn chat message, no push |
 | Export and erasure | `exportMyData`, `eraseMe` | real | Data rights (existing) | — | erasure removes attempts, XP, badges | integration | **Real** |
 | Leaderboards | none | — | — | — | — | — | **Missing** |
+
+## 10. Update, 2026-11-19: the Missing rows
+
+| Area (status above) | Now | Evidence |
+|---|---|---|
+| Supabase / Postgres (**Missing** in the app) | **Real.** `PostgresHelloStore`, selected by `DATABASE_URL` | `npm run test:postgres`; all journeys on Postgres |
+| Presence, typing, real-time push (**Missing**) | **Real.** SSE stream, presence, typing; cross-instance via LISTEN/NOTIFY | `tests/unit/live.test.ts`, `tests/integration/live.test.ts`, `tests/e2e/live-flow.mjs` |
+| Search (**Missing**) | **Real.** Permission-aware, command palette | `tests/integration/search.test.ts` |
+| Offline outbox (**Missing**) | **Real** for the conversation (localStorage, idempotent resend) | `tests/e2e/outbox-flow.mjs` |
+| Leaderboards (**Missing**) | **Real.** Opt-in only | `tests/integration/leaderboard-outbox.test.ts` |
+| Nexconn transport (**Missing**) | **Partial.** Chat gateway real and tested; the Nexconn bridge needs credentials | `docs/nexconn-integration.md` |
+| Calls (not verified with two peers) | **Verified** with two browsers exchanging video | `tests/e2e/call-flow.mjs` |
+| Media signature check (no test) | **Tested** | `tests/integration/audit-fixes.test.ts` |
+| Seasons (UTC only) | **Event time zone** | `tests/unit/season-timezone.test.ts` |
+| E2E suites (unverified) | **Run in CI** | `.github/workflows/ci.yml` |
+
+Still missing: browser push notifications, forward secrecy for private messages, a live AI provider, malware scanning
+of uploads, the Nexconn bridge itself.
