@@ -4413,6 +4413,21 @@ body {
 .atlas-answer { border-top: 1px solid var(--border); padding-top: 10px; }
 .atlas-answer small { display: block; color: var(--plain); margin-top: 4px; }
 .atlas-cites { font-family: var(--font-mono); font-size: 0.72rem; color: var(--plain); }
+/* Field Conditions: live incidents, occupancy and sessions per place (src/domain/field/live.ts). */
+.atlas-map .space--cond-busy { stroke: var(--warning); stroke-width: 0.9; }
+.atlas-map .space--cond-caution { fill: var(--warning-soft); stroke: var(--warning); stroke-width: 1; }
+.atlas-map .space--cond-avoid { fill: var(--danger-soft); stroke: var(--danger); stroke-width: 1.1; }
+.atlas-advisory circle { stroke-width: 0.6; }
+.atlas-advisory text { font-size: 2.6px; text-anchor: middle; font-weight: 700; pointer-events: none; fill: var(--text); }
+.atlas-advisory--busy circle { fill: var(--surface); stroke: var(--warning); }
+.atlas-advisory--caution circle { fill: var(--warning-soft); stroke: var(--warning); }
+.atlas-advisory--avoid circle { fill: var(--danger); stroke: var(--danger); }
+.atlas-advisory--avoid text { fill: var(--surface); }
+.atlas-legend .l-advisory::before { background: var(--warning-soft); border-color: var(--warning); border-radius: 2px; }
+.atlas-advisories { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; color: var(--plain); overflow-wrap: anywhere; }
+.atlas-cond { display: inline-block; padding: 0 6px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; border: 1px solid var(--border); margin-right: 4px; }
+.atlas-cond--busy, .atlas-cond--caution { border-color: var(--warning); background: var(--warning-soft); }
+.atlas-cond--avoid { border-color: var(--danger); background: var(--danger-soft); }
 .atlas-grid-badges { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
 .atlas-badge { display: grid; justify-items: center; gap: 8px; padding: 16px 10px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--surface); text-align: center; }
 .atlas-badge svg { width: 84px; height: 84px; }

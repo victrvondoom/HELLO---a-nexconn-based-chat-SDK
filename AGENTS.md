@@ -69,6 +69,24 @@ The policy is `decideVerification` in `src/domain/field/rules.ts`. AI never reac
 - Quest Director does not call a language model. Its output is deterministic and says so. It cannot award XP,
   verify evidence, or change a reward.
 
+### Live layer: Field Conditions and Season Pulse (`src/domain/field/live.ts`, `src/services/field-live.ts`)
+
+- `atlasHome` builds the atlas payload for both the page and `GET /api/events/[eventId]/atlas`. Add fields there only.
+- Field Conditions: per venue space with a room, from open incidents (`isOpen`), room occupancy/capacity and the
+  session running now. Levels CLEAR < BUSY < CAUTION < AVOID. Attendees get a category and a count, never incident
+  text or ids. Read on every poll; nothing is stored.
+- Season Pulse: aggregate counts per mission (verified in the last hour, underway, completed) and per season. Every
+  count below `PULSE_MIN_COUNT` (3) is null and shown as "fewer than 3", so no count can single out a person.
+- Quest Director applies `conditionPenalty` and `pulsePenalty` and cites `condition:<spaceId>` / `pulse:<missionId>`.
+  The field guide answers "Is now a good time to go?" from the same conditions. Neither changes availability or awards.
+
+### Integrity flags
+
+- One OPEN flag per (person, mission, kind). The id is a hash of the source and the dismissed count (`flag` in
+  `field-atlas.ts`), so retries do not flood the queue and the id does not carry the user id.
+- Only PUBLISHED seasons award a bonus, and every season that requires the approved mission is checked.
+- An XP adjustment can never take a person below 0.
+
 ### Privacy
 
 - No GPS. Route origin is a place the person picks.
@@ -80,9 +98,11 @@ The policy is `decideVerification` in `src/domain/field/rules.ts`. AI never reac
 ## Commands
 
 - `npm run typecheck`, `npm run lint`, `npm test` (vitest), `npm run build`, `npm run check`
-- Browser journey: start the demo server (`HELLO_DEMO_MODE=true npx next start -p 3000`), then
-  `node tests/e2e/field-atlas-flow.mjs`. The run waits about a minute first, because the submission limiter is per
-  person and per minute and survives a demo reset in the same process.
+- Browser journeys: start the demo server (`HELLO_DEMO_MODE=true npx next start -p 3000`), then
+  `node tests/e2e/field-atlas-flow.mjs` and `node tests/e2e/field-live-flow.mjs`. A demo reset clears every rate
+  limiter (the registry is on `globalThis`), so runs can follow each other. Run suites one at a time: each resets the demo.
+  Stop the server with `pkill -f next-server` (the process name is not `next start`).
+- `npm run test:routes` crawls every page as every demo role.
 
 ## Environment variables
 
@@ -101,8 +121,13 @@ persistence.
 - Field Atlas domain, verification, levels, seasons, badges, organiser management, Quest Director, export and erasure.
 - Unit tests (`tests/unit/field-rules.test.ts`), integration tests (`tests/integration/field-atlas.test.ts`), and a
   browser journey (`tests/e2e/field-atlas-flow.mjs`).
+- Defect sweep (16 fixes, see `docs/TEST_EVIDENCE.md`, 2026-11-19) and the live layer: Field Conditions and Season
+  Pulse, with `tests/unit/field-live.test.ts`, `tests/unit/rate-limit.test.ts`, `tests/integration/field-live.test.ts`
+  and `tests/e2e/field-live-flow.mjs`.
 
 ## Remaining
+
+Proposed next features, interconnected with what exists, are in `docs/FEATURE_PROPOSALS.md`.
 
 - Leaderboards (opt-in), a live AI provider for summaries and integrity review, real-time push instead of polling,
   event-timezone seasons, Postgres persistence, and Nexconn chat notifications.

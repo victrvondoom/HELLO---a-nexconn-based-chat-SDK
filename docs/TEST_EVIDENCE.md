@@ -98,3 +98,54 @@ Checks after the restore: `npm run check` passes (252 tests, build). Field Atlas
 Existing suites pass: judge-flow 13/13, features-flow 10/10, workflow-audit 22/22, private-messages 6/6, product-flow passes.
 
 Note: running the browser suites in parallel against one server makes them reset each other's state. Run them one at a time.
+
+## Defect sweep and the Field Atlas live layer (2026-11-19)
+
+Starting point: typecheck, lint, 252 tests, build, all six browser journeys and a 330-page crawl all passed. The
+defects below were found by reading each service against its stated invariants, then proven with a test that fails
+on the old code and passes on the fix (`tests/integration/field-live.test.ts`, `tests/unit/rate-limit.test.ts`).
+
+### Defects fixed
+
+| # | Where | Defect | Fix |
+|---|-------|--------|-----|
+| 1 | `field-atlas.ts` `flag` | Each submit after the 3-submission limit wrote a new `REPEATED_SUBMISSIONS` flag (random id), flooding the review queue. | One open flag per person, mission and kind. The id is a hash of the source plus the dismissed count, so it does not carry the user id after erasure, and a fresh occurrence after a dismissal is flagged again. |
+| 2 | `field-atlas.ts` `awardMission` | Only `mission.seasonId` was checked for a season bonus. A season that requires a mission from another season (allowed by `saveSeason`) never awarded its badge. | Every season that requires the mission is checked. |
+| 3 | `field-atlas.ts` `awardMission` | DRAFT and PAUSED seasons could award bonus XP and badges. | Only PUBLISHED seasons award. |
+| 4 | `field-atlas.ts` `seasonsForViewer` | "Required left" counted approvals from outside the season window, so it could say 0 while the badge rule refused the award. | Same window rule as the award. |
+| 5 | `field-atlas.ts` `adjustXp` | A negative adjustment could make total XP negative ("-40 XP"). | Refused with the current total in the message. |
+| 6 | `field-atlas.ts` `submitMission` | When a concurrent submission used the last attempt, the conditional write did nothing but the reply still said "submitted". | The reply is a VERSION_CONFLICT when the write did not happen. |
+| 7 | `atlas/reviews/[attemptId]/route.ts` | `decodeURIComponent` on an already-decoded param threw `URIError` for any `%`: HTTP 500 (`URI malformed` in the server log). | Decoded once only if it still looks encoded, and never throws. Now 404. |
+| 8 | `quest-director.ts` `draftMonthlyChallenge` | A re-draft saved new missions with the season's id but left them out of the season. Dead `requiredMissionIds` code was immediately overwritten. | New missions are appended (requirements only while the season is a draft, so a live challenge never gets harder). |
+| 9 | `rate-limit.ts` | The `hits` map kept every key (user, address, handle) for the life of the process. | Expired windows are swept once the map passes 1,024 keys. |
+| 10 | `rate-limit.ts`, `http.ts`, `errors.ts` | 429 responses had no `Retry-After`. | `DomainError` carries `retryAfterSeconds`, sent as `Retry-After`. |
+| 11 | `rate-limit.ts` | The reset registry was module-scoped, so it depended on the bundler loading one copy of the module. | Kept on `globalThis`, like the runtime. Hardening: in this production build the reset already worked (checked against the old server). |
+| 12 | `atlas/page.tsx` + `atlas/route.ts` | The first render and the poll built the atlas payload separately (the cause of the earlier viewBox bug). | One `atlasHome` service used by both. |
+| 13 | `FieldAtlas.tsx` | Evidence text and check-in code typed for one mission carried over to the next; the map stayed on the wrong floor. | Cleared on selection; the map moves to the mission's floor. |
+| 14 | `live/client.ts` `useLive` | A tab that had been hidden showed data up to one poll interval old after being shown again. | Refreshes on `visibilitychange`. |
+| 15 | `tests/e2e/field-atlas-flow.mjs` | Screenshot folder was hard-coded to one machine's scratchpad path. | `SHOT_DIR` or the system temp directory. |
+| 16 | `tests/e2e/route-crawl.mjs` | Eight pages were never crawled (atlas, atlas/manage, communities, calls, games, feed, flow, live-map). | Added. 330 page loads, 0 problems. |
+
+### New: Field Conditions and Season Pulse
+
+`src/domain/field/live.ts` (pure rules), `src/services/field-live.ts`, wired into the atlas home, the map, the
+mission panel, the field guide and Quest Director's ranking.
+
+- `tests/unit/field-live.test.ts`: levels per incident category and urgency, crowding thresholds, running sessions,
+  incident text never present, step-free penalty for access issues, k-anonymity suppression below 3, people counted
+  once, the one-hour window.
+- `tests/integration/field-live.test.ts`: Room 3 is AVOID from real seed data (open AV and crowding incidents, 52/40
+  occupancy) with no report text or incident ids; resolving incidents removes them at once; a 200 XP mission in
+  Room 3 is not ranked first and its field guide says to come back later; the pulse appears only at 3 people and fades
+  after an hour.
+- `tests/e2e/field-live-flow.mjs`, 8/8 in Chromium: advisory on the map, no report text, panel and pulse rendered,
+  staff cancel the incidents in another session and the attendee's map drops them on the next poll without a reload,
+  momentum appears after three real completions, no overflow at 390 px, no console errors.
+  Screenshot: `docs/screenshots/field-conditions.png`.
+
+### Results after the change
+
+`npm run typecheck`, `npm run lint`: clean. `npm test`: 26 files, 275 tests. `npm run build`: passes. Browser:
+judge-flow 13/13, features-flow 10/10, workflow-audit 22/22, private-messages 6/6, product-flow passes,
+field-atlas-flow 19/19, field-live-flow 8/8, route crawl 330 pages / 0 problems. Run against `next start` on port
+3000 with `HELLO_DEMO_MODE=true`.

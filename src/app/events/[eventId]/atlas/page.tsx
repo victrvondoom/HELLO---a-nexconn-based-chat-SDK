@@ -1,5 +1,5 @@
 import { loadEventViewer } from '@/lib/viewer';
-import { listMissionsForViewer, playerState, seasonsForViewer } from '@/services/field-atlas';
+import { atlasHome } from '@/services/field-live';
 import { FieldAtlas, type AtlasHome } from '@/components/atlas/FieldAtlas';
 
 export const dynamic = 'force-dynamic';
@@ -9,19 +9,8 @@ export default async function FieldAtlasPage({ params }: { params: Promise<{ eve
   const { eventId } = await params;
   const viewer = await loadEventViewer(eventId);
   const { ctx, userId } = viewer;
-  const [player, missions, seasons, venue] = await Promise.all([
-    playerState(ctx, eventId, userId),
-    listMissionsForViewer(ctx, eventId, userId),
-    seasonsForViewer(ctx, eventId, userId),
-    ctx.store.getVenue(eventId),
-  ]);
-  const initial: AtlasHome = {
-    player,
-    missions,
-    season: seasons.current,
-    venue: venue ? { name: venue.name, width: venue.width, depth: venue.depth, floors: venue.floors.map((f) => ({ id: f.id, name: f.name })), spaces: venue.spaces.map((s) => ({ id: s.id, floor: s.floor, name: s.name, kind: s.kind, outline: s.outline, stepFree: s.stepFree, roomId: s.roomId })) } : null,
-    serverTime: ctx.now(),
-  };
+  // The same object the API route serves on every poll, so the first render and live updates never disagree.
+  const initial: AtlasHome = await atlasHome(ctx, eventId, userId);
   return (
     <div className="page">
       <div className="page-header">
