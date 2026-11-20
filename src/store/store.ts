@@ -83,6 +83,8 @@ export interface HelloStore {
   listNotifications(recipientUserId: string): Promise<Notification[]>;
   /** Marks the recipient's notifications in an event as read. Returns how many changed. */
   markNotificationsRead(recipientUserId: string, eventId: string, now: number): Promise<number>;
+  /** Erasure: deletes every notification addressed to the person, and their dedupe keys. Returns how many. */
+  deleteNotificationsFor(recipientUserId: string): Promise<number>;
 
   // --- social graph (global, not per event: connections outlive an event) ---
   getProfile(userId: string): Promise<ProfileRecord | null>;
@@ -114,6 +116,8 @@ export interface HelloStore {
   // --- rights: erasure redacts operational text but keeps the accountable record ---
   redactMessagesFrom(userId: string, replacement: string): Promise<number>;
   redactReportsFrom(userId: string, replacement: string): Promise<number>;
+  /** Erasure: replaces the notes a person wrote on payments they made. The financial record itself is kept. */
+  redactPaymentNotesFrom(payerId: string, replacement: string): Promise<number>;
 
   /** The venue map and walkable graph for an event, if one has been drawn. */
   getVenue(eventId: string): Promise<Venue | null>;
@@ -152,6 +156,29 @@ export interface HelloStore {
   blobPut(id: string, bytes: Uint8Array): Promise<void>;
   blobGet(id: string): Promise<Uint8Array | null>;
   blobDelete(id: string): Promise<void>;
+}
+
+/** Initial data for an empty store: the demo event, or a test fixture. */
+export interface SeedData {
+  events: EventRecord[];
+  users: User[];
+  memberships: Membership[];
+  rooms: Room[];
+  sessions: Session[];
+  incidents?: Incident[];
+  reports?: IncidentReport[];
+  timeline?: IncidentTimelineEntry[];
+  announcements?: Announcement[];
+  notifications?: Notification[];
+  referenceDocs?: ReferenceDoc[];
+  venues?: Venue[];
+  profiles?: ProfileRecord[];
+  follows?: Follow[];
+}
+
+/** A store that can be loaded with seed data. Both the in-memory and the Postgres store are. */
+export interface SeedableStore extends HelloStore {
+  seed(data: SeedData): void | Promise<void>;
 }
 
 export class VersionConflictError extends DomainError {

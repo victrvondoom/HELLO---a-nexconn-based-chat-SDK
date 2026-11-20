@@ -633,7 +633,8 @@ export async function saveSeason(ctx: ServiceContext, eventId: string, actorId: 
   const s = parsed.data;
   let window;
   try {
-    window = monthWindow(s.year, s.month);
+    // Months follow the event's own time zone.
+    window = monthWindow(s.year, s.month, (await ctx.store.getEvent(eventId))?.timezone ?? 'UTC');
   } catch (error: unknown) {
     throw new DomainError('VALIDATION_FAILED', error instanceof Error ? error.message : 'Invalid month.');
   }

@@ -13,6 +13,14 @@ import { audit, notify, requireCapability, type ServiceContext } from './context
  * UI shows both facts.
  */
 
+/**
+ * Where approval notifications point: the approval queue on the operations page. They used to link to
+ * `/operations/approvals`, which has no page, so every "Approval needed" notification opened a 404.
+ */
+export function approvalsHref(eventId: string): string {
+  return `/events/${eventId}/operations#approvals`;
+}
+
 /** Pseudo-user for proposals raised automatically by HELLO's own coordination logic. */
 export const SYSTEM_ACTOR_ID = 'system:hello-coordinator';
 
@@ -30,6 +38,16 @@ export function validatePayload(actionType: ConsequentialActionType, payload: Re
       throw new DomainError('VALIDATION_FAILED', `The ${actionType} request is missing "${key}".`);
     }
   }
+}
+
+/**
+ * Two payloads are the same request when they have the same keys and values, in any order. This used to
+ * compare JSON strings, which depend on key order: a store that does not keep key order (Postgres JSONB
+ * sorts keys) made every repeat look new, and organisers got the same request again and again.
+ */
+export function samePayload(a: Record<string, string>, b: Record<string, string>): boolean {
+  const keys = Object.keys(a);
+  return keys.length === Object.keys(b).length && keys.every((k) => Object.hasOwn(b, k) && a[k] === b[k]);
 }
 
 export interface RequestApprovalInput {
@@ -57,7 +75,7 @@ export async function requestApproval(ctx: ServiceContext, input: RequestApprova
     (a) =>
       a.status === 'PENDING' &&
       a.actionType === input.actionType &&
-      JSON.stringify(a.payload) === JSON.stringify(input.payload),
+      samePayload(a.payload, input.payload),
   );
   if (existing) {
     return existing;
@@ -105,7 +123,7 @@ export async function requestApproval(ctx: ServiceContext, input: RequestApprova
       recipientUserId: m.userId,
       kind: 'APPROVAL_REQUESTED',
       body: `Approval needed: ${input.actionType}. ${input.justification}`,
-      href: `/events/${input.eventId}/operations/approvals`,
+      href: approvalsHref(input.eventId),
       dedupeParts: [approval.id],
     });
   }
@@ -279,7 +297,7 @@ async function notifyRequester(ctx: ServiceContext, approval: ApprovalRequest, b
     recipientUserId: approval.requestedByUserId,
     kind: 'APPROVAL_DECISION',
     body,
-    href: `/events/${approval.eventId}/operations/approvals`,
+    href: approvalsHref(approval.eventId),
     dedupeParts: [approval.id, approval.status, approval.executionStatus, approval.version],
   });
 }

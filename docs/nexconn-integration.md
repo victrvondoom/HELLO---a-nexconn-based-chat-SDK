@@ -1,42 +1,89 @@
 # Nexconn integration
 
-## What was verified (from the published packages, not from memory)
+HELLO talks to chat networks through one boundary, the **chat gateway**. Everything on the HELLO side is built
+and tested: linking accounts, signed inbound messages, the delivery outbox with retries, live updates, erasure.
+Connecting Nexconn means writing one small piece on the Nexconn side. This page says exactly what that piece
+must do.
 
-- `@nexconn/chat@26.2.1` (npm). Its `index.d.ts` exports the class **`NCEngine`** with:
-  - `static initialize(params: InitParams)`, where `InitParams` is `{ appKey, logLevel?, areaCode?, naviServer? }`.
-  - `static connect(params: ConnectParams)`, where `ConnectParams` is `{ token }`. It resolves to `{ userId }`.
-  - `static disconnect(disablePush?)`, `static getConnectionStatus()`, `static getCurrentUserId()`.
-  - `static addMessageHandler(id, handler)`, `addChannelHandler`, `addGroupChannelHandler`, `addConnectionStatusHandler`.
-  - `static registerCustomMessages(params: CustomMessageRegistration[])`, which is the documented route for
-    custom message types.
-  - Message sending uses message params classes such as `SendTextMessageParams(content)`, and channel objects
-    (`DirectChannel`, `GroupChannel`, and others) inherit `sendMessage` and `sendReadReceiptResponse` from `BaseChannel`.
-  - Attachments use `SendImageMessageParams`, `SendFileMessageParams` and related classes. Message metadata is set with
-    `Message.setMetadata`. Read receipts use `BaseChannel.sendReadReceiptResponse`.
-- `@nexconn/chatui@26.2.5` (npm). A UI kit with peer dependencies `@nexconn/engine`, `@nexconn/chat` and `lit`.
-  Its entry point is `NCChatUIApplication.initialize({ hooks, language })` and `app.ready()`. It is a browser UI kit.
+## What already works (tested)
 
-These names are the only ones this project relies on. Anything not listed above is not assumed to exist.
+| Piece | Where | Tests |
+|---|---|---|
+| Transport boundary (`ChatTransport`: `deliver`, `describe`) | `src/integrations/chat/transport.ts` | `tests/integration/chat-gateway.test.ts` |
+| Signed webhook transport (HMAC-SHA256, replay window, idempotency key) | same file, `src/integrations/chat/signature.ts` | real HTTP receiver in the same test file |
+| Inbound endpoint, one run per message id | `POST /api/integrations/chat/inbound` | same, plus `tests/e2e/chat-bridge-flow.mjs` |
+| Account linking with one-time codes | `src/services/chat-gateway.ts` | same |
+| Delivery outbox: lease, backoff, max attempts, one send across instances | same | same |
+| Settings UI: link, unlink, transport state, delivery totals | `src/components/settings/ChatLinks.tsx` | `tests/e2e/chat-bridge-flow.mjs` |
 
-## What this build does
+## How it fits together
 
-- `src/integrations/nexconn/status.ts` reports `NOT_CONFIGURED` when `NEXCONN_APP_KEY` is absent, and
-  `CONFIGURED_NOT_CONNECTED` when it is present. It never returns the key.
-- The conversation page labels its transport "Local demo transport · not Nexconn". It does not claim Nexconn delivery.
+```
+ Nexconn app (person)                      HELLO
+ ────────────────────                      ─────
+ sends "LINK AB12CD34"  ──► your bridge ──► POST /api/integrations/chat/inbound  (signed)
+                                            → links nx user ↔ HELLO person
+ sends "Projector broken in Room 2"  ──►  ──► same endpoint → same pipeline as the app
+                         ◄── reply in the HTTP response ◄──
+ receives notification ◄── your bridge ◄── POST HELLO_CHAT_OUTBOUND_URL (signed, idempotency-key)
+```
 
-## What is not done
+The bridge is the only Nexconn-specific code. It can be a few dozen lines on any server you run.
 
-1. **No SDK dependency is installed.** `@nexconn/chat` is not in `package.json` yet.
-2. **No connection.** `NCEngine.initialize` and `connect` are not called anywhere.
-3. **No token service.** `connect` needs a user token. Issuing one needs a server-side endpoint that holds the
-   app secret. The Nexconn token API was not verified in this build, so it is not implemented.
-4. **No adapter.** The planned boundary is an interface such as `ChatTransport` with `ensureConversation`,
-   `sendText`, `subscribe`, and a Nexconn implementation over `NCEngine`. The business logic depends only on that interface.
-5. **Not verified:** whether Nexconn exposes delivery receipts for every message type, server-side webhooks, and
-   the group/event-channel membership APIs needed for "event channels". Verify them against the official
-   documentation before relying on them.
+## Option A (recommended): a bridge using the signed webhook protocol
 
-## Browser note
+1. **Configure HELLO.**
+   ```bash
+   HELLO_CHAT_SECRET=<a random string of 32+ characters, shared with the bridge>
+   HELLO_CHAT_OUTBOUND_URL=https://your-bridge.example.org/hello   # https required except for localhost
+   ```
+   Settings then show "Chat network connected". With either variable missing or invalid, Settings say
+   "misconfigured" and nothing is sent.
 
-The SDK targets the browser. The integration must run in a client component or behind a dedicated
-client module, and it must not expose the app secret.
+2. **Inbound: Nexconn → HELLO.** For each message a person sends to your HELLO bot in Nexconn, POST to
+   `https://<hello>/api/integrations/chat/inbound`:
+   ```json
+   { "eventId": "evt-demo-hello-summit", "externalUserId": "<Nexconn user id>", "messageId": "<Nexconn message id>", "text": "…" }
+   ```
+   with headers `x-hello-timestamp: <unix ms>` and `x-hello-signature: v1=<hex HMAC-SHA256 of "<timestamp>.<raw body>">`.
+   Post `data.reply` back to the person in Nexconn. A `202` means an identical message is still running: retry
+   shortly. Retrying any message is safe; it runs once.
+
+3. **Outbound: HELLO → Nexconn.** Accept POSTs on `HELLO_CHAT_OUTBOUND_URL`. Verify the same two headers. The body is
+   `{ "type": "hello.delivery", "id", "eventId", "externalUserId", "body", "href", "createdAt" }`. Send `body` (and the
+   link `<hello base URL><href>`) to `externalUserId` in Nexconn. Treat `idempotency-key` (= `id`) as already sent if
+   you have seen it. Answer `200` with `{ "reference": "<Nexconn message id>" }`. Answer `5xx` for a temporary failure
+   (HELLO retries with backoff) and `4xx` for a permanent one (HELLO stops).
+
+4. **Check it.** `tests/e2e/chat-bridge-flow.mjs` is a working bridge in miniature: it verifies HELLO's signatures,
+   signs its own requests, links an account, sends a message, receives a notification. Your bridge must pass the
+   same flow.
+
+## Option B: a direct `ChatTransport` in HELLO
+
+If you prefer HELLO to call Nexconn's server API itself, implement `ChatTransport` (name `nexconn`, `external: true`,
+`deliver` sends one text message to `externalUserId` and returns `{ ok, retryable, reason }`), return it from
+`chatTransportFromEnv` when your Nexconn server credentials are set, and keep `POST /api/integrations/chat/inbound`
+as the target of Nexconn's message webhook. Nothing else in HELLO changes. Run `tests/integration/chat-gateway.test.ts`
+with your transport: every rule there (one send per delivery, retries, permanent failures) must still hold.
+
+## The browser SDK (only if you embed Nexconn chat in HELLO's pages)
+
+Verified from `@nexconn/chat@26.2.1` type definitions (`docs/IMPLEMENTATION_AUDIT.md` §2): `NCEngine.initialize({ appKey })`,
+`NCEngine.connect({ token })`, `addMessageHandler`, channel classes such as `DirectChannel` and `GroupChannel`, and
+`SendTextMessageParams`. `connect` needs a user token that only your server can issue with the app secret; that
+token API was not verified, so HELLO does not include one. The SDK needs a browser, so call it from a client
+component and never send the app secret to the browser.
+
+## Not verified, and why
+
+- Nexconn's server API, token issuance and webhook format: they need a Nexconn account and its documentation.
+  The bridge (Option A) or the transport (Option B) is where they go; nothing else in HELLO depends on them.
+- Delivery receipts for every Nexconn message type.
+
+## Privacy
+
+- Only people who linked an account get chat deliveries. Linking needs a code shown inside their own session.
+- Deliveries carry the notification text only. Private messages stay end-to-end encrypted in HELLO; their
+  notification says only that a message arrived.
+- Erasure deletes links, unused codes, queued deliveries and the record of handled chat messages.

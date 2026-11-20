@@ -1,4 +1,4 @@
-import type { MemoryHelloStore } from './memory';
+import type { HelloStore } from './store';
 import type { Backdrop, Post, PostComment, ReactionId, Story, StoryHighlight } from '../domain/product';
 import { STORY_TTL_MS } from '../domain/moments/stories';
 
@@ -28,7 +28,7 @@ const U = {
 
 type Seen = { by: string; minutesAgo: number; reaction?: ReactionId };
 
-export async function seedMoments(store: MemoryHelloStore, eventId: string, now: number): Promise<void> {
+export async function seedMoments(store: HelloStore, eventId: string, now: number): Promise<void> {
   const ago = (minutes: number) => now - minutes * MIN;
 
   const story = (

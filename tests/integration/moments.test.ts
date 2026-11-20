@@ -180,7 +180,7 @@ describe('Moments: posting rules are cited when broken', () => {
     expect(await code(createStory(h.ctx, h.eventId, ada, text('Next hour')))).toBe('OK');
   });
 
-  it('R5: your own file from this event, used once, of the right kind; and a real place', async () => {
+  it('R5: your own file from this event, of the right kind; and a real place', async () => {
     const h = await createHarness();
     const { attendeeAda: ada, attendeeBen: ben } = h.users;
     const image = await uploadMedia(h.ctx, h.eventId, ada, 'image/png', PNG);
@@ -192,10 +192,25 @@ describe('Moments: posting rules are cited when broken', () => {
     expect(await outcome(createStory(h.ctx, h.eventId, ada, { ...text(''), kind: 'IMAGE', mediaId: video.id }))).toMatchObject({ code: 'VALIDATION_FAILED', message: expect.stringMatching(r5) as unknown });
     expect((await outcome(createStory(h.ctx, h.eventId, ada, { ...text('Words'), mediaId: image.id }))).message).toMatch(r5);
     expect((await outcome(createStory(h.ctx, h.eventId, ada, { ...text(''), kind: 'VIDEO' }))).message).toMatch(r5);
+    // One upload may go into a post and a story (deleting either keeps it for the other: see releaseMedia).
     await createPost(h.ctx, h.eventId, ada, post('Robot arm', { mediaId: image.id }));
-    expect((await outcome(createStory(h.ctx, h.eventId, ada, { ...text(''), kind: 'IMAGE', mediaId: image.id }))).message).toMatch(r5);
+    expect(await code(createStory(h.ctx, h.eventId, ada, { ...text(''), kind: 'IMAGE', mediaId: image.id }))).toBe('OK');
     expect(await code(createStory(h.ctx, h.eventId, ada, { ...text(''), kind: 'VIDEO', mediaId: video.id }))).toBe('OK');
     expect(await code(createStory(h.ctx, h.eventId, ada, { ...text('Somewhere'), spaceId: 'sp-nowhere' }))).toBe('NOT_FOUND');
+  });
+});
+
+describe('Moments: shared uploads', () => {
+  it('keeps a file a post and a story share until both are deleted', async () => {
+    const h = await createHarness();
+    const ada = h.users.attendeeAda;
+    const image = await uploadMedia(h.ctx, h.eventId, ada, 'image/png', PNG);
+    const p = await createPost(h.ctx, h.eventId, ada, post('Robot arm', { mediaId: image.id }));
+    const s = await createStory(h.ctx, h.eventId, ada, { ...text(''), kind: 'IMAGE', mediaId: image.id });
+    await actOnStory(h.ctx, h.eventId, ada, s.id, { action: 'delete' });
+    expect((await readMedia(h.ctx, h.eventId, ada, image.id)).bytes.byteLength).toBe(PNG.byteLength);
+    await actOnPost(h.ctx, h.eventId, ada, p.id, { action: 'delete' });
+    expect(await code(readMedia(h.ctx, h.eventId, ada, image.id))).toBe('NOT_FOUND');
   });
 });
 

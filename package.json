@@ -2,7 +2,7 @@
   "name": "hello-event-coordination",
   "version": "0.1.0",
   "private": true,
-  "description": "HELLO — One conversation. Everyone connected. AI-assisted event coordination.",
+  "description": "HELLO \u2014 One conversation. Everyone connected. AI-assisted event coordination.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -11,8 +11,9 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:postgres": "node -e \"if(!process.env.HELLO_TEST_DATABASE_URL){console.error('Set HELLO_TEST_DATABASE_URL to an empty Postgres database, e.g. postgres://hello:hello@localhost:5432/hello_test');process.exit(1)}\" && vitest run tests/integration",
     "check": "npm run typecheck && npm run lint && npm run test && npm run build",
-    "test:e2e": "node tests/e2e/judge-flow.mjs && node tests/e2e/features-flow.mjs && node tests/e2e/workflow-audit.mjs && node tests/e2e/private-messages.mjs && node tests/e2e/product-flow.mjs && node tests/e2e/field-atlas-flow.mjs && node tests/e2e/field-live-flow.mjs",
+    "test:e2e": "node tests/e2e/judge-flow.mjs && node tests/e2e/features-flow.mjs && node tests/e2e/workflow-audit.mjs && node tests/e2e/private-messages.mjs && node tests/e2e/product-flow.mjs && node tests/e2e/field-atlas-flow.mjs && node tests/e2e/field-live-flow.mjs && node tests/e2e/live-flow.mjs && node tests/e2e/outbox-flow.mjs && node tests/e2e/call-flow.mjs",
     "test:routes": "node tests/e2e/route-crawl.mjs",
     "screenshots": "node tests/e2e/screenshots.mjs"
   },
@@ -22,6 +23,7 @@
   "dependencies": {
     "d3-geo": "^3.1.2",
     "next": "^16.4.6",
+    "pg": "^8.23.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "topojson-client": "^3.1.0",
@@ -33,6 +35,7 @@
     "@types/d3-geo": "^3.1.1",
     "@types/geojson": "^7946.0.16",
     "@types/node": "^22.0.0",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
     "@types/topojson-client": "^3.1.5",

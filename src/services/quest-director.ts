@@ -268,7 +268,8 @@ export async function draftMonthlyChallenge(ctx: ServiceContext, eventId: string
   await requireCapability(ctx, eventId, actorId, 'field.manage');
   const parsed = DraftInputSchema.safeParse(input);
   if (!parsed.success) throw new DomainError('VALIDATION_FAILED', 'Choose a valid year and month.');
-  const window = monthWindow(parsed.data.year, parsed.data.month);
+  const timeZone = (await ctx.store.getEvent(eventId))?.timezone ?? 'UTC';
+  const window = monthWindow(parsed.data.year, parsed.data.month, timeZone);
   const seasonId = `season-${parsed.data.year}-${String(parsed.data.month).padStart(2, '0')}`;
   const venue = await ctx.store.getVenue(eventId);
   const [rooms, sessions, stations, existingSeason] = await Promise.all([
@@ -370,7 +371,7 @@ export async function draftMonthlyChallenge(ctx: ServiceContext, eventId: string
     eventId,
     year: parsed.data.year,
     month: parsed.data.month,
-    title: `${new Date(window.startsAt).toLocaleString('en-GB', { month: 'long', timeZone: 'UTC' })} Field Challenge`,
+    title: `${new Date(window.startsAt).toLocaleString('en-GB', { month: 'long', timeZone })} Field Challenge`,
     theme: 'Find your way in, then help the next person.',
     description: 'A monthly collection drafted from this event’s real rooms, workflows and schedule. Staff review it before it is shown to attendees.',
     startsAt: window.startsAt,

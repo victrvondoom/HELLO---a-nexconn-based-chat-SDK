@@ -1160,6 +1160,31 @@ tbody tr:last-child td {
   color: var(--ink);
 }
 
+/* Search results: what kind of record it is, and one line of detail. */
+.palette__kind {
+  min-width: 84px;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--grass-800);
+  background: var(--grass-100);
+}
+
+.palette__detail {
+  display: block;
+  max-width: 52ch;
+  margin-top: 2px;
+  font-size: 12.5px;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .palette__empty {
   padding: 18px 12px;
   color: var(--text-3);

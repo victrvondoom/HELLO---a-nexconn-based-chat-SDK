@@ -44,6 +44,8 @@ export interface UserPrefs {
   id: string;
   /** ISO 3166-1 numeric code, as used by the world map. Null when not declared. */
   country: string | null;
+  /** Field Atlas leaderboard: shown by name only when the person opted in. Absent means no. */
+  leaderboard?: boolean;
 }
 
 export type MediaKind = 'IMAGE' | 'VIDEO';
@@ -380,6 +382,65 @@ export interface QuestRun {
   status: 'DRAFT_CREATED' | 'REJECTED_ALL';
 }
 
+// ---------- chat gateway (src/services/chat-gateway.ts) ----------
+
+/**
+ * A person's account on an external chat network (Nexconn, or any network behind the signed webhook
+ * transport), linked by a one-time code the person sent from that account. One link per external account.
+ */
+export interface ChatLink {
+  /** `${transport}:${externalUserId}` */
+  id: string;
+  transport: string;
+  externalUserId: string;
+  userId: string;
+  eventId: string;
+  createdAt: number;
+}
+
+/** A one-time link code. Only its hash is stored; it expires after ten minutes and works once. */
+export interface ChatLinkCode {
+  /** SHA-256 of the code. */
+  id: string;
+  userId: string;
+  eventId: string;
+  createdAt: number;
+  expiresAt: number;
+}
+
+/** An inbound message already handled, so a retried webhook gets the same reply and nothing runs twice. */
+export interface ChatInbound {
+  /** `${transport}:${messageId}` */
+  id: string;
+  transport: string;
+  /** PROCESSING while the first copy runs, so a duplicate arriving at the same moment does not run it again. */
+  state: 'PROCESSING' | 'DONE';
+  userId: string | null;
+  reply: string;
+  receivedAt: number;
+}
+
+/** One notification to deliver to one linked chat account: the outbox the delivery worker drains. */
+export interface ChatDelivery {
+  id: string;
+  eventId: string;
+  recipientUserId: string;
+  transport: string;
+  externalUserId: string;
+  body: string;
+  href: string;
+  createdAt: number;
+  status: 'PENDING' | 'SENDING' | 'DELIVERED' | 'FAILED';
+  attempts: number;
+  nextAttemptAt: number;
+  /** While SENDING: when another worker may take it over (the first one crashed or hung). */
+  leaseUntil: number | null;
+  lastError: string | null;
+  deliveredAt: number | null;
+  /** The transport's own reference for the delivered message. */
+  reference: string | null;
+}
+
 export interface Collections {
   accounts: AuthAccount;
   authSessions: SessionRecord;
@@ -405,6 +466,10 @@ export interface Collections {
   stories: Story;
   storyHighlights: StoryHighlight;
   savedPosts: SavedPost;
+  chatLinks: ChatLink;
+  chatLinkCodes: ChatLinkCode;
+  chatInbound: ChatInbound;
+  chatDeliveries: ChatDelivery;
 }
 
 export type CollectionName = keyof Collections;
@@ -434,4 +499,8 @@ export const COLLECTION_NAMES: readonly CollectionName[] = [
   'stories',
   'storyHighlights',
   'savedPosts',
+  'chatLinks',
+  'chatLinkCodes',
+  'chatInbound',
+  'chatDeliveries',
 ];

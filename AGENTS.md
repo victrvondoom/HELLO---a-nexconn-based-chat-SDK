@@ -14,8 +14,15 @@ venue maps, communities, calls, games and a workflow canvas. HELLO FIELD ATLAS a
   Interactive islands are `'use client'` components.
 - Services (`src/services/*`) hold the business rules. Routes (`src/app/api/**`) parse input, then call a service.
 - Pure domain rules (`src/domain/**`) have no storage and no clock. They are unit tested.
-- Persistence is the `HelloStore` contract (`src/store/store.ts`). The only implementation is `MemoryHelloStore`
-  (`src/store/memory.ts`), optionally written to disk by `src/lib/persistence.ts` (`HELLO_DATA_DIR`).
+- Persistence is the `HelloStore` contract (`src/store/store.ts`). Two implementations: `PostgresHelloStore`
+  (`src/store/postgres.ts`, chosen by `DATABASE_URL`) and `MemoryHelloStore` (`src/store/memory.ts`, optionally saved
+  to disk by `src/lib/persistence.ts`, `HELLO_DATA_DIR`). Any store change must pass `npm run test:postgres` too.
+- Live updates: every store write publishes a content-free nudge (`src/lib/live/store.ts` `describeWrite` is the
+  policy; personal and staff topics go only to the people concerned). `GET /api/events/[eventId]/stream` (SSE) delivers
+  them; `useLive` and `LiveRefresh` refetch through the normal API. Postgres fans them out across instances.
+- Chat gateway (`src/services/chat-gateway.ts`, `src/integrations/chat/`): Nexconn plugs in here. See
+  docs/nexconn-integration.md.
+- Shared per-person write limits for app routes and MCP tools: `src/lib/action-limits.ts`.
   Product records use typed document collections (`docGet/docPut/docPutIfAbsent/docMutate/docList`).
 - Authorisation: `requireCapability(ctx, eventId, userId, capability)` (`src/services/context.ts`) against the table
   in `src/domain/permissions.ts`. Hiding a control in React is never the security boundary.
@@ -53,8 +60,7 @@ The policy is `decideVerification` in `src/domain/field/rules.ts`. AI never reac
 
 ### Seasons and badges
 
-- Seasons use UTC calendar months (`monthWindow`). The event timezone is UTC in the demo. Non-UTC events are not
-  supported yet: their month boundaries would be wrong.
+- Seasons use calendar months in the event's time zone (`monthWindow(year, month, timeZone)`).
 - A monthly badge is earned when every required mission is approved inside the season window. The bonus XP is awarded
   with it, once.
 - Permanent achievements (`FIRST_MISSION`, `FIVE_MISSIONS`, `WAYFINDER`) are evaluated after each approval.
@@ -131,16 +137,20 @@ API: `/api/events/[eventId]/moments/**` and `/feed`. Seed: `src/store/moments-se
   limiter (the registry is on `globalThis`), so runs can follow each other. Run suites one at a time: each resets the demo.
   Stop the server with `pkill -f next-server` (the process name is not `next start`).
 - `npm run test:routes` crawls every page as every demo role.
+- `npm run test:postgres` with `HELLO_TEST_DATABASE_URL` runs the integration suite on Postgres (one schema per test).
+- `npm run test:e2e` runs every browser journey. `tests/e2e/chat-bridge-flow.mjs` needs `HELLO_CHAT_SECRET` and
+  `HELLO_CHAT_OUTBOUND_URL=http://localhost:4100/hello` on the server; `live-flow.mjs` takes `BASE_URL_B` for a second
+  instance. CI (`.github/workflows/ci.yml`) runs all of it.
 
 ## Environment variables
 
-See `.env.example`. Field Atlas adds none. `HELLO_DEMO_MODE` seeds the demo event; `HELLO_DATA_DIR` enables disk
+See `.env.example`: `DATABASE_URL`, `HELLO_DB_SCHEMA`, `HELLO_CHAT_SECRET`, `HELLO_CHAT_OUTBOUND_URL` were added. `HELLO_DEMO_MODE` seeds the demo event; `HELLO_DATA_DIR` enables disk
 persistence.
 
 ## Integration limitations (see docs/INTEGRATION_STATUS.md)
 
-- Nexconn is not connected. No Nexconn notification is sent. Field Atlas notifications go to the in-app store.
-- No Postgres. The in-memory store is the only implementation.
+- Nexconn: the chat gateway is built; the Nexconn-side bridge is not written (needs credentials).
+- Rate limits are per instance, also on Postgres.
 - No AI model provider is configured. Quest Director is deterministic.
 
 ## Completed
@@ -155,9 +165,12 @@ persistence.
   Pulse, with `tests/unit/field-live.test.ts`, `tests/unit/rate-limit.test.ts`, `tests/integration/field-live.test.ts`
   and `tests/e2e/field-live-flow.mjs`.
 
+- 2026-11-19, second pass: 11 audit fixes, Postgres store, live push with presence and typing, chat gateway,
+  search, time-zone seasons, opt-in leaderboard, offline outbox, two-browser call test, CI. Evidence in
+  `docs/TEST_EVIDENCE.md`.
+
 ## Remaining
 
 Proposed next features, interconnected with what exists, are in `docs/FEATURE_PROPOSALS.md`.
 
-- Leaderboards (opt-in), a live AI provider for summaries and integrity review, real-time push instead of polling,
-  event-timezone seasons, Postgres persistence, and Nexconn chat notifications.
+- A live AI provider, browser push notifications, forward secrecy for private messages, the Nexconn bridge.

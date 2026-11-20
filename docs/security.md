@@ -32,13 +32,13 @@
 1. **Demo sign-in is not authentication.** `DEMO_SESSION_COOKIE` holds a user id, and any browser can set it.
    It is enabled outside production, or when `HELLO_DEMO_MODE=true`. Replace it with real sign-in (for example
    Supabase Auth with signed, HTTP-only, rotated sessions) before any deployment that holds real data.
-2. **In-memory store.** Data is lost on restart and is not shared between instances. Serverless deployments
-   each have their own store. The Postgres implementation is not written yet.
+2. **Storage.** Use Postgres (`DATABASE_URL`) for a real event. The in-memory store loses data on restart and is not
+   shared between instances. Rate limits are per instance in both cases.
 3. **Rate limiter is per process.** It does not coordinate across instances.
 4. **Session cookie** is set `secure` only in production builds. Behind a plain-HTTP staging host it will not be sent over TLS.
 5. **No CSRF token.** API routes accept JSON POSTs and rely on the `SameSite=Lax` cookie. Add a CSRF token
    or an origin check before real sign-in is introduced.
 6. **No content moderation** on messages.
-7. **No attachment upload.** The file-upload safety work (type checks, size limits, malware scanning) has not been done because attachments are not implemented.
+7. **Uploads.** Feed media is checked by type, size and magic bytes (tested). There is no malware scanning.
 8. **Dependency audit.** `npm audit --omit=dev` reported 0 production vulnerabilities after upgrading Next.js to 16.4.6 and Zod to 4.6.7.
 9. **The Supabase service role key** must only ever be used in server code. The database access layer that uses it is not written yet.

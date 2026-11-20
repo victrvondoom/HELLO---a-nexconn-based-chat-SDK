@@ -131,11 +131,10 @@ describe('posting rules', () => {
 
   it('R5: only your own file from this event, used once, of the kind the story needs', () => {
     const actor = { eventId: 'evt-x', userId: 'u-me' };
-    const media = (over: Partial<AttachedMedia> = {}): AttachedMedia => ({ eventId: 'evt-x', ownerId: 'u-me', kind: 'IMAGE', inUse: false, ...over });
+    const media = (over: Partial<AttachedMedia> = {}): AttachedMedia => ({ eventId: 'evt-x', ownerId: 'u-me', kind: 'IMAGE', ...over });
     expect(checkAttachment(null, actor, 'ANY')).toBe('NOT_YOURS');
     expect(checkAttachment(media({ ownerId: 'u-other' }), actor, 'ANY')).toBe('NOT_YOURS');
     expect(checkAttachment(media({ eventId: 'evt-y' }), actor, 'ANY')).toBe('NOT_YOURS');
-    expect(checkAttachment(media({ inUse: true }), actor, 'ANY')).toBe('IN_USE');
     expect(checkAttachment(media(), actor, 'VIDEO')).toBe('WRONG_KIND');
     expect(checkAttachment(media({ kind: 'VIDEO' }), actor, 'ANY')).toBe('OK');
     expect(checkAttachment(media(), actor, 'IMAGE')).toBe('OK');

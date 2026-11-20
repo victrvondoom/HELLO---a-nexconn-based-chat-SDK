@@ -4,6 +4,7 @@ import { OPEN_STATUSES } from '../domain/incidents/lifecycle';
 import { roleHasCapability } from '../domain/permissions';
 import type { ApiToken } from '../domain/product';
 import type { ServiceContext } from './context';
+import { consumeAction } from '../lib/action-limits';
 import { createPost, listFeed, POST_MAX } from './feed';
 import { listIncidentsForViewer } from './incidents';
 import { handleMessage, MAX_MESSAGE_LENGTH } from './pipeline';
@@ -62,14 +63,17 @@ const TOOLS: Tool[] = [
     return WORKFLOWS.filter((w) => membership && roleHasCapability(membership.role, w.capability)).map((w) => ({ id: w.id, name: w.name, purpose: w.purpose }));
   }),
   tool('hello_send_message', 'Send a message to HELLO as this person: report a problem, ask a question, or check a request.', true, z.object({ text: z.string().trim().min(1).max(MAX_MESSAGE_LENGTH) }).strict(), async (ctx, t, args) => {
+    consumeAction('message.send', t.userId, t.eventId, ctx.now());
     const result = await handleMessage(ctx, { eventId: t.eventId, userId: t.userId, text: args.text });
     return { reply: result.reply, incidents: result.incidents.map((i) => ({ id: i.incidentId, status: i.status })) };
   }),
   tool('hello_post', 'Publish a text post to the event feed as this person.', true, z.object({ text: z.string().trim().min(1).max(POST_MAX) }).strict(), async (ctx, t, args) => {
+    consumeAction('post.create', t.userId, t.eventId, ctx.now());
     const post = await createPost(ctx, t.eventId, t.userId, { text: args.text, mediaId: null, communityId: null, repostOf: null });
     return { id: post.id };
   }),
   tool('hello_run_workflow', 'Run one of the workflows listed by hello_workflows.', true, z.object({ workflowId: z.string().regex(/^[a-z-]{3,30}$/) }).strict(), async (ctx, t, args) => {
+    consumeAction('workflow.run', t.userId, t.eventId, ctx.now());
     const run = await runWorkflow(ctx, t.eventId, t.userId, args.workflowId, 'MCP');
     return { status: run.status, steps: run.steps };
   }),

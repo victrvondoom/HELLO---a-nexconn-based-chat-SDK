@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Icon } from '@/components/ui/Icon';
+import { subscribeStream } from '@/components/live/stream';
 import { formatMoney } from '@/domain/payments/voice';
 import type { Payment } from '@/domain/types';
 
@@ -29,6 +30,7 @@ interface Thread {
 
 const STATUS: Record<Payment['status'], string> = {
   AWAITING_CONFIRMATION: 'Waiting for you to confirm',
+  PROCESSING: 'Processing',
   SUCCEEDED: 'Paid',
   FAILED: 'Failed',
   CANCELLED: 'Cancelled',
@@ -60,12 +62,21 @@ export function PayPanel({ eventId, me, peer }: { eventId: string; me: string; p
   useEffect(() => {
     setCanSpeak(speech() !== null);
     void load();
-    const id = window.setInterval(() => void load(), 8000);
+    // A payment to or from this person arrives as a live nudge; polling stays as a slow fallback.
+    let live = false;
+    const unsubscribe = subscribeStream(eventId, (message) => {
+      if (message.kind === 'state') live = message.connected;
+      else if (message.kind === 'change' && message.topic === 'payments') void load();
+    });
+    const id = window.setInterval(() => {
+      if (!live) void load();
+    }, 8000);
     return () => {
       window.clearInterval(id);
+      unsubscribe();
       recognition.current?.stop();
     };
-  }, [load]);
+  }, [load, eventId]);
 
   async function post<T>(url: string, payload: unknown): Promise<T | null> {
     setBusy(true);

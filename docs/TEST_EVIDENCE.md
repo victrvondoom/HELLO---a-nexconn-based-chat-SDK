@@ -149,3 +149,43 @@ mission panel, the field guide and Quest Director's ranking.
 judge-flow 13/13, features-flow 10/10, workflow-audit 22/22, private-messages 6/6, product-flow passes,
 field-atlas-flow 19/19, field-live-flow 8/8, route crawl 330 pages / 0 problems. Run against `next start` on port
 3000 with `HELLO_DEMO_MODE=true`.
+
+## Second pass: audit fixes and the missing pieces (2026-11-19, later)
+
+### Defects fixed (each with a test that fails on the old code)
+
+| Where | Defect |
+|---|---|
+| `services/mcp.ts` | MCP write tools had their own 120/min per-token limit; with ten tokens a person could send 1,200 messages, posts or workflow runs a minute. Now shared per-person limits (`lib/action-limits.ts`). |
+| `services/incidents.ts` | Two people reporting the same problem at once: the second got VERSION_CONFLICT and its report had no timeline entry. The equipment merge now retries. |
+| `services/pipeline.ts` | "What is on in Room 4?" listed sessions with blank times (`.slice(11)` on a 9-character string). |
+| `services/approvals.ts` | Approval notifications linked to `/operations/approvals`, a 404. |
+| `services/approvals.ts` | De-duplication compared JSON strings; on Postgres (JSONB sorts keys) every repeat looked new. |
+| `services/payments.ts` | The daily cap was checked before claiming, so drafts confirmed together could all pass it. New PROCESSING state; checked after claiming. |
+| `services/rights.ts` | Erasure left the person's notifications and their payment notes. |
+| `services/feed.ts` | Deleting a post deleted media another post still used. |
+| `services/games.ts` | Quizzes never closed; five quiz rounds locked a person out of starting any game, forever. |
+| `services/location.ts` | Country counts of one or two people were shown, which identifies them. Hidden below three. |
+| `lib/persistence.ts` | A save pending at shutdown was lost. Flushed on exit. |
+| `store/memory.ts` | Update patches were stored without copying. |
+| `services/location.ts` | `setCountry` replaced the whole preferences record. |
+
+### New, with evidence
+
+| Piece | Tests |
+|---|---|
+| Postgres store | `npm run test:postgres`: 170 pass, 1 memory-only skip; `store-contract.test.ts`; all journeys on Postgres; restart durability checked |
+| Live push, presence, typing | `tests/unit/live.test.ts` (13), `tests/integration/live.test.ts` (incl. LISTEN/NOTIFY across two stores), `tests/e2e/live-flow.mjs` 9/9 on one server and across two server processes |
+| Chat gateway | `tests/integration/chat-gateway.test.ts` (15, both stores, real HTTP receiver), `tests/e2e/chat-bridge-flow.mjs` 9/9 |
+| Search | `tests/integration/search.test.ts` (6) |
+| Time-zone seasons, leaderboard, outbox | `tests/unit/season-timezone.test.ts`, `tests/integration/leaderboard-outbox.test.ts`, `tests/e2e/outbox-flow.mjs` 3/3 |
+| Two-person video call | `tests/e2e/call-flow.mjs` 4/4: each browser receives the other's frames |
+| Media magic bytes | `tests/integration/audit-fixes.test.ts` |
+
+### Totals at the end of this pass
+
+`npm run typecheck`, `npm run lint`: clean. `npm test`: 34 files, 340 pass, 1 skipped (Postgres-only). `npm run build`:
+passes. `npm run test:e2e`: 10 journeys pass (judge 13/13, features 10/10, workflow 22/22, private messages 6/6,
+product, Field Atlas 19/19, field live 8/8, live 9/9, outbox 3/3, call 4/4). Route crawl: 330 pages, 0 problems.
+
+Not run here: HawkScan (no `HAWK_API_KEY` in this environment). CI has not run yet on GitHub at the time of writing.

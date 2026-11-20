@@ -2658,3 +2658,29 @@ h3:has(+ .quiz-options) {
     align-items: stretch;
   }
 }
+
+/* ---------- live presence and typing (SecureThread) ---------- */
+
+.presence-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--grass-800);
+}
+
+.presence-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--grass-500);
+  box-shadow: 0 0 0 3px rgb(71 167 90 / 0.2);
+}
+
+.typing-line {
+  margin: 4px 0 0;
+  font-style: italic;
+  color: var(--text-3);
+}

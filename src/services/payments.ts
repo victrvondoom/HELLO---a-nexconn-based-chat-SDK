@@ -117,6 +117,20 @@ export async function cancelPayment(ctx: ServiceContext, eventId: string, payerI
   return ctx.store.updatePayment(paymentId, expectedVersion, { status: 'CANCELLED' });
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Money committed by a payer in one currency over the last 24 hours: payments that succeeded, plus payments
+ * being charged right now (PROCESSING). A payment stuck in PROCESSING stops counting a day after it was made.
+ */
+export function dailyCommitted(payments: readonly Payment[], currency: Payment['currency'], now: number): number {
+  const dayAgo = now - DAY_MS;
+  return payments
+    .filter((p) => p.currency === currency)
+    .filter((p) => (p.status === 'SUCCEEDED' && (p.settledAt ?? 0) > dayAgo) || (p.status === 'PROCESSING' && p.createdAt > dayAgo))
+    .reduce((sum, p) => sum + p.amountMinor, 0);
+}
+
 /** The payer's on-screen confirmation. This, not the voice, authorises the charge. */
 export async function confirmPayment(ctx: ServiceContext, eventId: string, payerId: string, paymentId: string, expectedVersion: number): Promise<Payment> {
   const payment = await loadOwn(ctx, eventId, payerId, paymentId);
@@ -128,16 +142,19 @@ export async function confirmPayment(ctx: ServiceContext, eventId: string, payer
   }
   await requirePair(ctx, eventId, payerId, payment.payeeId);
 
-  const dayAgo = now - 24 * 60 * 60 * 1000;
-  const spent = (await ctx.store.listPaymentsFrom(payerId))
-    .filter((p) => p.status === 'SUCCEEDED' && p.currency === payment.currency && (p.settledAt ?? 0) > dayAgo)
-    .reduce((sum, p) => sum + p.amountMinor, 0);
-  if (spent + payment.amountMinor > PAYMENT_LIMITS.perDayMinor) {
+  // Claim the draft first: PROCESSING. A second tap or a second tab fails this version check and never
+  // reaches the gateway.
+  const claimed = await ctx.store.updatePayment(paymentId, expectedVersion, { status: 'PROCESSING', failureReason: null });
+
+  // The daily cap is checked after the claim, and counts payments that are being charged right now as well as
+  // those that succeeded. It used to count only SUCCEEDED payments, before claiming, so two drafts confirmed
+  // at the same moment both saw the same total and both were charged past the cap.
+  if (dailyCommitted(await ctx.store.listPaymentsFrom(payerId), payment.currency, now) > PAYMENT_LIMITS.perDayMinor) {
+    // Give the draft back, so the person can confirm it later or cancel it.
+    await ctx.store.updatePayment(paymentId, claimed.version, { status: 'AWAITING_CONFIRMATION' });
     throw new DomainError('VALIDATION_FAILED', `This would pass your daily limit of ${formatMoney(PAYMENT_LIMITS.perDayMinor, payment.currency)}.`);
   }
 
-  // Claim the draft first. A second tap or a second tab fails this version check and never reaches the gateway.
-  const claimed = await ctx.store.updatePayment(paymentId, expectedVersion, { failureReason: null });
   let result;
   try {
     result = await ctx.payments.charge({ idempotencyKey: payment.id, payerId, payeeId: payment.payeeId, amountMinor: payment.amountMinor, currency: payment.currency });

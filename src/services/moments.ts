@@ -22,7 +22,7 @@ import {
 import { extractTags, normaliseTag, trendingTags } from '../domain/moments/tags';
 import { MOMENT_MESSAGE_TYPES, nexconnRef, storyEnvelope, type NexconnRef } from '../integrations/nexconn/moments';
 import { notify, requireCapability, type ServiceContext } from './context';
-import { attachable, charterOrder, eventPost, ID, isVisualPost, newestFirst, postViews, type OrderedPost, type PostView } from './feed';
+import { attachable, charterOrder, releaseMedia, eventPost, ID, isVisualPost, newestFirst, postViews, type OrderedPost, type PostView } from './feed';
 
 /**
  * Moments: stories, saved posts, highlights and explore, on top of the feed.
@@ -187,10 +187,7 @@ async function visibleStory(ctx: ServiceContext, eventId: string, v: Viewer, sto
 /** Deletes a story, its file, and its place in the author's highlights. A highlight left empty goes too. */
 export async function deleteStory(ctx: ServiceContext, story: Story): Promise<void> {
   await ctx.store.docDelete('stories', story.id);
-  if (story.mediaId) {
-    await ctx.store.docDelete('media', story.mediaId);
-    await ctx.store.blobDelete(story.mediaId);
-  }
+  if (story.mediaId) await releaseMedia(ctx, story.mediaId);
   for (const h of await ctx.store.docList('storyHighlights', { eventId: story.eventId, ownerId: story.authorId })) {
     if (!h.storyIds.includes(story.id)) continue;
     const left = await ctx.store.docMutate('storyHighlights', h.id, (x) => ({ ...x, storyIds: x.storyIds.filter((s) => s !== story.id), updatedAt: ctx.now() }));

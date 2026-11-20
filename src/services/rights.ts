@@ -87,6 +87,7 @@ export async function exportMyData(ctx: ServiceContext, userId: string) {
     liveLocation: (await ctx.store.docList('locations', { userId })).map((l) => ({ audience: l.audience, approximate: l.approximate, until: new Date(l.expiresAt).toISOString() })),
     accessTokens: (await ctx.store.docList('apiTokens', { userId })).map((t) => ({ name: t.name, scope: t.scope, createdAt: new Date(t.createdAt).toISOString() })),
     workflowRuns: (await ctx.store.docList('workflowRuns', { actorId: userId })).map((r) => ({ workflow: r.workflowId, status: r.status, at: new Date(r.startedAt).toISOString() })),
+    linkedChatAccounts: (await ctx.store.docList('chatLinks', { userId })).map((l) => ({ transport: l.transport, account: l.externalUserId, linkedAt: new Date(l.createdAt).toISOString() })),
     notifications: notifications.map((n) => ({ at: new Date(n.createdAt).toISOString(), body: n.body, read: n.readAt !== null })),
     events: perEvent,
   };
@@ -131,6 +132,10 @@ export interface ErasureReport {
   momentsRecords: number;
   /** The person's views and reactions removed from other people's stories. */
   storyInteractions: number;
+  /** Notifications addressed to the person. They used to be left behind. */
+  notifications: number;
+  /** Notes the person wrote on payments they made. The payment record is kept for accountability. */
+  paymentNotesRedacted: number;
   follows: number;
   deviceKeys: number;
   privateMessages: number;
@@ -207,6 +212,8 @@ export async function eraseMe(ctx: ServiceContext, userId: string): Promise<Eras
     fieldAtlasRecords: await eraseFieldAtlas(ctx, userId, eventIds),
     momentsRecords: moments.records,
     storyInteractions: moments.interactions,
+    notifications: await ctx.store.deleteNotificationsFor(userId),
+    paymentNotesRedacted: await ctx.store.redactPaymentNotesFrom(userId, ERASED_TEXT),
     follows: await ctx.store.removeAllFollows(userId),
     deviceKeys: await ctx.store.deleteKeyBundles(userId),
     privateMessages: await ctx.store.deleteSealedInvolving(userId),
@@ -236,6 +243,11 @@ export async function eraseMe(ctx: ServiceContext, userId: string): Promise<Eras
   }
   for (const l of await ctx.store.docList('locations', { userId })) await ctx.store.docDelete('locations', l.id);
   for (const t of await ctx.store.docList('apiTokens', { userId })) await ctx.store.docDelete('apiTokens', t.id);
+  // Chat gateway: linked accounts, unused link codes, queued deliveries and the record of handled messages.
+  for (const l of await ctx.store.docList('chatLinks', { userId })) await ctx.store.docDelete('chatLinks', l.id);
+  for (const c of await ctx.store.docList('chatLinkCodes', { userId })) await ctx.store.docDelete('chatLinkCodes', c.id);
+  for (const d of await ctx.store.docList('chatDeliveries', { recipientUserId: userId })) await ctx.store.docDelete('chatDeliveries', d.id);
+  for (const i of await ctx.store.docList('chatInbound', { userId })) await ctx.store.docDelete('chatInbound', i.id);
   for (const a of await ctx.store.docList('accounts', { userId })) await ctx.store.docDelete('accounts', a.id);
   await ctx.store.docDelete('prefs', userId);
   await endAllSessions(ctx, userId);
@@ -249,7 +261,7 @@ export async function eraseMe(ctx: ServiceContext, userId: string): Promise<Eras
       'privacy.erase',
       'user',
       userId,
-      `Erased on request: ${report.fieldAtlasRecords} Field Atlas records, ${report.momentsRecords} Moments records (stories, highlights, saves), ${report.storyInteractions} story views and reactions, ${report.follows} follows, ${report.deviceKeys} keys, ${report.privateMessages} private messages; ${report.messagesRedacted} messages and ${report.reportsRedacted} reports redacted.`,
+      `Erased on request: ${report.fieldAtlasRecords} Field Atlas records, ${report.momentsRecords} Moments records (stories, highlights, saves), ${report.storyInteractions} story views and reactions, ${report.notifications} notifications, ${report.follows} follows, ${report.deviceKeys} keys, ${report.privateMessages} private messages; ${report.messagesRedacted} messages, ${report.reportsRedacted} reports and ${report.paymentNotesRedacted} payment notes redacted.`,
     );
   }
   return report;

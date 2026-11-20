@@ -13,7 +13,7 @@ import type {
   Session,
   User,
 } from '../domain/types';
-import type { MemoryHelloStore } from './memory';
+import type { SeedableStore } from './store';
 import type { Vault } from '../lib/vault';
 import { buildDemoVenue } from './venue-seed';
 import { seedFieldAtlas } from './field-seed';
@@ -388,10 +388,10 @@ const DEMO_FOLLOWS: Array<[string, string]> = [
   [DEMO_USERS.attendeeDev, DEMO_USERS.speakerInes],
 ];
 
-export async function loadDemoEvent(store: MemoryHelloStore, options: { vault?: Vault } = {}): Promise<void> {
+export async function loadDemoEvent(store: SeedableStore, options: { vault?: Vault } = {}): Promise<void> {
   const data = buildDemoData();
   const vault = options.vault;
-  store.seed({
+  await store.seed({
     profiles: vault
       ? DEMO_PROFILES.map((p) => ({
           userId: p.userId,

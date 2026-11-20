@@ -323,7 +323,8 @@ export interface SealedMessage {
 
 // ---------- payments between connected people ---------------------------------
 
-export type PaymentStatus = 'AWAITING_CONFIRMATION' | 'SUCCEEDED' | 'FAILED' | 'CANCELLED' | 'EXPIRED';
+/** PROCESSING: confirmed and claimed, while the gateway is being called. It counts against the daily cap. */
+export type PaymentStatus = 'AWAITING_CONFIRMATION' | 'PROCESSING' | 'SUCCEEDED' | 'FAILED' | 'CANCELLED' | 'EXPIRED';
 
 /**
  * A payment from one person to another inside their private thread. Speech may draft it, but it

@@ -23,7 +23,7 @@ export const POSTING_RULES = [
   {
     id: 'R5-media',
     label: 'Your own media',
-    rule: 'Attach only a picture or video you uploaded to this event and have not attached anywhere else. Picture and video stories need a file of that kind.',
+    rule: 'Attach only a picture or video you uploaded to this event. Picture and video stories need a file of that kind.',
   },
 ] as const;
 
@@ -80,11 +80,9 @@ export interface AttachedMedia {
   eventId: string;
   ownerId: string;
   kind: MediaKind;
-  /** True when a post or story already carries this file. Deleting one would delete it for the other. */
-  inUse: boolean;
 }
 
-export type MediaRuleOutcome = 'OK' | 'NOT_YOURS' | 'IN_USE' | 'WRONG_KIND';
+export type MediaRuleOutcome = 'OK' | 'NOT_YOURS' | 'WRONG_KIND';
 
 /**
  * R5. NOT_YOURS covers a missing file too, so the answer never confirms that someone else's upload exists.
@@ -92,7 +90,6 @@ export type MediaRuleOutcome = 'OK' | 'NOT_YOURS' | 'IN_USE' | 'WRONG_KIND';
  */
 export function checkAttachment(media: AttachedMedia | null, actor: { eventId: string; userId: string }, wanted: MediaKind | 'ANY'): MediaRuleOutcome {
   if (!media || media.eventId !== actor.eventId || media.ownerId !== actor.userId) return 'NOT_YOURS';
-  if (media.inUse) return 'IN_USE';
   if (wanted !== 'ANY' && media.kind !== wanted) return 'WRONG_KIND';
   return 'OK';
 }

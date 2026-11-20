@@ -6,6 +6,8 @@ import { INCIDENT_STATUSES } from '@/domain/types';
 
 export const SendMessageBody = z.object({
   text: z.string().trim().min(1).max(MAX_MESSAGE_LENGTH),
+  /** Set by the browser's outbox, so a message retried after a dropped connection is handled once. */
+  clientId: z.string().regex(/^[A-Za-z0-9_-]{8,64}$/).optional(),
 });
 
 export const IncidentActionBody = z.discriminatedUnion('action', [

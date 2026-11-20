@@ -12,6 +12,15 @@ import { AvailabilityControl } from '@/components/workplace/AvailabilityControl'
 import { SignOutButton } from '@/components/settings/SignOutButton';
 import { ResetDemoButton } from '@/components/settings/ResetDemoButton';
 import { TokenManager } from '@/components/settings/TokenManager';
+import { ChatLinks } from '@/components/settings/ChatLinks';
+import { getRuntime } from '@/lib/runtime';
+import { gatewayStatus } from '@/services/chat-gateway';
+
+const STORAGE_LABEL = {
+  POSTGRES: 'Postgres. Durable, and safe for several app instances.',
+  DISK: 'In memory, saved to disk. Durable on one instance only.',
+  MEMORY_DEMO: 'In memory only. Everything is lost on restart.',
+} as const;
 
 export const dynamic = 'force-dynamic';
 
@@ -21,6 +30,8 @@ export default async function SettingsPage({ params }: { params: Promise<{ event
   const nexconn = nexconnStatus();
   const isStaff = STAFF_ROLES.includes(viewer.membership.role);
   const own = await ownProfileText(viewer.ctx, viewer.userId);
+  const runtime = await getRuntime();
+  const chat = await gatewayStatus(viewer.ctx, eventId, viewer.userId, runtime.chat);
 
   return (
     <div className="page">
@@ -91,12 +102,24 @@ export default async function SettingsPage({ params }: { params: Promise<{ event
         </div>
 
         <div className="stack" style={{ gap: 20 }}>
-          <section className="card card__body stack" aria-labelledby="transport-heading">
-            <h2 id="transport-heading">Messaging transport</h2>
-            <div className={nexconn.state === 'NOT_CONFIGURED' ? 'notice notice--demo' : 'notice'} role="status">
-              <strong>{nexconn.state === 'NOT_CONFIGURED' ? 'Not connected to Nexconn' : 'Nexconn key configured'}</strong>
-              <p style={{ marginTop: 6 }}>{nexconn.message}</p>
+          <section id="chat" className="card card__body stack" aria-labelledby="chat-heading">
+            <div>
+              <h2 id="chat-heading">Chat app</h2>
+              <p className="small muted">Get HELLO&apos;s notifications in your chat app, and message HELLO from it.</p>
             </div>
+            <ChatLinks eventId={eventId} initial={chat} />
+          </section>
+
+          <section className="card card__body stack" aria-labelledby="system-heading">
+            <h2 id="system-heading">How HELLO is running</h2>
+            <dl className="small" style={{ margin: 0, display: 'grid', gridTemplateColumns: 'max-content 1fr', gap: '6px 12px' }}>
+              <dt className="muted">Storage</dt>
+              <dd style={{ margin: 0 }} data-testid="storage-mode">{STORAGE_LABEL[runtime.persistence]}</dd>
+              <dt className="muted">Live updates</dt>
+              <dd style={{ margin: 0 }}>{runtime.fanout ? 'Pushed instantly, across every app instance.' : 'Pushed instantly within this app instance.'}</dd>
+              <dt className="muted">Nexconn</dt>
+              <dd style={{ margin: 0 }}>{nexconn.message}</dd>
+            </dl>
           </section>
 
           <section className="card card__body stack" aria-labelledby="data-heading">

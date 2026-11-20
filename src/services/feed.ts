@@ -93,12 +93,11 @@ async function storyAllowsMedia(ctx: ServiceContext, eventId: string, userId: st
 /**
  * Rule R5 for an attachment. Returns the file's kind, or throws a refusal that names the rule. A file
  * that is missing or someone else's gets the same answer, so it never confirms another person's upload.
- * A file already attached elsewhere is refused because deleting either post would delete it for both.
+ * One upload may be attached to several posts and stories; `releaseMedia` keeps it until the last one goes.
  */
 export async function attachable(ctx: ServiceContext, eventId: string, userId: string, mediaId: string, wanted: MediaKind | 'ANY'): Promise<MediaKind> {
   const meta = ID.test(mediaId) ? await ctx.store.docGet('media', mediaId) : null;
-  const inUse = meta ? (await ctx.store.docList('posts', { mediaId: meta.id })).length + (await ctx.store.docList('stories', { mediaId: meta.id })).length > 0 : false;
-  const outcome = checkAttachment(meta && { eventId: meta.eventId, ownerId: meta.ownerId, kind: meta.kind, inUse }, { eventId, userId }, wanted);
+  const outcome = checkAttachment(meta && { eventId: meta.eventId, ownerId: meta.ownerId, kind: meta.kind }, { eventId, userId }, wanted);
   if (outcome === 'NOT_YOURS' || !meta) throw refuse('R5-media', 'NOT_FOUND');
   if (outcome !== 'OK') throw refuse('R5-media');
   return meta.kind;
@@ -134,7 +133,7 @@ export async function createPost(ctx: ServiceContext, eventId: string, userId: s
   if (tooLong(input.text, 'POST')) throw refuse('R1-length');
   if (tooManyTags(input.text)) throw refuse('R2-tags');
   if (isRepeat(input.text, await ctx.store.docList('posts', { eventId, authorId: userId }), ctx.now())) throw refuse('R3-duplicate');
-  // Only your own upload, from this event and not attached anywhere else, can be attached.
+  // Only your own upload, from this event, can be attached.
   const mediaKind: MediaKind | null = input.mediaId ? await attachable(ctx, eventId, userId, input.mediaId, 'ANY') : null;
   if (input.communityId) {
     const community = await ctx.store.docGet('communities', input.communityId);
@@ -211,10 +210,19 @@ export async function deletePost(ctx: ServiceContext, post: Post): Promise<void>
   // A save of a deleted post would point at nothing.
   for (const s of await ctx.store.docList('savedPosts', { postId: post.id })) await ctx.store.docDelete('savedPosts', s.id);
   for (const share of await ctx.store.docList('posts', { repostOf: post.id })) await deletePost(ctx, share);
-  if (post.mediaId) {
-    await ctx.store.docDelete('media', post.mediaId);
-    await ctx.store.blobDelete(post.mediaId);
-  }
+  if (post.mediaId) await releaseMedia(ctx, post.mediaId);
+}
+
+/**
+ * Deletes an upload once nothing uses it. A person can attach one upload to several posts and stories; the file
+ * used to be deleted with the first of them, which broke the picture in the others. Call after removing the
+ * post or story that held it.
+ */
+export async function releaseMedia(ctx: ServiceContext, mediaId: string): Promise<void> {
+  const [posts, stories] = await Promise.all([ctx.store.docList('posts', { mediaId }), ctx.store.docList('stories', { mediaId })]);
+  if (posts.length + stories.length > 0) return;
+  await ctx.store.docDelete('media', mediaId);
+  await ctx.store.blobDelete(mediaId);
 }
 
 export interface PostView {

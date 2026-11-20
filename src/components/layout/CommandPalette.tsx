@@ -1,14 +1,31 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from '@/components/ui/Icon';
 import type { NavLinkItem } from './NavLinks';
+import type { SearchHit } from '@/services/search';
+
+const KIND_LABEL: Record<SearchHit['kind'], string> = {
+  person: 'Person',
+  session: 'Session',
+  room: 'Room',
+  request: 'Request',
+  mission: 'Mission',
+  community: 'Community',
+  post: 'Post',
+  guide: 'Event guide',
+  announcement: 'Announcement',
+  messages: 'Conversation',
+};
+
+type Entry = { href: string; label: string; icon: NavLinkItem['icon'] | null; kind: string | null; detail: string };
 
 /**
- * Jump anywhere with ⌘K / Ctrl+K. It only lists pages the navigation already offers this viewer,
- * so it never reveals a page their role cannot open (and each page re-checks access on the server).
+ * Jump anywhere with ⌘K / Ctrl+K. It lists the pages the navigation already offers this viewer, and from
+ * two characters on it also searches the event (GET /api/events/[eventId]/search). The server filters every
+ * result by the viewer's permissions, so the palette never shows a record their role cannot open.
  */
 export function CommandPalette({ items }: { items: NavLinkItem[] }) {
   const router = useRouter();
@@ -16,15 +33,47 @@ export function CommandPalette({ items }: { items: NavLinkItem[] }) {
   const [query, setQuery] = useState('');
   const [active, setActive] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const pathname = usePathname();
+  const eventId = /^\/events\/([^/]+)/.exec(pathname)?.[1] ?? null;
+  const [hits, setHits] = useState<SearchHit[]>([]);
+  const [searching, setSearching] = useState(false);
 
-  const results = useMemo(() => {
+  // Search the event as the person types, a moment after they pause. A newer query replaces an older one.
+  useEffect(() => {
+    const q = query.trim();
+    if (!open || !eventId || q.length < 2) {
+      setHits([]);
+      return;
+    }
+    let live = true;
+    setSearching(true);
+    const timer = window.setTimeout(() => {
+      fetch(`/api/events/${eventId}/search?q=${encodeURIComponent(q)}`, { cache: 'no-store' })
+        .then((r) => r.json() as Promise<{ ok: boolean; data?: { hits: SearchHit[] } }>)
+        .then((body) => {
+          if (live) setHits(body.ok && body.data ? body.data.hits : []);
+        })
+        .catch(() => {
+          if (live) setHits([]);
+        })
+        .finally(() => {
+          if (live) setSearching(false);
+        });
+    }, 150);
+    return () => {
+      live = false;
+      window.clearTimeout(timer);
+    };
+  }, [query, open, eventId]);
+
+  const results: Entry[] = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return items;
-    // Label matches first, then pages that only match on a keyword ("feed" finds Moments).
-    const byLabel = items.filter((item) => item.label.toLowerCase().includes(q));
-    const byKeyword = items.filter((item) => !byLabel.includes(item) && (item.keywords ?? '').toLowerCase().includes(q));
-    return [...byLabel, ...byKeyword];
-  }, [items, query]);
+    // Pages: label matches first, then pages that only match on a keyword ("feed" finds Moments).
+    const byLabel = q ? items.filter((item) => item.label.toLowerCase().includes(q)) : items;
+    const byKeyword = q ? items.filter((item) => !byLabel.includes(item) && (item.keywords ?? '').toLowerCase().includes(q)) : [];
+    const pages = [...byLabel, ...byKeyword].map((item) => ({ href: item.href, label: item.label, icon: item.icon, kind: null, detail: '' }));
+    return [...pages, ...hits.map((h) => ({ href: h.href, label: h.title, icon: null, kind: KIND_LABEL[h.kind], detail: h.detail }))];
+  }, [items, query, hits]);
 
   useEffect(() => {
     function onKey(event: globalThis.KeyboardEvent) {
@@ -47,7 +96,7 @@ export function CommandPalette({ items }: { items: NavLinkItem[] }) {
     }
   }, [open]);
 
-  function go(item: NavLinkItem | undefined) {
+  function go(item: Entry | undefined) {
     if (!item) return;
     setOpen(false);
     router.push(item.href);
@@ -93,15 +142,15 @@ export function CommandPalette({ items }: { items: NavLinkItem[] }) {
                 setActive(0);
               }}
               onKeyDown={onInputKey}
-              placeholder="Where to? Try “moments”, “map” or “schedule”…"
-              aria-label="Search pages"
+              placeholder="Search people, sessions, rooms, requests… or a page"
+              aria-label="Search the event"
               aria-controls="palette-results"
               aria-activedescendant={results[active] ? `palette-${String(active)}` : undefined}
             />
             <ul id="palette-results" className="palette__list" role="listbox" aria-label="Pages">
               {results.map((item, index) => (
                 <li
-                  key={item.href}
+                  key={`${item.href}|${item.label}`}
                   id={`palette-${String(index)}`}
                   role="option"
                   aria-selected={index === active}
@@ -109,11 +158,14 @@ export function CommandPalette({ items }: { items: NavLinkItem[] }) {
                   onMouseEnter={() => { setActive(index); }}
                   onClick={() => { go(item); }}
                 >
-                  <Icon name={item.icon} />
-                  <span className="grow">{item.label}</span>
+                  {item.icon ? <Icon name={item.icon} /> : <span className="palette__kind xs">{item.kind}</span>}
+                  <span className="grow">
+                    {item.label}
+                    {item.detail ? <span className="palette__detail xs faint">{item.detail}</span> : null}
+                  </span>
                 </li>
               ))}
-              {results.length === 0 ? <li className="palette__empty">No page matches “{query}”.</li> : null}
+              {results.length === 0 ? <li className="palette__empty">{searching ? 'Searching…' : `Nothing matches “${query}”.`}</li> : null}
             </ul>
             <p className="palette__hint xs faint">↑ ↓ to move · Enter to open · Esc to close</p>
           </div>

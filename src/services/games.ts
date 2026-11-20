@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { DomainError } from '../domain/errors';
 import { COLS, landing, ROWS, winningLine } from '../domain/games/four';
+import { effectiveStatus, isOpenGame } from '../domain/games/lifecycle';
 import type { Game, QuizQuestion } from '../domain/product';
 import { notify, requireCapability, type ServiceContext } from './context';
 import { ID } from './feed';
@@ -63,7 +64,8 @@ export async function buildQuiz(ctx: ServiceContext, eventId: string, seed: numb
 export async function createGame(ctx: ServiceContext, eventId: string, userId: string, kind: Game['kind']): Promise<Game> {
   await requireCapability(ctx, eventId, userId, 'message.send');
   const now = ctx.now();
-  const open = (await ctx.store.docList('games', { eventId, createdBy: userId })).filter((g) => g.status === 'WAITING' || g.status === 'ACTIVE');
+  // Closed games (see src/domain/games/lifecycle.ts) no longer count, so the limit cannot lock a person out.
+  const open = (await ctx.store.docList('games', { eventId, createdBy: userId })).filter((g) => isOpenGame(g, now));
   if (open.length >= 5) throw new DomainError('VALIDATION_FAILED', 'Finish one of your open games before starting another.');
   const id = ctx.newId('game');
   const questions = kind === 'QUIZ' ? await buildQuiz(ctx, eventId, now) : [];
@@ -98,7 +100,10 @@ export async function playGame(ctx: ServiceContext, eventId: string, userId: str
     return null;
   };
   // The whole decision runs inside one atomic change, so two moves sent together cannot both land.
-  const updated = await ctx.store.docMutate('games', game.id, (g) => {
+  const updated = await ctx.store.docMutate('games', game.id, (stored) => {
+    // A game that has closed by time is treated as closed: no join, move or answer is accepted.
+    const g = { ...stored, status: effectiveStatus(stored, now) };
+    if (g.status === 'FINISHED') return refuse('INVALID_TRANSITION', 'This game has closed.');
     if (input.action === 'join') {
       if (g.kind !== 'FOUR' || g.status !== 'WAITING') return refuse('INVALID_TRANSITION', 'This game is not open to join.');
       if (g.players.includes(userId)) return refuse('VALIDATION_FAILED', 'You are already in this game.');
@@ -145,7 +150,8 @@ export async function viewGame(ctx: ServiceContext, eventId: string, userId: str
   return present(ctx, await eventGame(ctx, eventId, gameId), userId);
 }
 
-async function present(ctx: ServiceContext, g: Game, userId: string) {
+async function present(ctx: ServiceContext, stored: Game, userId: string) {
+  const g = { ...stored, status: effectiveStatus(stored, ctx.now()) };
   const name = async (id: string) => (await ctx.store.getUser(id))?.displayName ?? 'Someone';
   const mine = g.answers[userId] ?? [];
   return {
