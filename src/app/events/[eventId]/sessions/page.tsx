@@ -23,7 +23,7 @@ export default async function SessionsPage({
     : null;
 
   return (
-    <>
+    <div className="page">
       <div className="page-header">
         <div>
           <h1>Sessions and rooms</h1>
@@ -33,7 +33,7 @@ export default async function SessionsPage({
         </div>
       </div>
 
-      <div className="table-wrap card card__body" style={{ padding: 0 }}>
+      <div className="table-wrap card card__body ops-table" style={{ padding: 0 }}>
         <table>
           <thead>
             <tr>
@@ -107,6 +107,6 @@ export default async function SessionsPage({
           ) : null}
         </section>
       ) : null}
-    </>
+    </div>
   );
 }

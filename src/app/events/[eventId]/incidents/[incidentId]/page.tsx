@@ -71,7 +71,7 @@ export default async function IncidentDetailPage({
           <h2 id="rail-heading">Progress</h2>
           <span className="small muted">{rail.position}</span>
         </div>
-        <ol className="rail" aria-label="Workflow stages">
+        <ol className="rail list-reset" aria-label="Workflow stages">
           {rail.stages.map((s) => (
             <li
               key={s.label}

@@ -3,8 +3,8 @@ import { demoModeEnabled } from '@/lib/session';
 import { getRuntime } from '@/lib/runtime';
 import { DEMO_EVENT_ID } from '@/store/seed';
 import { slaFor } from '@/domain/incidents/sla';
-import { Halo } from '@/components/brand/Halo';
 import { Wordmark } from '@/components/brand/Wordmark';
+import { MeadowScene } from '@/components/brand/MeadowScene';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { AGENT_ROSTER, type AgentScope } from '@/agents/types';
 
@@ -44,22 +44,22 @@ const FEATURES: Array<{ title: string; body: string; icon: IconName }> = [
   },
 ];
 
+const MOMENTS: Array<{ title: string; body: string; icon: IconName }> = [
+  { icon: 'camera', title: 'Stories that leave after a day', body: 'Share a moment from a room, a talk or the coffee queue. It is deleted after 24 hours unless you keep it in a highlight.' },
+  { icon: 'reels', title: 'Reels and a feed you can scroll', body: 'Pictures, videos and colourful text posts from the people around you, with double-tap likes, comments and saves.' },
+  { icon: 'compass', title: 'Explore what the event is talking about', body: 'Tags trend only when at least three different people use them, so one loud account cannot fake a trend.' },
+  { icon: 'info', title: 'A feed that tells you why', body: 'Six announced rules order the feed, and every post shows the rules that placed it. No hidden signals, no paid boosts.' },
+];
+
 async function liveFigures() {
   const { store, ctx } = await getRuntime();
   const now = ctx.now();
-  const [incidents, sessions, announcements, people] = await Promise.all([
-    store.listIncidents(DEMO_EVENT_ID),
-    store.listSessions(DEMO_EVENT_ID),
-    store.listAnnouncements(DEMO_EVENT_ID),
-    store.listMemberships(DEMO_EVENT_ID),
-  ]);
+  const [incidents, sessions] = await Promise.all([store.listIncidents(DEMO_EVENT_ID), store.listSessions(DEMO_EVENT_ID)]);
   const open = incidents.filter((i) => !['CLOSED', 'CANCELLED', 'CONFIRMED'].includes(i.status));
   return {
     open: open.length,
     overdue: open.filter((i) => slaFor(i, now).state === 'BREACHED').length,
     running: sessions.filter((s) => s.startsAt <= now && s.endsAt > now).length,
-    announcements: announcements.length,
-    people: people.length,
     clock: new Date(now).toISOString().slice(11, 16),
   };
 }
@@ -76,15 +76,16 @@ export default async function LandingPage() {
   return (
     <div className="landing">
       <header className="landing__nav">
-        <Link href="/" className="brand" aria-label="HELLO home">
+        <Link href="/" className="landing__brand" aria-label="HELLO home">
           <Wordmark height={30} id="wm-top" />
         </Link>
         <nav className="landing__links" aria-label="Page">
           <a href="#how">How it works</a>
+          <a href="#moments">Moments</a>
           <a href="#agents">Agent mesh</a>
           <a href="#features">Features</a>
           {demo ? (
-            <Link className="button button--sm" href="/demo">
+            <Link className="button button--sun button--sm" href="/demo">
               Open the demo
             </Link>
           ) : null}
@@ -92,117 +93,200 @@ export default async function LandingPage() {
       </header>
 
       <section className="hero" aria-labelledby="hero-title">
-        <div>
-          <p className="eyebrow">Event coordination for physical events</p>
-          <Wordmark height={86} id="wm-hero" className="hero__wordmark" title="HELLO" />
-          <h1 id="hero-title">
-            One conversation. <span className="text-sky">Everyone connected.</span>
-          </h1>
-          <p className="lead">
-            Attendees describe a problem in ordinary words. A team of HELLO agents works out the room, the session and the people
-            concerned, checks the event guide, coordinates the response, and tells the person who asked when it is fixed.
-          </p>
-          <div className="row" style={{ marginTop: 28, gap: 12 }}>
-            {demo ? (
-              <Link className="button" href="/demo">
-                Enter the demo <Icon name="arrow" />
-              </Link>
-            ) : null}
-            <a className="button button--ghost" href="#agents">
-              Meet the agents
-            </a>
-          </div>
-          {live ? (
-            <p className="live-strip" style={{ marginTop: 24, display: 'inline-flex', flexWrap: 'wrap' }} aria-label="Live figures from the demo event">
-              <span className="live">
-                <span className="live__dot" aria-hidden="true" />
-                Live demo · {live.clock} UTC
-              </span>
-              <span>
-                <strong>{live.open}</strong> open
-              </span>
-              <span>
-                <strong>{live.overdue}</strong> past target
-              </span>
-              <span>
-                <strong>{live.running}</strong> sessions running
-              </span>
+        <MeadowScene>
+          <div className="hero__copy">
+            <p className="hero__eyebrow">Event coordination that feels like home</p>
+            <h1 id="hero-title">
+              One conversation.
+              <br /> <em>Everyone</em> connected.
+            </h1>
+            <p className="hero__lead">
+              Attendees describe a problem in ordinary words. A team of HELLO agents works out the room, the session and the people
+              concerned, coordinates the response, and tells the person who asked when it is fixed. In between, the event shares its
+              moments.
             </p>
-          ) : null}
-        </div>
-
-        <div className="halo-stage">
-          <Halo />
-          <div className="orbit-chip orbit-chip--1" aria-hidden="true">
-            <span className="orbit-chip__dot">1</span>
-            <span>
-              Triage
-              <small>Microphone fault · Room 3</small>
-            </span>
+            <div className="hero__actions">
+              {demo ? (
+                <Link className="button button--sun button--lg" href="/demo">
+                  Enter the demo <Icon name="arrow" />
+                </Link>
+              ) : null}
+              <a className="button button--glass button--lg" href="#agents">
+                Meet the agents
+              </a>
+            </div>
+            {live ? (
+              <p className="live-strip hero__live" aria-label="Live figures from the demo event">
+                <span className="live">
+                  <span className="live__dot" aria-hidden="true" />
+                  Live demo · {live.clock} UTC
+                </span>
+                <span>
+                  <strong>{live.open}</strong> open
+                </span>
+                <span>
+                  <strong>{live.overdue}</strong> past target
+                </span>
+                <span>
+                  <strong>{live.running}</strong> sessions running
+                </span>
+              </p>
+            ) : null}
           </div>
-          <div className="orbit-chip orbit-chip--2" aria-hidden="true">
-            <span className="orbit-chip__dot">2</span>
-            <span>
-              Event guide
-              <small>AV procedure cited</small>
-            </span>
+          <div className="hero__floats" aria-hidden="true">
+            <div className="float-chip float-chip--1">
+              <span className="float-chip__num">1</span>
+              <span>
+                Triage
+                <small>Microphone fault · Room 3</small>
+              </span>
+            </div>
+            <div className="float-chip float-chip--2">
+              <span className="float-chip__num">2</span>
+              <span>
+                Event guide
+                <small>AV procedure cited</small>
+              </span>
+            </div>
+            <div className="float-chip float-chip--3">
+              <span className="float-chip__num">3</span>
+              <span>
+                Coordinator
+                <small>Kiri recommended · claimed</small>
+              </span>
+            </div>
           </div>
-          <div className="orbit-chip orbit-chip--3" aria-hidden="true">
-            <span className="orbit-chip__dot">3</span>
-            <span>
-              Coordinator
-              <small>Kiri recommended · claimed</small>
-            </span>
-          </div>
-        </div>
+        </MeadowScene>
       </section>
 
       <section className="section" id="how" aria-labelledby="how-title">
         <div className="how">
-          <div className="section__head" style={{ marginBottom: 0 }}>
+          <div className="section__head">
             <p className="eyebrow">How it works</p>
-            <h2 id="how-title">A message becomes an accountable workflow.</h2>
+            <h2 id="how-title">
+              A message becomes an <em>accountable</em> workflow.
+            </h2>
             <p>
-              Every step is a record: who reported it, which open report it joined, who claimed it, and whether the person who
-              asked agreed it was fixed.
+              Every step is a record: who reported it, which open report it joined, who claimed it, and whether the person who asked agreed
+              it was fixed.
             </p>
           </div>
           <figure className="flow" aria-label="Example of a message becoming a workflow">
             <div className="flow__msg">The microphone in Room 3 has stopped working.</div>
-            <div className="flow__step">
-              <span className="flow__num">1</span>
-              <span>Room 3, the current session and the event are resolved from stored data.</span>
-            </div>
-            <div className="flow__step">
-              <span className="flow__num">2</span>
-              <span>An open report about the same fault is found. Your report joins it, and you are linked to it.</span>
-            </div>
-            <div className="flow__step">
-              <span className="flow__num">3</span>
-              <span>The AV technician is recommended, with the reasons, and the AV procedure from the event guide is attached.</span>
-            </div>
-            <div className="flow__step">
-              <span className="flow__num">4</span>
-              <span>Work is recorded step by step. You are asked to confirm the fix.</span>
-            </div>
+            <ol className="flow__steps">
+              <li className="flow__step">
+                <span className="flow__num">1</span>
+                <span>Room 3, the current session and the event are resolved from stored data.</span>
+              </li>
+              <li className="flow__step">
+                <span className="flow__num">2</span>
+                <span>An open report about the same fault is found. Your report joins it, and you are linked to it.</span>
+              </li>
+              <li className="flow__step">
+                <span className="flow__num">3</span>
+                <span>The AV technician is recommended, with the reasons, and the AV procedure from the event guide is attached.</span>
+              </li>
+              <li className="flow__step">
+                <span className="flow__num">4</span>
+                <span>Work is recorded step by step. You are asked to confirm the fix.</span>
+              </li>
+            </ol>
           </figure>
+        </div>
+      </section>
+
+      <section className="section section--moments" id="moments" aria-labelledby="moments-title">
+        <div className="moments-intro">
+          <div className="phone" aria-hidden="true">
+            <div className="phone__screen">
+              <div className="phone__bar">
+                <span className="phone__title">Moments</span>
+                <span className="phone__icons">
+                  <Icon name="heart" size={18} />
+                  <Icon name="send" size={18} />
+                </span>
+              </div>
+              <div className="phone__stories">
+                {[
+                  ['You', 'grass', true],
+                  ['Ines', 'sky', false],
+                  ['Dev', 'sun', false],
+                  ['Kiri', 'clay', false],
+                  ['Chloe', 'grass', false],
+                ].map(([name, tone, mine]) => (
+                  <span key={String(name)} className={`phone__story${mine ? ' is-mine' : ''}`}>
+                    <span className={`phone__ring phone__ring--${String(tone)}`}>
+                      <span className="phone__face">{String(name).charAt(0)}</span>
+                    </span>
+                    <span className="phone__name">{String(name)}</span>
+                  </span>
+                ))}
+              </div>
+              <div className="phone__post">
+                <div className="phone__post-head">
+                  <span className="phone__face phone__face--sm">I</span>
+                  <span>
+                    <strong>Dr Ines</strong>
+                    <small>Room 3 · 12 min</small>
+                  </span>
+                </div>
+                <div className="phone__post-art">
+                  <span>
+                    Solar arrays fold like origami. Come see one open at 13:00. <b>#satellites</b>
+                  </span>
+                </div>
+                <div className="phone__post-actions">
+                  <Icon name="heart" size={18} />
+                  <Icon name="comment" size={18} />
+                  <Icon name="send" size={18} />
+                  <span className="phone__why">Why: you follow them · fresh</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="moments-intro__copy">
+            <p className="eyebrow">Moments</p>
+            <h2 id="moments-title">
+              The event, as it <em>happens</em>.
+            </h2>
+            <p className="muted">
+              Stories, reels, a feed and explore, built for the people in the same building. Every moment travels as a Nexconn-shaped message:
+              a story is an <code>HL:Story</code> on the event’s community channel, a like is a message reaction, and seeing a story is a read
+              receipt.
+            </p>
+            <ul className="moments-list">
+              {MOMENTS.map((m) => (
+                <li key={m.title}>
+                  <span className="moments-list__icon" aria-hidden="true">
+                    <Icon name={m.icon} size={18} />
+                  </span>
+                  <span>
+                    <strong>{m.title}</strong>
+                    <span className="muted small">{m.body}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </section>
 
       <section className="section" id="agents" aria-labelledby="agents-title">
         <div className="section__head">
           <p className="eyebrow">The agent mesh</p>
-          <h2 id="agents-title">Seven small agents. One accountable answer.</h2>
+          <h2 id="agents-title">
+            Seven small agents. <em>One</em> accountable answer.
+          </h2>
           <p>
-            Each agent has one job and a declared scope. Agents read, rank and cite. Only the coordinator changes anything, and it
-            does so through the same permission checks as a person would. Every reply shows its sources and how it was reached.
+            Each agent has one job and a declared scope. Agents read, rank and cite. Only the coordinator changes anything, and it does so
+            through the same permission checks as a person would. Every reply shows its sources and how it was reached.
           </p>
         </div>
         <div className="mesh">
           {AGENT_ROSTER.map((agent, index) => (
             <article key={agent.id} className="agent-card">
               <div className="agent-card__top">
-                <span className="orbit-chip__dot">{index + 1}</span>
+                <span className="agent-card__num">{String(index + 1).padStart(2, '0')}</span>
                 <span className={`scope scope--${agent.scope}`}>{SCOPE_LABEL[agent.scope]}</span>
               </div>
               <h3>{agent.name}</h3>
@@ -217,28 +301,36 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      <section className="section features" id="features" aria-label="What HELLO does" style={{ display: 'grid' }}>
-        {FEATURES.map((f) => (
-          <article key={f.title} className="card card__body feature">
-            <span className="feature__icon" aria-hidden="true">
-              <Icon name={f.icon} size={18} />
-            </span>
-            <h3>{f.title}</h3>
-            <p>{f.body}</p>
-          </article>
-        ))}
+      <section className="section" id="features" aria-labelledby="features-title">
+        <div className="section__head">
+          <p className="eyebrow">What HELLO does</p>
+          <h2 id="features-title">
+            Calm, <em>careful</em> coordination.
+          </h2>
+        </div>
+        <div className="features">
+          {FEATURES.map((f) => (
+            <article key={f.title} className="card feature">
+              <span className="feature__icon" aria-hidden="true">
+                <Icon name={f.icon} size={20} />
+              </span>
+              <h3>{f.title}</h3>
+              <p>{f.body}</p>
+            </article>
+          ))}
+        </div>
       </section>
 
       {demo ? (
         <section className="section">
           <div className="cta-band">
-            <div>
-              <h2>See it with a live demo event.</h2>
-              <p className="muted" style={{ marginTop: 6 }}>
-                Seeded, fictional data for the HELLO Global Technology Summit. Switch roles to see what each person can do.
-              </p>
+            <div className="cta-band__copy">
+              <h2>
+                Come <em>home</em> to a live demo event.
+              </h2>
+              <p>Seeded, fictional data for the HELLO Global Technology Summit. Switch roles to see what each person can do.</p>
             </div>
-            <Link className="button" href="/demo">
+            <Link className="button button--sun button--lg" href="/demo">
               Enter the demo <Icon name="arrow" />
             </Link>
           </div>
@@ -246,8 +338,8 @@ export default async function LandingPage() {
       ) : null}
 
       <footer className="footer-note">
-        HELLO is a working prototype. Messaging is not yet connected to Nexconn, AI and web search providers are optional, and data
-        is held in memory. See the project README for the full status before any real use.
+        HELLO is a working prototype. Messaging is not yet connected to Nexconn, AI and web search providers are optional, and data is held in
+        memory. See the project README for the full status before any real use.
       </footer>
     </div>
   );

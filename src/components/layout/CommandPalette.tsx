@@ -19,7 +19,11 @@ export function CommandPalette({ items }: { items: NavLinkItem[] }) {
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return q ? items.filter((item) => item.label.toLowerCase().includes(q)) : items;
+    if (!q) return items;
+    // Label matches first, then pages that only match on a keyword ("feed" finds Moments).
+    const byLabel = items.filter((item) => item.label.toLowerCase().includes(q));
+    const byKeyword = items.filter((item) => !byLabel.includes(item) && (item.keywords ?? '').toLowerCase().includes(q));
+    return [...byLabel, ...byKeyword];
   }, [items, query]);
 
   useEffect(() => {
@@ -65,10 +69,10 @@ export function CommandPalette({ items }: { items: NavLinkItem[] }) {
 
   return (
     <>
-      <button type="button" className="palette-trigger" onClick={() => { setOpen(true); }} aria-haspopup="dialog">
+      <button type="button" className="palette-trigger" onClick={() => { setOpen(true); }} aria-haspopup="dialog" aria-label="Search pages">
         <Icon name="search" />
-        <span className="grow">Jump to…</span>
-        <kbd>⌘K</kbd>
+        <span className="grow palette-trigger__text">Search or jump to…</span>
+        <kbd className="palette-trigger__kbd">⌘K</kbd>
       </button>
       {open
         ? createPortal(
@@ -89,7 +93,7 @@ export function CommandPalette({ items }: { items: NavLinkItem[] }) {
                 setActive(0);
               }}
               onKeyDown={onInputKey}
-              placeholder="Type a page name…"
+              placeholder="Where to? Try “moments”, “map” or “schedule”…"
               aria-label="Search pages"
               aria-controls="palette-results"
               aria-activedescendant={results[active] ? `palette-${String(active)}` : undefined}

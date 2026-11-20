@@ -14,6 +14,11 @@ const ICON: Record<string, IconName> = {
   incidents: 'incidents', map: 'pin', needs: 'bell', notifications: 'bell', signals: 'sparkle',
 };
 const KIND_LABEL: Record<FlowNode['kind'], string> = { source: 'Source', agent: 'Agents', queue: 'Live', output: 'For you', workflow: 'Workflow' };
+/** Edge label pill: one character of the 10px mono label font is 6px wide (see .canvas__label in social.css). */
+const LABEL_CHAR = 6;
+const LABEL_H = 18;
+/** Where along its curve a label may sit, best first. Crossing edges share a midpoint, so the middle is not always free. */
+const ALONG = [0.5, 0.42, 0.58, 0.34, 0.66, 0.26, 0.74, 0.18, 0.82, 0.1, 0.9];
 
 type Positions = Record<string, { x: number; y: number }>;
 type RunResult = FlowSnapshot['runs'][number];
@@ -50,6 +55,10 @@ export function FlowCanvas({ eventId, initial }: { eventId: string; initial: Flo
 
   const edges = useMemo(() => {
     const byId = new Map(data.nodes.map((n) => [n.id, n]));
+    // A label takes the first spot on its curve that covers no node and no label already placed.
+    const taken = data.nodes.map((n) => ({ ...place(n), w: NODE_W, h: HEIGHT[n.kind] }));
+    const clear = (x: number, y: number, w: number) =>
+      taken.every((r) => x + w / 2 <= r.x || x - w / 2 >= r.x + r.w || y + LABEL_H / 2 <= r.y || y - LABEL_H / 2 >= r.y + r.h);
     return data.edges.flatMap((e) => {
       const from = byId.get(e.from);
       const to = byId.get(e.to);
@@ -61,7 +70,7 @@ export function FlowCanvas({ eventId, initial }: { eventId: string; initial: Flo
         const tx = b.x + NODE_W / 2;
         const ty = b.y + HEIGHT[to.kind];
         const lift = Math.max(40, (a.y - ty) / 2);
-        return [{ key: `${e.from}>${e.to}`, d: `M${sx},${a.y} C${sx},${a.y - lift} ${tx},${ty + lift} ${tx},${ty}`, label: e.label, lx: 0, ly: 0, live: running !== null && e.from === `wf:${running}`, dashed: true }];
+        return [{ key: `${e.from}>${e.to}`, d: `M${sx},${a.y} C${sx},${a.y - lift} ${tx},${ty + lift} ${tx},${ty}`, label: e.label, lx: 0, ly: 0, lw: 0, live: running !== null && e.from === `wf:${running}`, dashed: true }];
       }
       const forward = b.x >= a.x + NODE_W / 2;
       const x1 = forward ? a.x + NODE_W : a.x;
@@ -69,7 +78,18 @@ export function FlowCanvas({ eventId, initial }: { eventId: string; initial: Flo
       const y1 = a.y + HEIGHT[from.kind] / 2;
       const y2 = b.y + HEIGHT[to.kind] / 2;
       const bend = Math.max(50, Math.abs(x2 - x1) / 2) * (forward ? 1 : -1);
-      return [{ key: `${e.from}>${e.to}`, d: `M${x1},${y1} C${x1 + bend},${y1} ${x2 - bend},${y2} ${x2},${y2}`, label: e.label, lx: (x1 + x2) / 2, ly: (y1 + y2) / 2 - 6, live: false, dashed: false }];
+      const at = (t: number) => {
+        const u = 1 - t;
+        const k1 = 3 * u * u * t;
+        const k2 = 3 * u * t * t;
+        return { x: u * u * u * x1 + k1 * (x1 + bend) + k2 * (x2 - bend) + t * t * t * x2, y: (u * u * u + k1) * y1 + (k2 + t * t * t) * y2 };
+      };
+      const lw = (e.label?.length ?? 0) * LABEL_CHAR + 10;
+      const mid = at(0.5);
+      // Along the curve first; if every spot is taken, beside the middle.
+      const spot = [...ALONG.map(at), ...[-1, 1, -2, 2].map((s) => ({ x: mid.x + s * lw, y: mid.y }))].find((p) => clear(p.x, p.y, lw)) ?? mid;
+      if (e.label) taken.push({ x: spot.x - lw / 2, y: spot.y - LABEL_H / 2, w: lw, h: LABEL_H });
+      return [{ key: `${e.from}>${e.to}`, d: `M${x1},${y1} C${x1 + bend},${y1} ${x2 - bend},${y2} ${x2},${y2}`, label: e.label, lx: Math.round(spot.x), ly: Math.round(spot.y), lw, live: false, dashed: false }];
     });
   }, [data, place, running]);
 
@@ -128,15 +148,19 @@ export function FlowCanvas({ eventId, initial }: { eventId: string; initial: Flo
         <div className="canvas__world" style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.k})` }}>
           <svg className="canvas__edges" width="1" height="1" aria-hidden="true">
             {edges.map((e) => (
-              <g key={e.key}>
-                <path d={e.d} className={e.live ? 'is-flow' : e.dashed ? 'is-quiet' : undefined} />
-                {e.label ? (
-                  <text x={e.lx} y={e.ly} textAnchor="middle">
+              <path key={e.key} d={e.d} className={e.live ? 'is-flow' : e.dashed ? 'is-quiet' : undefined} />
+            ))}
+            {/* Labels after every line, so no line is drawn across a label. */}
+            {edges.map((e) =>
+              e.label ? (
+                <g key={`${e.key}:label`} className="canvas__label" transform={`translate(${e.lx} ${e.ly})`}>
+                  <rect x={-e.lw / 2} y={-LABEL_H / 2} width={e.lw} height={LABEL_H} rx={LABEL_H / 2} />
+                  <text textAnchor="middle" dominantBaseline="central">
                     {e.label}
                   </text>
-                ) : null}
-              </g>
-            ))}
+                </g>
+              ) : null,
+            )}
           </svg>
           {data.nodes.map((n) => {
             const p = place(n);

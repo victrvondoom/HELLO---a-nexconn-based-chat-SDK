@@ -1,5 +1,4 @@
 import type { IncidentStatus } from '@/domain/types';
-import { statusTone } from '@/components/ui/labels';
 
 const SHORT: Record<IncidentStatus, string> = {
   REPORTED: 'Reported',
@@ -16,8 +15,22 @@ const SHORT: Record<IncidentStatus, string> = {
   ESCALATED: 'Escalated',
 };
 
+/** The Meadow status palette: new is sky, in hand is sun, done is grass, needs rescue is poppy, cancelled is neutral. */
+const TONE: Record<IncidentStatus, string> = {
+  REPORTED: 'badge badge--sky',
+  TRIAGED: 'badge badge--sky',
+  ASSIGNED: 'badge badge--warning',
+  ACKNOWLEDGED: 'badge badge--warning',
+  IN_PROGRESS: 'badge badge--warning',
+  NEEDS_INFORMATION: 'badge badge--sun',
+  RESOLVED: 'badge badge--success',
+  CONFIRMED: 'badge badge--success',
+  CLOSED: 'badge badge--success',
+  REOPENED: 'badge badge--danger',
+  ESCALATED: 'badge badge--danger',
+  CANCELLED: 'badge',
+};
+
 export function IncidentBadge({ status }: { status: IncidentStatus }) {
-  const tone = statusTone(status);
-  const className = tone ? `badge badge--${tone}` : 'badge';
-  return <span className={className}>{SHORT[status]}</span>;
+  return <span className={TONE[status]}>{SHORT[status]}</span>;
 }

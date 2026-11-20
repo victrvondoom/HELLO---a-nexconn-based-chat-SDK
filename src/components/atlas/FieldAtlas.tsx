@@ -299,7 +299,7 @@ export function FieldAtlas({ eventId, initial, cabinetHref }: { eventId: string;
               <span style={{ width: `${pct}%` }} />
             </div>
             <p className="xs faint" style={{ margin: '4px 0 0' }}>
-              {data.player.xp} XP{data.player.next ? ` · ${data.player.next.xpNeeded} to ${data.player.next.name}` : ' · top level'}
+              <span className="atlas-xp">{data.player.xp} XP</span>{data.player.next ? ` · ${data.player.next.xpNeeded} to ${data.player.next.name}` : ' · top level'}
             </p>
           </div>
         </div>
@@ -482,7 +482,7 @@ function CabinetView({ cabinet, error }: { cabinet: Cabinet | null; error: strin
           <p className="small muted" style={{ margin: 0 }}>No XP yet. Complete a verified mission to see it here.</p>
         ) : (
           <table className="atlas-table">
-            <caption className="sr-only">XP entries, newest first</caption>
+            <caption className="visually-hidden">XP entries, newest first</caption>
             <thead><tr><th scope="col">Date</th><th scope="col">XP</th><th scope="col">What it was for</th></tr></thead>
             <tbody>
               {cabinet.history.map((h) => (

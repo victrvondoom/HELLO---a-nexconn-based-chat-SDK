@@ -29,7 +29,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ eventI
     if (error instanceof DomainError && (error.code === 'NOT_FOUND' || error.code === 'FORBIDDEN')) notFound();
     throw error;
   }
-  const posts = await listFeed(viewer.ctx, eventId, viewer.userId, { scope: 'all', communityId: null, authorId: profile.userId });
+  const posts = await listFeed(viewer.ctx, eventId, viewer.userId, { scope: 'latest', communityId: null, authorId: profile.userId });
 
   return (
     <div className="page" style={{ maxWidth: 920 }}>

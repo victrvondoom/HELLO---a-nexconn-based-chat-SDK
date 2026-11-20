@@ -104,6 +104,38 @@ const PATHS: Record<IconName, ReactNode> = {
       <path d="M4 21a8 8 0 0 1 16 0" />
     </>
   ),
+  camera: (
+    <>
+      <path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" />
+      <circle cx="12" cy="13.5" r="3.5" />
+    </>
+  ),
+  compass: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="m15.5 8.5-2 5-5 2 2-5z" />
+    </>
+  ),
+  bookmark: <path d="M6 3h12v18l-6-4.5L6 21z" />,
+  reels: (
+    <>
+      <rect x="3" y="3" width="18" height="18" rx="4" />
+      <path d="M3 8h18M8 3l3 5M14 3l3 5M10.5 11.5v6l5-3z" />
+    </>
+  ),
+  menu: <path d="M4 7h16M4 12h16M4 17h16" />,
+  more: <path d="M5 12h.01M12 12h.01M19 12h.01" />,
+  close: <path d="M6 6l12 12M18 6 6 18" />,
+  send: <path d="M21 3 10 14M21 3l-7 18-4-7-7-4z" />,
+  sprout: <path d="M12 21v-8M12 13c0-4 3-7 8-7 0 5-3 7-8 7zM12 15c0-3.5-2.5-6-7-6 0 4 2.5 6 7 6zM6 21h12" />,
+  chevron: <path d="m9 6 6 6-6 6" />,
+  pause: <path d="M8 5v14M16 5v14" />,
+  info: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v5M12 8h.01" />
+    </>
+  ),
 };
 
 export type IconName =
@@ -142,7 +174,19 @@ export type IconName =
   | 'bolt'
   | 'map'
   | 'lock'
-  | 'user';
+  | 'user'
+  | 'camera'
+  | 'compass'
+  | 'bookmark'
+  | 'reels'
+  | 'menu'
+  | 'more'
+  | 'close'
+  | 'send'
+  | 'sprout'
+  | 'chevron'
+  | 'pause'
+  | 'info';
 
 export function Icon({ name, size = 16, label }: { name: IconName; size?: number; label?: string }) {
   return (

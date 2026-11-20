@@ -1,0 +1,168 @@
+/* =============================================================================
+   HELLO design system: "Meadow"
+
+   The app should feel like coming home: a sky above, grass underfoot, warm paper in between.
+   - Paper: warm cream surfaces with a faint print grain. Cards are a brighter paper on top.
+   - Grass: the primary family. Deep grass carries filled controls and success; fresh grass is light and decoration.
+   - Sky: links, information and live state. Deep sky carries text; bright sky is glow and decoration.
+   - Sun: the highlighter. Active navigation, the one thing to notice, the editorial accent.
+   - Poppy: danger and overdue work. Used sparingly.
+   - Ink: a deep forest black, never pure black.
+   Contrast: every text token below passes WCAG AA (4.5:1) on both --paper and --surface.
+   Type: Instrument Serif for display, Inter for reading, JetBrains Mono for labels and figures.
+   ============================================================================= */
+
+:root {
+  color-scheme: light;
+
+  /* ---- type ---- */
+  --font-sans: var(--font-inter, 'Inter'), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  --font-serif: var(--font-instrument, 'Instrument Serif'), 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  --font-mono: var(--font-jetbrains, 'JetBrains Mono'), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* Kept for components that asked for "display": it is the serif now. */
+  --font-display: var(--font-serif);
+
+  /* ---- palette: grass ---- */
+  --grass-950: #0b2e17;
+  --grass-900: #0f3d1e;
+  --grass-800: #165a2b;
+  --grass-700: #1f6f35;
+  --grass-600: #2d8a43;
+  --grass-500: #47a75a;
+  --grass-400: #7cc56b;
+  --grass-300: #b4df90;
+  --grass-200: #d6efc0;
+  --grass-100: #eaf6de;
+  --grass-50: #f4faee;
+
+  /* ---- palette: sky ---- */
+  --sky-900: #0b3a63;
+  --sky-800: #0d4f86;
+  --sky-700: #1565a8;
+  --sky-600: #1f7fc9;
+  --sky-500: #3c9be0;
+  --sky-400: #6db8ee;
+  --sky-300: #a6d5f6;
+  --sky-200: #cfe8fa;
+  --sky-100: #e6f3fc;
+  --sky-50: #f2f9fe;
+
+  /* ---- palette: sun, poppy, clay ---- */
+  --sun-700: #7a5200;
+  --sun-600: #a87400;
+  --sun-500: #f4c430;
+  --sun-400: #f7d35e;
+  --sun-300: #f9df86;
+  --sun-200: #fcecb8;
+  --sun-100: #fdf5d8;
+  --poppy-800: #8f1d16;
+  --poppy-700: #b3261e;
+  --poppy-500: #e0452e;
+  --poppy-200: #f8cbc2;
+  --poppy-100: #fdebe7;
+  --clay-500: #e5866a;
+  --clay-300: #f2b89a;
+
+  /* ---- paper and ink ---- */
+  --paper: #f6f2e6;
+  --paper-2: #ede7d7;
+  --paper-3: #e4dcc7;
+  --surface: #fffdf7;
+  --surface-2: #faf7ee;
+  --surface-3: #f2eee1;
+  --ink: #14231a;
+  --ink-2: #3f5045;
+  --ink-3: #5f6e64;
+  --ink-rgb: 20 35 26;
+  --line: rgb(var(--ink-rgb) / 0.12);
+  --line-strong: rgb(var(--ink-rgb) / 0.22);
+  --frame: #14231a;
+
+  /* ---- semantic roles ---- */
+  --bg: var(--paper);
+  --text: var(--ink);
+  --text-2: var(--ink-2);
+  --text-3: var(--ink-3);
+  --border: var(--line);
+  --border-strong: var(--line-strong);
+  --hair: var(--line);
+  --hair-strong: var(--line-strong);
+  --well: var(--surface-2);
+  --dot: rgb(var(--ink-rgb) / 0.10);
+
+  --accent: var(--grass-700);
+  --accent-hover: var(--grass-800);
+  --accent-soft: var(--grass-100);
+  --accent-ink: var(--grass-800);
+  --accent-bright: var(--grass-400);
+  --accent-grad: linear-gradient(135deg, var(--grass-600) 0%, var(--grass-700) 55%, var(--grass-800) 100%);
+
+  --link: var(--sky-700);
+  --link-hover: var(--sky-800);
+  --info: var(--sky-700);
+  --info-soft: var(--sky-100);
+
+  --highlight: var(--sun-500);
+  --highlight-soft: var(--sun-100);
+
+  --danger: var(--poppy-700);
+  --danger-soft: var(--poppy-100);
+  --warning: var(--sun-700);
+  --warning-soft: var(--sun-100);
+  --success: var(--grass-700);
+  --success-soft: var(--grass-100);
+  --focus: var(--sky-600);
+  --demo-bg: var(--sun-100);
+  --demo-border: var(--sun-400);
+
+  /* ---- scenery: the sky-to-grass gradients used for heroes, story rings and backdrops ---- */
+  --sky-gradient: linear-gradient(180deg, #8ec9f2 0%, #bfe1f7 38%, #e6f2f4 70%, #f5f1e6 100%);
+  --meadow-gradient: linear-gradient(180deg, #8fd07a 0%, #4fa548 55%, #2b7a36 100%);
+  --ring-gradient: conic-gradient(from 210deg, var(--grass-500), var(--sky-500), var(--sun-500), var(--clay-500), var(--grass-500));
+  --halftone: radial-gradient(circle, rgb(var(--ink-rgb) / 0.22) 0.9px, transparent 1.3px);
+  /* Print grain: SVG fractal noise, tiled. Static, so it costs one decode. */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.08 0 0 0 0 0.14 0 0 0 0 0.10 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+
+  /* ---- depth: shadows tinted with forest ink so they read as shade on grass, not dirt ---- */
+  --hl: rgb(255 255 255 / 0.75);
+  --e1: 0 1px 0 var(--hl) inset, 0 1px 2px rgb(var(--ink-rgb) / 0.06), 0 2px 6px -3px rgb(var(--ink-rgb) / 0.08);
+  --e2: 0 1px 0 var(--hl) inset, 0 1px 2px rgb(var(--ink-rgb) / 0.05), 0 10px 24px -12px rgb(var(--ink-rgb) / 0.22);
+  --e3: 0 1px 0 var(--hl) inset, 0 2px 4px rgb(var(--ink-rgb) / 0.05), 0 22px 44px -18px rgb(var(--ink-rgb) / 0.30);
+  --e4: 0 0 0 1px rgb(var(--ink-rgb) / 0.06), 0 18px 40px -12px rgb(var(--ink-rgb) / 0.22), 0 50px 100px -30px rgb(var(--ink-rgb) / 0.40);
+  --print: 3px 3px 0 var(--frame);
+  --print-sm: 2px 2px 0 var(--frame);
+  --glow: 0 0 0 3px rgb(60 155 224 / 0.22);
+  --shadow-1: var(--e1);
+  --shadow-2: var(--e2);
+
+  /* ---- space, radius, layout ---- */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-10: 40px;
+  --s-12: 48px;
+  --s-16: 64px;
+
+  --r-xs: 6px;
+  --r-sm: 10px;
+  --r-md: 12px;
+  --r-lg: 18px;
+  --r-xl: 26px;
+  --r-pill: 999px;
+
+  --nav-w: 264px;
+  --ctx-w: 336px;
+  --topbar-h: 64px;
+  --tabbar-h: 64px;
+
+  /* ---- motion ---- */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --t-fast: 120ms;
+  --t-med: 200ms;
+  --t-slow: 360ms;
+}

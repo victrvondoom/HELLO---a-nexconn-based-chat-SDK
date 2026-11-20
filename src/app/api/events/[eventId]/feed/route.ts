@@ -3,7 +3,8 @@ import { jsonOk, parseBody } from '@/lib/http';
 import { getRuntime } from '@/lib/runtime';
 import { FixedWindowRateLimiter } from '@/lib/rate-limit';
 import { DomainError } from '@/domain/errors';
-import { createPost, FeedQuerySchema, listFeed, PostSchema } from '@/services/feed';
+import { FEED_CRITERIA, NEVER_USED } from '@/domain/moments/charter';
+import { createPost, FeedQuerySchema, listFeed, PostSchema, RANKED_SCOPES } from '@/services/feed';
 
 const limiter = new FixedWindowRateLimiter(20, 60_000);
 
@@ -12,7 +13,11 @@ export const GET = viewerRoute<{ eventId: string }>('feed.list', async ({ userId
   const query = FeedQuerySchema.safeParse({ scope: url.searchParams.get('scope') ?? undefined, communityId: url.searchParams.get('community'), authorId: url.searchParams.get('author') });
   if (!query.success) throw new DomainError('VALIDATION_FAILED', 'That feed does not exist.');
   const { ctx } = await getRuntime();
-  return jsonOk({ now: ctx.now(), posts: await listFeed(ctx, params.eventId, userId, query.data) });
+  const now = ctx.now();
+  const posts = await listFeed(ctx, params.eventId, userId, query.data);
+  // A ranked feed carries its charter, so the explanation always arrives with the order it explains.
+  const charter = RANKED_SCOPES.includes(query.data.scope) ? { charter: { criteria: FEED_CRITERIA, neverUsed: NEVER_USED } } : {};
+  return jsonOk({ now, posts, ...charter });
 });
 
 export const POST = viewerRoute<{ eventId: string }>('feed.create', async ({ userId, params, request }) => {

@@ -77,7 +77,7 @@ export default async function OperationsPage({ params }: { params: Promise<{ eve
       </div>
 
       <div className="split">
-        <section className="card" aria-labelledby="board-heading" style={{ overflow: 'hidden' }}>
+        <section className="card ops-table" aria-labelledby="board-heading" style={{ overflow: 'hidden' }}>
           <div className="card__head">
             <h2 id="board-heading">Acknowledgement board</h2>
             <span className="xs faint">Most overdue first</span>
@@ -122,12 +122,22 @@ export default async function OperationsPage({ params }: { params: Promise<{ eve
         <div className="stack" style={{ gap: 20 }}>
           <section className="card card__body stack" aria-labelledby="rooms-heading">
             <h2 id="rooms-heading">Rooms</h2>
-            <ul className="list-reset list-divided">
+            <ul className="list-reset list-divided room-list">
               {rooms.map((r) => (
                 <li key={r.room.id} className="split-meta" style={{ padding: '10px 0' }}>
                   <div>
                     <strong>{r.room.name}</strong>
                     <div className="xs faint">{r.occupancyLabel}</div>
+                    {r.room.occupancy !== null ? (
+                      <div className="load room-load" aria-hidden="true">
+                        <div className="load__track">
+                          <div
+                            className={r.room.occupancy >= r.room.capacity ? 'load__fill is-full' : 'load__fill'}
+                            style={{ width: `${Math.min(100, Math.round((r.room.occupancy / Math.max(1, r.room.capacity)) * 100))}%` }}
+                          />
+                        </div>
+                      </div>
+                    ) : null}
                     {r.overCapacity ? (
                       <span className={r.overCapacityIsVerified ? 'badge badge--danger' : 'badge badge--warning'} style={{ marginTop: 4 }}>
                         {r.overCapacityIsVerified ? 'Over capacity (verified)' : 'Over capacity in recorded data'}

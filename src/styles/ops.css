@@ -1,0 +1,1829 @@
+/* =============================================================================
+   Ops: the conversation, incidents, operations, team, audit, agents, announcements, sessions,
+   notifications, settings, Today, sign-in and the demo role picker.
+
+   Several class names here are also used by other areas (msg, bubble, avatar, composer, mic-button,
+   plane-tag, cards, open, inline-form, score-list), so those rules are always scoped to this area's own
+   containers (.chat, .thread__composer, .composer__foot, .ocard, #tokens). The landing page owns .mesh,
+   .agent-card, .scope and .orbit-chip__dot, which /agents reuses as they are.
+   ============================================================================= */
+
+/* ---------- conversation: frame ---------- */
+
+/* The shell makes the workspace one screen tall and gives .chat the rest (.main > .chat { flex: 1 }).
+   The thread scrolls inside; the composer sits at its foot. */
+.chat {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--ctx-w);
+  grid-template-rows: minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+}
+
+.thread {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: radial-gradient(900px 280px at 50% -80px, color-mix(in srgb, var(--sky-300) 30%, transparent), transparent 72%);
+}
+
+.thread__head {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  padding: 10px var(--s-8);
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--paper) 74%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.thread__head form[role='search'] {
+  position: relative;
+  max-width: 380px;
+  flex-wrap: nowrap;
+}
+
+/* A magnifier drawn with a mask, so it takes its colour from a token. */
+.thread__head form[role='search']::before {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  left: 14px;
+  top: 50%;
+  width: 15px;
+  height: 15px;
+  margin-top: -7.5px;
+  background: var(--ink-3);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.6-3.6'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.6-3.6'/%3E%3C/svg%3E") center / contain no-repeat;
+  pointer-events: none;
+}
+
+.thread__head input {
+  min-height: 40px;
+  padding: 8px 16px 8px 38px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  font-size: 14px;
+  box-shadow: var(--e1);
+}
+
+.thread__head .live {
+  margin-left: auto;
+}
+
+.thread__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-6);
+  padding: var(--s-8) var(--s-8) var(--s-6);
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+/* A calm reading column: messages sit in a centred measure however wide the screen is. */
+.thread__scroll > * {
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 820px;
+  margin-inline: auto;
+}
+
+.thread__scroll > .empty {
+  max-width: 600px;
+  padding: var(--s-10) var(--s-8);
+  gap: 10px;
+  border-style: solid;
+  border-color: var(--line);
+  background:
+    radial-gradient(260px 120px at 50% 100%, color-mix(in srgb, var(--grass-300) 30%, transparent), transparent 70%),
+    radial-gradient(320px 140px at 50% 0%, color-mix(in srgb, var(--sky-200) 55%, transparent), transparent 70%),
+    var(--surface);
+  box-shadow: var(--e2);
+}
+
+/* The halo already says "nothing yet, but HELLO is here"; the sprout stays for an empty search. */
+.thread__scroll > .empty:has(.halo-mark)::before {
+  display: none;
+}
+
+.thread__scroll > .empty .halo-mark {
+  margin-bottom: 6px;
+}
+
+.thread__scroll > .empty span {
+  max-width: 46ch;
+  line-height: 1.6;
+}
+
+/* ---------- conversation: messages ---------- */
+
+.chat .msg {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+}
+
+.chat .msg--me {
+  flex-direction: row-reverse;
+  align-self: flex-end;
+  width: auto;
+  max-width: min(80%, 620px);
+  margin-left: auto;
+}
+
+.chat .msg__body {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--s-2);
+  min-width: 0;
+}
+
+.chat .msg--me .msg__body {
+  align-items: flex-end;
+}
+
+.chat .msg__body > * {
+  max-width: 680px;
+}
+
+.chat .msg__meta {
+  padding: 0 6px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  overflow-wrap: anywhere;
+}
+
+.chat .avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  margin-top: 22px;
+  border-radius: 50%;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--sky-900);
+  background: linear-gradient(135deg, var(--sky-100), var(--sky-200));
+  box-shadow: inset 0 0 0 1px rgb(var(--ink-rgb) / 0.08), var(--e1);
+  user-select: none;
+}
+
+/* HELLO's own avatar: the halo mark on a paper disc with a faint sun ring, like a seal on a letter. */
+.chat .avatar--hello {
+  background: var(--surface);
+  box-shadow:
+    0 0 0 1px var(--line),
+    0 0 0 5px color-mix(in srgb, var(--sun-300) 38%, transparent),
+    var(--e2);
+}
+
+.chat .bubble {
+  align-self: flex-start;
+  max-width: 640px;
+  padding: 12px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  border-top-left-radius: 6px;
+  background: var(--surface-3);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.55;
+  box-shadow: none;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.chat .bubble--hello {
+  background: var(--surface);
+  box-shadow: var(--e2);
+}
+
+/* The person's own words: deep grass, warm white type, a tail towards them. */
+.chat .bubble--me {
+  align-self: flex-end;
+  color: var(--surface);
+  background: linear-gradient(160deg, var(--grass-600) 0%, var(--grass-700) 45%, var(--grass-800) 100%);
+  border-color: var(--grass-800);
+  border-radius: 20px;
+  border-top-right-radius: 6px;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--surface) 22%, transparent),
+    0 14px 26px -16px color-mix(in srgb, var(--grass-900) 85%, transparent);
+}
+
+.chat .bubble--me ::selection {
+  background: var(--sun-300);
+  color: var(--ink);
+}
+
+.chat .msg__body > .notice {
+  border-radius: 14px;
+}
+
+/* ---------- conversation: outcome cards ---------- */
+
+.chat .cards {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--s-2);
+  width: 100%;
+}
+
+.map-chip {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 6px 15px 6px 12px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--sky-200);
+  background: var(--sky-50);
+  color: var(--sky-800);
+  font-size: 13px;
+  font-weight: 620;
+  text-decoration: none;
+  box-shadow: var(--e1);
+  transition: transform var(--t-fast) var(--ease-out), box-shadow var(--t-med) var(--ease-out), background var(--t-fast) ease;
+}
+
+.map-chip:hover {
+  color: var(--sky-900);
+  background: var(--sky-100);
+  border-color: var(--sky-300);
+  transform: translateY(-1px);
+  box-shadow: var(--e2);
+  text-decoration: none;
+}
+
+.ocard {
+  --rail: var(--line-strong);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px 14px 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  box-shadow: var(--e1);
+  font-size: 14px;
+  overflow: hidden;
+  transition: box-shadow var(--t-med) var(--ease-out);
+}
+
+.ocard::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--rail);
+}
+
+.ocard:has(a:hover) {
+  box-shadow: var(--e2);
+}
+
+.ocard--incident {
+  --rail: linear-gradient(180deg, var(--sky-400), var(--sky-700));
+}
+
+.ocard--approval {
+  --rail: linear-gradient(180deg, var(--sun-400), var(--sun-600));
+  background: linear-gradient(90deg, var(--sun-100), var(--surface) 75%);
+}
+
+.ocard--warn {
+  --rail: linear-gradient(180deg, var(--sun-500), var(--clay-500));
+}
+
+.ocard--alt {
+  --rail: linear-gradient(180deg, var(--grass-400), var(--grass-700));
+}
+
+.ocard__title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s-3);
+  font-size: 14.5px;
+  font-weight: 620;
+  line-height: 1.4;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+a.ocard__title {
+  display: block;
+}
+
+.ocard__title .badge {
+  flex-shrink: 0;
+}
+
+.ocard__meta {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-2);
+  overflow-wrap: anywhere;
+}
+
+.ocard__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line-strong);
+}
+
+.ocard .open {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--link);
+}
+
+/* An arrow from an empty pseudo-element, so the link's accessible name stays exactly its text. */
+.ocard .open::after {
+  content: '';
+  width: 14px;
+  height: 14px;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14M13 6l6 6-6 6'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14M13 6l6 6-6 6'/%3E%3C/svg%3E") center / contain no-repeat;
+  transition: transform var(--t-fast) var(--ease-out);
+}
+
+.ocard .open:hover::after {
+  transform: translateX(3px);
+}
+
+.ocard .list-plain > li {
+  padding: 9px 0;
+}
+
+.ocard .list-plain strong {
+  font-size: 14px;
+  font-weight: 620;
+}
+
+/* ---------- conversation: sources and the agent trace ---------- */
+
+.sources {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  font-size: 13px;
+}
+
+.sources__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px var(--s-2);
+}
+
+.sources__head > span:first-child {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.sources ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.source {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.source__n {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--sky-800);
+  background: var(--sky-100);
+  box-shadow: inset 0 0 0 1px var(--sky-200);
+}
+
+.source__title {
+  font-weight: 620;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+a.source__title {
+  color: var(--link);
+}
+
+.source__snippet {
+  display: -webkit-box;
+  margin-top: 3px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-2);
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Where an answer came from, in the status palette: records grass, the guide sky, the web sun. */
+.grounding {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.6;
+  color: var(--text-2);
+  background: var(--surface-3);
+}
+
+.grounding::before {
+  content: '';
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.75;
+}
+
+.grounding--VERIFIED_RECORDS {
+  color: var(--grass-800);
+  background: var(--grass-100);
+}
+
+.grounding--EVENT_GUIDE {
+  color: var(--sky-800);
+  background: var(--sky-100);
+}
+
+.grounding--WEB_UNVERIFIED {
+  color: var(--sun-700);
+  background: var(--sun-100);
+  border-color: var(--sun-300);
+  border-style: dashed;
+}
+
+.grounding--NO_ANSWER {
+  color: var(--ink-3);
+  background: var(--surface-3);
+}
+
+.trace {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  font-size: 12.5px;
+  overflow: hidden;
+}
+
+.trace > summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 8px 14px;
+  list-style: none;
+  cursor: pointer;
+  font-weight: 550;
+  color: var(--text-2);
+  user-select: none;
+  transition: background var(--t-fast) ease, color var(--t-fast) ease;
+}
+
+.trace > summary::-webkit-details-marker {
+  display: none;
+}
+
+.trace > summary:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.trace > summary::after {
+  content: '';
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  margin-left: auto;
+  border-right: 1.6px solid currentColor;
+  border-bottom: 1.6px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform var(--t-med) var(--ease-out);
+}
+
+.trace[open] > summary {
+  border-bottom: 1px solid var(--line);
+}
+
+.trace[open] > summary::after {
+  transform: translateY(1px) rotate(-135deg);
+}
+
+.trace__dots {
+  display: inline-flex;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.trace__dot {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--grass-500);
+}
+
+.trace__dot--DONE {
+  background: var(--grass-500);
+}
+
+.trace__dot--SKIPPED {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--line-strong);
+}
+
+.trace__dot--FAILED {
+  background: var(--poppy-500);
+}
+
+/* The steps as a mono timeline: a dot per agent, joined by a hairline. */
+.trace ol {
+  list-style: none;
+  margin: 0;
+  padding: 8px 14px 10px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.55;
+}
+
+.trace li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 7px minmax(110px, 150px) minmax(0, 1fr) auto;
+  grid-template-areas: 'dot agent summary ms';
+  column-gap: 12px;
+  align-items: start;
+  padding: 6px 0;
+}
+
+.trace li:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 20px;
+  bottom: -9px;
+  width: 1px;
+  background: var(--line-strong);
+}
+
+.trace li > .trace__dot {
+  grid-area: dot;
+  margin-top: 5px;
+}
+
+.trace__agent {
+  grid-area: agent;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.trace__summary {
+  grid-area: summary;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.trace__ms {
+  grid-area: ms;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-3);
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* ---------- conversation: composer ---------- */
+
+.thread__composer {
+  position: relative;
+  z-index: 2;
+  padding: var(--s-2) var(--s-8) var(--s-5);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--paper) 40%, transparent), color-mix(in srgb, var(--paper) 92%, transparent) 40%);
+}
+
+/* Messages fade out under the composer instead of being cut by a hard edge. */
+.thread__composer::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: 28px;
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--paper) 40%, transparent));
+  pointer-events: none;
+}
+
+.thread__composer > * {
+  max-width: 820px;
+  margin-inline: auto;
+}
+
+.thread__composer .chips {
+  gap: 6px 8px;
+}
+
+.thread__composer .chip {
+  font-size: 13px;
+  padding: 6px 13px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+}
+
+.thread__composer .composer {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--s-2);
+  margin: 0;
+  padding: 7px 7px 7px 20px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  box-shadow: var(--e3);
+  transition: border-color var(--t-fast) ease, box-shadow var(--t-med) var(--ease-out);
+}
+
+.thread__composer .composer:focus-within {
+  border-color: var(--sky-500);
+  box-shadow: var(--glow), var(--e3);
+}
+
+.thread__composer .composer textarea {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  max-height: 180px;
+  padding: 11px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font-size: 15.5px;
+  line-height: 1.45;
+  resize: none;
+}
+
+.thread__composer .composer textarea:focus {
+  background: transparent;
+  box-shadow: none;
+}
+
+.thread__composer .composer textarea:disabled {
+  opacity: 0.7;
+}
+
+.thread__composer .mic-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: background var(--t-fast) ease, color var(--t-fast) ease, border-color var(--t-fast) ease, transform var(--t-fast) var(--ease-out);
+}
+
+.thread__composer .mic-button svg {
+  width: 19px;
+  height: 19px;
+}
+
+.thread__composer .mic-button:hover:not(:disabled) {
+  color: var(--grass-800);
+  background: var(--grass-50);
+  border-color: var(--grass-300);
+}
+
+.thread__composer .mic-button:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+/* Listening is "live now", so it is sky, with a slow ripple. */
+.thread__composer .mic-button[aria-pressed='true'] {
+  color: var(--sky-800);
+  background: var(--sky-100);
+  border-color: var(--sky-400);
+  animation: ops-mic-ripple 1.4s var(--ease-out) infinite;
+}
+
+.thread__composer .mic-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@keyframes ops-mic-ripple {
+  from {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--sky-500) 55%, transparent);
+  }
+  to {
+    box-shadow: 0 0 0 12px color-mix(in srgb, var(--sky-500) 0%, transparent);
+  }
+}
+
+/* The round send button. While sending it widens to fit its word. */
+.thread__composer .composer .button {
+  flex-shrink: 0;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: var(--r-pill);
+}
+
+.thread__composer .composer .button:has(> svg) {
+  width: 44px;
+  padding: 0;
+}
+
+.thread__composer .composer .button svg {
+  width: 19px;
+  height: 19px;
+}
+
+.thread__composer .composer__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px var(--s-3);
+  padding: 0 var(--s-2);
+}
+
+.composer__foot .plane-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 8px 0 0;
+  padding: 2px 10px 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  color: var(--ink-2);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.5;
+  box-shadow: none;
+}
+
+/* "Open" plane: readable by HELLO and staff, marked with the sky dot used for information. */
+.composer__foot .plane-tag--open::before {
+  content: '';
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--sky-500);
+}
+
+/* ---------- conversation: context column ---------- */
+
+.context {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-6);
+  min-width: 0;
+  min-height: 0;
+  padding: var(--s-6) var(--s-5) var(--s-8);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-left: 1px solid var(--line);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 72%, transparent), color-mix(in srgb, var(--surface-2) 40%, transparent));
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+.context__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  min-width: 0;
+}
+
+.context__section > h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.context__section > h2::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+/* What the person must do next is the one thing to notice, so its heading wears the sun. */
+.context__section[aria-labelledby='waiting-heading'] > h2 {
+  color: var(--sun-700);
+}
+
+.context__section[aria-labelledby='waiting-heading'] > h2::before {
+  content: '';
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--sun-500);
+  box-shadow: 0 0 0 3px var(--sun-200);
+}
+
+.context .list-plain > li {
+  padding: 12px 0;
+}
+
+.context .list-plain > li:first-child {
+  padding-top: 2px;
+}
+
+.context .list-plain a {
+  font-weight: 600;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.context .list-plain a:hover {
+  color: var(--link-hover);
+}
+
+.context .list-plain strong {
+  font-size: 14px;
+  font-weight: 620;
+}
+
+.context ul.small > li::marker {
+  color: var(--grass-500);
+}
+
+/* ---------- conversation: narrower screens ---------- */
+
+/* Below 1100px the context drops under the thread: the thread keeps the full height and the context is
+   one scroll further down, so the composer never moves. */
+@media (max-width: 1100px) {
+  .chat {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 100% auto;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .thread__scroll {
+    overscroll-behavior: auto;
+  }
+
+  .context {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    align-items: start;
+    gap: var(--s-6) var(--s-8);
+    padding: var(--s-6) var(--s-8) var(--s-10);
+    overflow: visible;
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+}
+
+@media (max-width: 900px) {
+  .thread__head {
+    padding: 8px var(--s-4);
+    gap: var(--s-3);
+  }
+
+  .thread__head input {
+    min-height: 40px;
+  }
+
+  .thread__scroll {
+    gap: var(--s-5);
+    padding: var(--s-5) var(--s-4) var(--s-4);
+  }
+
+  .thread__scroll > .empty {
+    padding: var(--s-8) var(--s-5);
+  }
+
+  .thread__composer {
+    padding: 6px var(--s-3) var(--s-3);
+  }
+
+  /* On a phone the suggestions are one swipeable strip, so the thread keeps its height. */
+  .thread__composer .chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin: 0 calc(-1 * var(--s-3));
+    padding: 2px var(--s-3) 6px;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, black var(--s-3), black calc(100% - 36px), transparent);
+    mask-image: linear-gradient(90deg, transparent 0, black var(--s-3), black calc(100% - 36px), transparent);
+  }
+
+  .thread__composer .chips::-webkit-scrollbar {
+    display: none;
+  }
+
+  .thread__composer .chip {
+    flex-shrink: 0;
+    min-height: 36px;
+    white-space: nowrap;
+  }
+
+  .thread__composer .composer {
+    padding: 5px 5px 5px 16px;
+    border-radius: 24px;
+  }
+
+  .chat .msg--me {
+    max-width: 88%;
+  }
+
+  .chat .avatar {
+    width: 30px;
+    height: 30px;
+    margin-top: 22px;
+    font-size: 11px;
+  }
+
+  .context {
+    grid-template-columns: minmax(0, 1fr);
+    padding: var(--s-5) var(--s-4) var(--s-8);
+  }
+}
+
+@media (max-width: 600px) {
+  .thread__head .live .faint {
+    display: none;
+  }
+
+  .chat .msg {
+    gap: var(--s-2);
+  }
+
+  .chat .bubble {
+    padding: 10px 14px;
+  }
+
+  .ocard {
+    padding: 12px 14px 12px 18px;
+  }
+
+  .ocard__title {
+    flex-wrap: wrap;
+  }
+
+  .trace li {
+    grid-template-columns: 7px minmax(0, 1fr) auto;
+    grid-template-areas:
+      'dot agent ms'
+      '. summary summary';
+    row-gap: 2px;
+  }
+
+  .thread__composer .composer__foot {
+    padding: 0 4px;
+  }
+
+  /* The privacy tag takes its own line, so the counter never breaks mid-phrase. */
+  .composer__foot .plane-tag {
+    display: flex;
+    width: fit-content;
+    margin: 0 0 4px;
+  }
+}
+
+/* ---------- tables: incidents, the operations board, team, audit, sessions ---------- */
+
+.ops-table table {
+  min-width: 640px;
+}
+
+.ops-table tbody td {
+  padding-top: 13px;
+  padding-bottom: 13px;
+}
+
+.ops-table td:first-child {
+  min-width: 220px;
+}
+
+.ops-table td:first-child > a,
+.ops-table td:first-child > strong {
+  font-weight: 620;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.ops-table td:first-child > a:hover {
+  color: var(--link-hover);
+}
+
+.ops-table td > .xs,
+.ops-table td > .small.muted {
+  margin-top: 3px;
+}
+
+.ops-table td > .badge + .xs {
+  margin-top: 5px;
+}
+
+.ops-table td.small {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Audit action names read as printed codes. */
+.ops-table td > .mono {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--r-xs);
+  background: var(--surface-3);
+  color: var(--ink-2);
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+
+.ops-table .load {
+  min-width: 140px;
+  max-width: 200px;
+}
+
+.ops-table .load__track {
+  height: 7px;
+  box-shadow: inset 0 1px 1px rgb(var(--ink-rgb) / 0.08);
+}
+
+.ops-table .card__head h2 {
+  font-family: var(--font-serif);
+  font-size: 24px;
+  font-weight: 400;
+  letter-spacing: -0.005em;
+}
+
+/* Filter chips and search above the incidents table. */
+.split-meta:has(> nav[aria-label='Filter incidents']) {
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+nav[aria-label='Filter incidents'],
+nav[aria-label='Filter by action'] {
+  gap: var(--s-2);
+}
+
+/* ---------- cards with a heading row (Today, incident detail, announcements, notifications) ---------- */
+
+.card__body > .split-meta {
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--s-1) var(--s-3);
+}
+
+.list-divided > li.split-meta {
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--s-3);
+  font-size: 14px;
+  color: var(--text);
+}
+
+.list-divided > li.split-meta > div {
+  min-width: 0;
+}
+
+.list-divided > li.split-meta > .badge {
+  flex-shrink: 0;
+}
+
+/* Section titles on the dashboard-like pages (Today, operations, an incident) read as editorial headings. */
+section[aria-labelledby^='today-'] > .split-meta > h2,
+#rooms-heading,
+#approvals-heading,
+#signals-heading,
+#rail-heading,
+#state-heading,
+#reports-heading,
+#assign-heading,
+#timeline-heading {
+  font-family: var(--font-serif);
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -0.005em;
+}
+
+/* Two figures per row on a phone, so the first screen shows the work and not four tall tiles. */
+@media (max-width: 600px) {
+  .page-header + .kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--s-3);
+  }
+
+  .page-header + .kpi-grid .kpi {
+    padding: var(--s-3) var(--s-4) var(--s-4);
+  }
+
+  .page-header + .kpi-grid .kpi__value {
+    font-size: 38px;
+  }
+}
+
+section[aria-labelledby^='today-'] .list-divided > li strong {
+  font-weight: 620;
+}
+
+/* The incident's progress rail: six stages are too many for one phone-width row, so it folds into two. */
+@media (max-width: 600px) {
+  section[aria-labelledby='rail-heading'] .rail {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    row-gap: var(--s-3);
+  }
+}
+
+/* ---------- operations ---------- */
+
+.room-list > li {
+  align-items: flex-start;
+}
+
+.room-list > li > div {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  min-width: 0;
+}
+
+.room-list strong {
+  font-size: 14px;
+  font-weight: 620;
+  color: var(--text);
+}
+
+.room-load {
+  align-self: stretch;
+  max-width: 240px;
+  margin-top: 3px;
+}
+
+.room-load .load__track {
+  height: 6px;
+}
+
+/* Approval requests: pending ones carry a sun rail, so the queue reads at a glance. */
+section[aria-labelledby='approvals-heading'] li.card {
+  border-radius: var(--r-md);
+  box-shadow: var(--e1);
+}
+
+section[aria-labelledby='approvals-heading'] li.card:has(.badge--warning) {
+  box-shadow: inset 4px 0 0 var(--sun-500), var(--e2);
+}
+
+section[aria-labelledby='approvals-heading'] article > .row:first-child > strong {
+  display: inline-block;
+}
+
+section[aria-labelledby='approvals-heading'] article > .row:first-child > strong::first-letter {
+  text-transform: uppercase;
+}
+
+section[aria-labelledby='approvals-heading'] .mono,
+section[aria-labelledby='signals-heading'] .small.muted {
+  overflow-wrap: anywhere;
+}
+
+section[aria-labelledby='signals-heading'] article.card {
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  box-shadow: none;
+}
+
+/* ---------- agents ---------- */
+
+.config-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: var(--s-3);
+  margin-bottom: var(--s-8);
+}
+
+.config-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: var(--s-4) var(--s-5) var(--s-5);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--e1);
+  overflow: hidden;
+}
+
+.config-tile > .xs:first-child {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.config-tile > strong {
+  font-family: var(--font-serif);
+  font-size: 25px;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--grass-800);
+}
+
+.config-tile code {
+  font-size: 11px;
+  overflow-wrap: anywhere;
+  color: var(--sky-800);
+}
+
+.config-grid ~ h2,
+#runs-heading,
+#guide-heading {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+.runs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.run {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-4) var(--s-5);
+}
+
+.run__text {
+  padding-left: 12px;
+  border-left: 3px solid var(--grass-300);
+  font-size: 15px;
+  font-weight: 560;
+  line-height: 1.5;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+/* ---------- settings ---------- */
+
+section[aria-labelledby='profile-heading'] .toggle {
+  align-items: flex-start;
+}
+
+section[aria-labelledby='profile-heading'] .toggle input {
+  margin-top: 2px;
+}
+
+#tokens .inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--s-3);
+}
+
+#tokens .inline-form .field {
+  flex: 1 1 200px;
+  min-width: 0;
+  margin: 0;
+}
+
+#tokens .inline-form .button {
+  flex-shrink: 0;
+}
+
+#tokens .score-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+
+#tokens .score-list > li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: 10px var(--s-4);
+  font-size: 14px;
+}
+
+#tokens .score-list > li + li {
+  border-top: 1px solid var(--line);
+}
+
+#tokens .score-list > li > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+#tokens .secret {
+  display: block;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border: 1px dashed var(--sky-400);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+/* ---------- sign in: a card on a sky over a little meadow ---------- */
+
+.auth {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: var(--s-12) var(--s-4) 168px;
+  overflow: hidden;
+  text-align: center;
+  background: var(--sky-gradient);
+}
+
+/* Two rolling hills along the bottom edge: the meadow the whole app stands on. */
+.auth::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  left: -12%;
+  right: -12%;
+  bottom: 0;
+  height: 220px;
+  background:
+    radial-gradient(62% 100% at 24% 100%, var(--grass-600) 0 62%, transparent 62.5%),
+    radial-gradient(70% 115% at 76% 100%, var(--grass-500) 0 60%, transparent 60.5%),
+    radial-gradient(58% 140% at 50% 100%, var(--grass-300) 0 58%, transparent 58.5%);
+}
+
+/* A faint halftone sun behind the card. */
+.auth::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 9%;
+  right: 12%;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: var(--halftone);
+  background-size: 7px 7px;
+  -webkit-mask-image: radial-gradient(circle, black 0%, transparent 70%);
+  mask-image: radial-gradient(circle, black 0%, transparent 70%);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.auth > a:first-child {
+  display: inline-flex;
+  border-radius: var(--r-md);
+}
+
+.auth > h1 {
+  font-size: clamp(40px, 6vw, 56px);
+}
+
+.auth > p {
+  max-width: 40ch;
+  font-size: 15.5px;
+}
+
+.auth .panel {
+  width: 100%;
+  max-width: 420px;
+  margin-top: var(--s-6);
+  text-align: left;
+  border: 1.5px solid var(--frame);
+  border-radius: var(--r-xl);
+  box-shadow: var(--print), var(--e3);
+}
+
+.auth .panel__head {
+  justify-content: center;
+  padding: var(--s-4) var(--s-5);
+}
+
+.auth .segmented {
+  display: flex;
+  width: 100%;
+}
+
+.auth .segmented__item {
+  flex: 1;
+}
+
+.auth form.panel__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  padding: var(--s-5) var(--s-6) var(--s-6);
+}
+
+.auth form.panel__body > .notice {
+  margin: 0;
+}
+
+.auth form.panel__body > .button {
+  min-height: 46px;
+  margin-top: 4px;
+}
+
+@media (max-width: 600px) {
+  .auth {
+    justify-content: flex-start;
+    padding-top: var(--s-10);
+    padding-bottom: 140px;
+  }
+
+  .auth::before {
+    height: 150px;
+  }
+
+  .auth::after {
+    top: 3%;
+    right: -40px;
+  }
+
+  .auth form.panel__body {
+    padding: var(--s-4) var(--s-5) var(--s-5);
+  }
+}
+
+/* ---------- demo role picker ---------- */
+
+.signin-hero {
+  display: flex;
+  align-items: center;
+  gap: var(--s-5);
+  margin: var(--s-3) 0 var(--s-4);
+}
+
+.signin-hero .halo {
+  position: relative;
+  flex-shrink: 0;
+  width: 112px;
+  height: 112px;
+  max-width: none;
+  margin: 0;
+}
+
+.signin-hero .halo__glow {
+  position: absolute;
+  inset: 12%;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--sky-300) 70%, transparent), transparent 70%);
+  filter: blur(10px);
+}
+
+.signin-hero .halo__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.role-groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-8);
+}
+
+.role-group {
+  --role-accent: var(--grass-600);
+  --role-soft: var(--grass-100);
+}
+
+.role-group--attendee {
+  --role-accent: var(--sky-600);
+  --role-soft: var(--sky-100);
+}
+
+.role-group--speaker {
+  --role-accent: var(--sun-600);
+  --role-soft: var(--sun-100);
+}
+
+.role-group--volunteer {
+  --role-accent: var(--grass-500);
+  --role-soft: var(--grass-100);
+}
+
+.role-group--operations {
+  --role-accent: var(--clay-500);
+  --role-soft: var(--poppy-100);
+}
+
+.role-group--organiser {
+  --role-accent: var(--grass-700);
+  --role-soft: var(--grass-100);
+}
+
+.role-group--platform-admin {
+  --role-accent: var(--ink-2);
+  --role-soft: var(--surface-3);
+}
+
+.role-group__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  margin-bottom: var(--s-4);
+  padding-bottom: var(--s-3);
+  border-bottom: 1px solid var(--line);
+}
+
+.role-group__n {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: var(--r-pill);
+  background: var(--role-soft);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--role-accent) 35%, transparent);
+}
+
+.role-group__head h2 {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.role-group__count {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+
+.role-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: var(--s-3);
+}
+
+.role-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-4);
+  overflow: hidden;
+}
+
+/* A role-coloured top edge that brightens on hover. */
+.role-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: var(--role-accent);
+  opacity: 0.35;
+  transition: opacity var(--t-med) ease;
+}
+
+.role-card:hover::before,
+.role-card:focus-within::before {
+  opacity: 1;
+}
+
+.role-card:has(.role-card__go:focus-visible) {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sky-500) 30%, transparent), var(--e3);
+}
+
+.role-card__top {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-width: 0;
+}
+
+.role-card__who {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+}
+
+.role-card__who strong {
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.role-card__blurb {
+  flex: 1;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
+/* The whole card is the button's target: the button stretches an empty layer over it. It does not move
+   on hover, so that layer stays put under the pointer. */
+.role-card__go {
+  width: 100%;
+  justify-content: space-between;
+}
+
+.role-card__go::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.role-card__go::before {
+  content: '';
+  order: 1;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14M13 6l6 6-6 6'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14M13 6l6 6-6 6'/%3E%3C/svg%3E") center / contain no-repeat;
+  transition: transform var(--t-fast) var(--ease-out);
+}
+
+.role-card:hover .role-card__go:not(:disabled)::before {
+  transform: translateX(3px);
+}
+
+.role-card__go,
+.role-card__go:hover,
+.role-card__go:active {
+  transform: none;
+}
+
+.role-card:hover .role-card__go:not(:disabled) {
+  color: var(--surface);
+  background: var(--grass-700);
+  border-color: var(--grass-900);
+}
+
+@media (max-width: 600px) {
+  .signin-hero {
+    gap: var(--s-3);
+  }
+
+  .signin-hero .halo {
+    width: 76px;
+    height: 76px;
+  }
+
+  .signin-hero .wordmark {
+    width: auto;
+    max-width: calc(100% - 92px);
+    height: auto;
+  }
+
+  .role-groups {
+    gap: var(--s-6);
+  }
+
+  .role-group__head h2 {
+    font-size: 24px;
+  }
+
+  /* On a phone each role is one swipeable row: the next card peeks in, so the page stays short. */
+  .role-grid {
+    display: flex;
+    gap: var(--s-3);
+    margin: 0 calc(-1 * var(--s-4));
+    padding: 4px var(--s-4) 10px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: var(--s-4);
+    scrollbar-width: none;
+  }
+
+  .role-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .role-card {
+    flex: 0 0 84%;
+    scroll-snap-align: start;
+  }
+
+  .role-card:only-child {
+    flex-basis: 100%;
+  }
+}

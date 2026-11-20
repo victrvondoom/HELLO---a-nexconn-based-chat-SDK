@@ -142,7 +142,8 @@ describe('erasure and durable storage', () => {
     await createToken(h.ctx, userId, { name: 't', scope: 'WRITE', eventId: h.eventId });
     await shareLocation(h.ctx, h.eventId, userId, { audience: 'EVENT', lat: 1, lng: 1, approximate: false, minutes: 15 });
     await eraseMe(h.ctx, userId);
-    const feed = await listFeed(h.ctx, h.eventId, h.users.attendeeAda, all);
+    // The demo seed has its own posts (pst-seed-*). Of the posts made here, only 'keep' survives, unliked.
+    const feed = (await listFeed(h.ctx, h.eventId, h.users.attendeeAda, all)).filter((p) => !p.id.startsWith('pst-seed-'));
     expect(feed.map((p) => p.text)).toEqual(['keep']);
     expect(feed[0]?.likeCount).toBe(0);
     expect(await h.store.docList('apiTokens', { userId })).toHaveLength(0);
@@ -157,7 +158,9 @@ describe('erasure and durable storage', () => {
     await actOnPost(h.ctx, h.eventId, h.users.attendeeBen, post.id, { action: 'like', on: true });
     const restored = new MemoryHelloStore();
     restored.hydrate(h.store.snapshot());
-    expect((await restored.docList('posts')).map((p) => p.text)).toEqual(['still here']);
+    const made = (store: MemoryHelloStore) => store.docList('posts').then((posts) => posts.filter((p) => !p.id.startsWith('pst-seed-')).map((p) => p.text));
+    expect(await made(restored)).toEqual(['still here']);
+    expect((await restored.docList('posts')).length).toBe((await h.store.docList('posts')).length);
     expect(await restored.docGet('accounts', 'kept')).not.toBeNull();
     expect((await restored.listIncidents(h.eventId)).length).toBe((await h.store.listIncidents(h.eventId)).length);
     // Notification de-duplication survives too: the same notice cannot be written twice after a restart.

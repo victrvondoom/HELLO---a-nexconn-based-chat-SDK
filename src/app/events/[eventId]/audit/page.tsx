@@ -58,7 +58,7 @@ export default async function AuditPage({
           <span>Assignments, approvals, escalations and announcements appear here as they happen.</span>
         </div>
       ) : (
-        <div className="card" style={{ overflow: 'hidden' }}>
+        <div className="card ops-table" style={{ overflow: 'hidden' }}>
           <div className="table-wrap">
             <table>
               <thead>

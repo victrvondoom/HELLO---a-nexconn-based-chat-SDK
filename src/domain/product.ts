@@ -48,6 +48,59 @@ export interface UserPrefs {
 
 export type MediaKind = 'IMAGE' | 'VIDEO';
 
+/**
+ * Moments: stories, saves and highlights (rules in src/domain/moments). The lists are the source of the
+ * types, so a schema, the seed and the UI cannot drift apart. Backdrops are named swatches, never colours
+ * a person types, so a post or story cannot carry arbitrary styling.
+ */
+export const BACKDROPS = ['meadow', 'sky', 'dusk', 'sun', 'night', 'clover'] as const;
+export type Backdrop = (typeof BACKDROPS)[number];
+/** Reaction ids are sent to Nexconn as `reactionId`, which is limited to 16 characters. */
+export const REACTION_IDS = ['heart', 'fire', 'clap', 'laugh', 'wow', 'sprout'] as const;
+export type ReactionId = (typeof REACTION_IDS)[number];
+export type StoryKind = 'TEXT' | 'IMAGE' | 'VIDEO';
+export type StoryAudience = 'EVENT' | 'FOLLOWERS';
+
+export interface Story {
+  id: string;
+  eventId: string;
+  authorId: string;
+  kind: StoryKind;
+  text: string;
+  backdrop: Backdrop;
+  mediaId: string | null;
+  /** A space on the venue map the story is about. Chosen by the author, never read from a device. */
+  spaceId: string | null;
+  audience: StoryAudience;
+  createdAt: number;
+  /** createdAt + 24 hours. After this the story is deleted, unless it is in a highlight. */
+  expiresAt: number;
+  /** First view per person. The author's own views are not recorded. */
+  views: Array<{ userId: string; at: number }>;
+  /** One per person; a new reaction replaces the old one. */
+  reactions: Array<{ userId: string; reactionId: ReactionId; at: number }>;
+}
+
+/** Stories the author chose to keep on their profile after the 24 hours. */
+export interface StoryHighlight {
+  id: string;
+  eventId: string;
+  ownerId: string;
+  title: string;
+  storyIds: string[];
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface SavedPost {
+  /** `${userId}:${postId}`, so saving twice cannot store two records. */
+  id: string;
+  eventId: string;
+  userId: string;
+  postId: string;
+  createdAt: number;
+}
+
 export interface MediaMeta {
   id: string;
   eventId: string;
@@ -66,6 +119,8 @@ export interface Post {
   text: string;
   mediaId: string | null;
   mediaKind: MediaKind | null;
+  /** A text post drawn on a backdrop. Posts stored before Moments have no field: read it as `p.backdrop ?? null`. */
+  backdrop: Backdrop | null;
   /** Set when this post shares another post. */
   repostOf: string | null;
   likes: string[];
@@ -347,6 +402,9 @@ export interface Collections {
   fieldFlags: FieldFlag;
   fieldLevels: FieldLevelConfig;
   questRuns: QuestRun;
+  stories: Story;
+  storyHighlights: StoryHighlight;
+  savedPosts: SavedPost;
 }
 
 export type CollectionName = keyof Collections;
@@ -373,4 +431,7 @@ export const COLLECTION_NAMES: readonly CollectionName[] = [
   'fieldFlags',
   'fieldLevels',
   'questRuns',
+  'stories',
+  'storyHighlights',
+  'savedPosts',
 ];

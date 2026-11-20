@@ -11,6 +11,7 @@ export function SignInForm({ demo }: { demo: boolean }) {
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const signingIn = mode === 'login';
 
   async function submit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -35,10 +36,10 @@ export function SignInForm({ demo }: { demo: boolean }) {
     <div className="panel">
       <div className="panel__head">
         <nav className="segmented" aria-label="Sign in or create an account">
-          <button type="button" className={mode === 'login' ? 'segmented__item is-active' : 'segmented__item'} onClick={() => { setMode('login'); setError(null); }} aria-pressed={mode === 'login'}>
+          <button type="button" className={signingIn ? 'segmented__item is-active' : 'segmented__item'} onClick={() => { setMode('login'); setError(null); }} aria-pressed={mode === 'login'}>
             Sign in
           </button>
-          <button type="button" className={mode === 'register' ? 'segmented__item is-active' : 'segmented__item'} onClick={() => { setMode('register'); setError(null); }} aria-pressed={mode === 'register'}>
+          <button type="button" className={signingIn ? 'segmented__item' : 'segmented__item is-active'} onClick={() => { setMode('register'); setError(null); }} aria-pressed={mode === 'register'}>
             Create account
           </button>
         </nav>

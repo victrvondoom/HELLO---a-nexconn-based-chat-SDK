@@ -47,10 +47,11 @@ export function FollowButton({ eventId, userId, name, initial, size = 'md' }: { 
   }
 
   const label = rel.following ? (rel.connected ? 'Connected' : 'Following') : rel.followsYou ? 'Follow back' : 'Follow';
+  const small = size === 'sm';
   return (
     <button
       type="button"
-      className={`${rel.following ? 'button button--ghost' : 'button'}${size === 'sm' ? ' button--sm' : ''} follow-button`}
+      className={`${rel.following ? 'button button--ghost' : 'button'}${small ? ' button--sm' : ''} follow-button`}
       onClick={() => void toggle()}
       disabled={busy}
       aria-pressed={rel.following}
