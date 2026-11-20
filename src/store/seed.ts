@@ -17,6 +17,7 @@ import type { SeedableStore } from './store';
 import type { Vault } from '../lib/vault';
 import { buildDemoVenue } from './venue-seed';
 import { seedFieldAtlas } from './field-seed';
+import { seedMoments } from './moments-seed';
 
 /**
  * DEMO SEED DATA — every record here is fictional and exists only to demonstrate
@@ -417,6 +418,8 @@ export async function loadDemoEvent(store: SeedableStore, options: { vault?: Vau
     await store.insertApproval(approval);
   }
   await seedFieldAtlas(store, DEMO_EVENT_ID, DEMO_T0);
+  // Stories, posts and a highlight, timed back from the moment the demo opens (12:00 UTC).
+  await seedMoments(store, DEMO_EVENT_ID, DEMO_NOW);
 }
 
 export const DEMO_NOW = DEMO_T0 + 3 * HOUR;

@@ -199,7 +199,7 @@ export function AtlasManage({ eventId, initial, canManage, canReview }: { eventI
   };
 
   return (
-    <div className="stack" style={{ gap: 18 }} aria-busy={busy}>
+    <div className="stack atlas-manage" style={{ gap: 18 }} aria-busy={busy}>
       <section className="panel" aria-labelledby="totals-heading">
         <h2 id="totals-heading" style={{ fontSize: '1rem', margin: '0 0 8px' }}>Participation</h2>
         <dl className="atlas-panel" style={{ margin: 0 }}>
@@ -278,8 +278,8 @@ export function AtlasManage({ eventId, initial, canManage, canReview }: { eventI
             {data.missions.length === 0 ? <p className="small muted">No missions yet.</p> : (
               <div style={{ overflowX: 'auto' }}>
                 <table className="atlas-table">
-                  <caption className="sr-only">Missions and their completion counts</caption>
-                  <thead><tr><th scope="col">Mission</th><th scope="col">Status</th><th scope="col">XP</th><th scope="col">Started</th><th scope="col">Verified</th><th scope="col">Waiting</th><th scope="col"><span className="sr-only">Actions</span></th></tr></thead>
+                  <caption className="visually-hidden">Missions and their completion counts</caption>
+                  <thead><tr><th scope="col">Mission</th><th scope="col">Status</th><th scope="col">XP</th><th scope="col">Started</th><th scope="col">Verified</th><th scope="col">Waiting</th><th scope="col"><span className="visually-hidden">Actions</span></th></tr></thead>
                   <tbody>
                     {data.missions.map((m) => (
                       <tr key={m.id}>
@@ -370,14 +370,14 @@ export function AtlasManage({ eventId, initial, canManage, canReview }: { eventI
             <p className="xs faint" style={{ margin: '0 0 10px' }}>Changing a level creates a new version. Attendees’ XP is never edited by this form.</p>
             <div style={{ overflowX: 'auto' }}>
               <table className="atlas-table">
-                <caption className="sr-only">Level table</caption>
+                <caption className="visually-hidden">Level table</caption>
                 <thead><tr><th scope="col">Name</th><th scope="col">Minimum XP</th><th scope="col">Active</th></tr></thead>
                 <tbody>
                   {levels.map((l, i) => (
                     <tr key={l.id}>
-                      <td><label className="sr-only" htmlFor={`lv-name-${l.id}`}>Name for {l.id}</label><input id={`lv-name-${l.id}`} value={l.name} maxLength={60} onChange={(e) => { setLevels(levels.map((x, j) => (j === i ? { ...x, name: e.target.value } : x))); }} /></td>
-                      <td><label className="sr-only" htmlFor={`lv-xp-${l.id}`}>Minimum XP for {l.id}</label><input id={`lv-xp-${l.id}`} type="number" min={0} value={l.minXp} onChange={(e) => { setLevels(levels.map((x, j) => (j === i ? { ...x, minXp: Number(e.target.value) } : x))); }} /></td>
-                      <td><label className="sr-only" htmlFor={`lv-on-${l.id}`}>{l.id} active</label><input id={`lv-on-${l.id}`} type="checkbox" checked={l.active} onChange={(e) => { setLevels(levels.map((x, j) => (j === i ? { ...x, active: e.target.checked } : x))); }} /></td>
+                      <td><label className="visually-hidden" htmlFor={`lv-name-${l.id}`}>Name for {l.id}</label><input id={`lv-name-${l.id}`} value={l.name} maxLength={60} onChange={(e) => { setLevels(levels.map((x, j) => (j === i ? { ...x, name: e.target.value } : x))); }} /></td>
+                      <td><label className="visually-hidden" htmlFor={`lv-xp-${l.id}`}>Minimum XP for {l.id}</label><input id={`lv-xp-${l.id}`} type="number" min={0} value={l.minXp} onChange={(e) => { setLevels(levels.map((x, j) => (j === i ? { ...x, minXp: Number(e.target.value) } : x))); }} /></td>
+                      <td><label className="visually-hidden" htmlFor={`lv-on-${l.id}`}>{l.id} active</label><input id={`lv-on-${l.id}`} type="checkbox" checked={l.active} onChange={(e) => { setLevels(levels.map((x, j) => (j === i ? { ...x, active: e.target.checked } : x))); }} /></td>
                     </tr>
                   ))}
                 </tbody>

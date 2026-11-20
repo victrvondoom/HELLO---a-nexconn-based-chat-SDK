@@ -43,7 +43,7 @@ try {
     await signInAs(ops.page, 'Kiri (demo AV technician)');
     await ops.page.goto(`${BASE}/events/${EVENT}/operations`);
     await ops.page.getByRole('heading', { name: 'Acknowledgement board' }).waitFor();
-    await ops.page.getByText('Live', { exact: false }).first().waitFor();
+    await ops.page.locator('main .live').filter({ hasText: 'Live' }).first().waitFor();
   });
 
   await step('the escalation check reports its result as a notification', async () => {

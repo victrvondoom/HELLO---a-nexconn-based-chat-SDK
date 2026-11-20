@@ -2,7 +2,7 @@ import type { SlaSnapshot } from '@/domain/incidents/sla';
 
 const TONE: Record<SlaSnapshot['state'], string> = {
   MET: 'badge badge--success',
-  ON_TRACK: 'badge badge--accent',
+  ON_TRACK: 'badge badge--sky',
   AT_RISK: 'badge badge--warning',
   BREACHED: 'badge badge--danger',
   NOT_APPLICABLE: 'badge',

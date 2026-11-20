@@ -68,7 +68,10 @@ export function CommandPalette({ items }: { items: NavLinkItem[] }) {
 
   const results: Entry[] = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const pages = (q ? items.filter((item) => item.label.toLowerCase().includes(q)) : items).map((item) => ({ href: item.href, label: item.label, icon: item.icon, kind: null, detail: '' }));
+    // Pages: label matches first, then pages that only match on a keyword ("feed" finds Moments).
+    const byLabel = q ? items.filter((item) => item.label.toLowerCase().includes(q)) : items;
+    const byKeyword = q ? items.filter((item) => !byLabel.includes(item) && (item.keywords ?? '').toLowerCase().includes(q)) : [];
+    const pages = [...byLabel, ...byKeyword].map((item) => ({ href: item.href, label: item.label, icon: item.icon, kind: null, detail: '' }));
     return [...pages, ...hits.map((h) => ({ href: h.href, label: h.title, icon: null, kind: KIND_LABEL[h.kind], detail: h.detail }))];
   }, [items, query, hits]);
 
@@ -115,10 +118,10 @@ export function CommandPalette({ items }: { items: NavLinkItem[] }) {
 
   return (
     <>
-      <button type="button" className="palette-trigger" onClick={() => { setOpen(true); }} aria-haspopup="dialog">
+      <button type="button" className="palette-trigger" onClick={() => { setOpen(true); }} aria-haspopup="dialog" aria-label="Search pages">
         <Icon name="search" />
-        <span className="grow">Jump to…</span>
-        <kbd>⌘K</kbd>
+        <span className="grow palette-trigger__text">Search or jump to…</span>
+        <kbd className="palette-trigger__kbd">⌘K</kbd>
       </button>
       {open
         ? createPortal(
@@ -139,7 +142,7 @@ export function CommandPalette({ items }: { items: NavLinkItem[] }) {
                 setActive(0);
               }}
               onKeyDown={onInputKey}
-              placeholder="Search people, sessions, rooms, requests…"
+              placeholder="Search people, sessions, rooms, requests… or a page"
               aria-label="Search the event"
               aria-controls="palette-results"
               aria-activedescendant={results[active] ? `palette-${String(active)}` : undefined}

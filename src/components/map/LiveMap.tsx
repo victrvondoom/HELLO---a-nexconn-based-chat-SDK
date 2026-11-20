@@ -117,7 +117,7 @@ export function LiveMap({ eventId, shapes, initial }: { eventId: string; shapes:
   const r = focus ? 1.6 : 5;
 
   return (
-    <div className="split">
+    <div className="split live-map">
       <div className="stack" style={{ gap: 12 }}>
         <svg className="world" viewBox={viewBox} role="img" aria-label={`World map. ${data.people.length} live locations visible to you, ${data.countries.length} countries represented.`}>
           {shapes.map((s) => {

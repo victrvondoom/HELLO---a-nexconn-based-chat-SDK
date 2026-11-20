@@ -1,0 +1,2255 @@
+/* =============================================================================
+   Venue: the venue map (plan, 3D and heat engines), the live world map, and Field Atlas.
+
+   The plan is a printed park map: cream paper with a grain, spaces washed in grass and sky by kind,
+   crisp ink outlines, small round signage badges, and the route as a deep-sky trail that ends at a
+   sun pin. The 3D engine stacks the floors with real shade: lit tops, darker walls, cast shadows.
+   Field Atlas is a game in a meadow: a level medallion, a grass progress bar, a sun challenge card,
+   round mission pins and a cabinet of medallions.
+
+   SVG geometry is in metres (user units), so font sizes and offsets inside the maps are user units.
+   Outlines that must stay crisp at any size use vector-effect: non-scaling-stroke (screen pixels).
+   ============================================================================= */
+
+/* ---------------------------------------------------------------------------
+   1. Venue map: layout
+   --------------------------------------------------------------------------- */
+
+.map {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-rows: auto 1fr;
+  gap: var(--s-4) var(--s-5);
+  align-items: start;
+}
+
+/* The canvas and the panel join the map grid, so the toolbar sits directly above the canvas. */
+.map__body {
+  display: contents;
+}
+
+.map__toolbar {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  min-width: 0;
+}
+
+.map__toolbar > .segmented {
+  flex: none;
+}
+
+.map__turn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: 44px;
+  padding: 6px 18px 6px 16px;
+  border-radius: var(--r-pill);
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  box-shadow: inset 0 1px 2px rgb(var(--ink-rgb) / 0.06);
+}
+
+.map__turn > span {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.map__turn input {
+  width: 200px;
+  cursor: grab;
+}
+
+.map__turn input:active {
+  cursor: grabbing;
+}
+
+/* The printed sheet: cream paper, grain, a hairline ink frame and an offset print shadow. */
+.map__canvas {
+  grid-column: 1;
+  grid-row: 2;
+  position: relative;
+  min-width: 0;
+  padding: var(--s-4);
+  border: 1.5px solid var(--frame);
+  border-radius: var(--r-lg);
+  background-color: var(--surface-2);
+  background-image:
+    var(--grain),
+    radial-gradient(90% 70% at 10% 0%, color-mix(in srgb, var(--surface) 85%, transparent), transparent 70%),
+    radial-gradient(60% 55% at 100% 100%, color-mix(in srgb, var(--grass-100) 75%, transparent), transparent 75%);
+  background-size: 220px 220px, auto, auto;
+  box-shadow: var(--print);
+  overflow: hidden;
+}
+
+/* A north arrow on the plan sheet. North is up: the venue model's origin is its north-west corner. */
+.map__canvas:has(> .plan)::after {
+  content: '';
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  width: 30px;
+  height: 38px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 46'%3E%3Cpath d='M13.5 10V2l9 8V2' fill='none' stroke='%2314231a' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='18' cy='29' r='13' fill='%23fffdf7' fill-opacity='.85' stroke='%2314231a' stroke-width='1.2'/%3E%3Cpath d='M18 18l4.5 11h-9z' fill='%2314231a'/%3E%3Cpath d='M18 40l4.5-11h-9z' fill='none' stroke='%2314231a' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat center / contain;
+  pointer-events: none;
+}
+
+/* The 3D model floats in an afternoon sky over a soft meadow horizon. */
+.map__canvas:has(> .iso) {
+  background-color: var(--sky-100);
+  background-image:
+    var(--grain),
+    radial-gradient(120% 34% at 50% 108%, color-mix(in srgb, var(--grass-300) 70%, transparent), transparent 72%),
+    var(--sky-gradient);
+  background-size: 220px 220px, auto, auto;
+}
+
+.map__legend {
+  position: absolute;
+  left: var(--s-4);
+  bottom: var(--s-4);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  max-width: calc(100% - 2 * var(--s-4));
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  box-shadow: var(--e2);
+  backdrop-filter: blur(6px);
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+
+.map__legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.swatch {
+  display: inline-block;
+  flex: none;
+  width: 13px;
+  height: 13px;
+  border-radius: 4px;
+  border: 1.5px solid var(--ink-3);
+  background: var(--surface-3);
+}
+
+.swatch--calm {
+  background: var(--grass-200);
+  border-color: var(--grass-800);
+}
+
+.swatch--busy {
+  background: var(--sun-300);
+  border-color: var(--sun-700);
+}
+
+.swatch--full {
+  background: var(--poppy-200);
+  border-color: var(--poppy-700);
+}
+
+.swatch--none {
+  background: var(--surface-3);
+  border-color: var(--ink-3);
+  border-style: dashed;
+}
+
+/* ---------------------------------------------------------------------------
+   2. Venue map: plan engine
+   --------------------------------------------------------------------------- */
+
+.plan {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 72vh;
+  margin: 0 auto;
+  overflow: visible;
+  font-family: var(--font-sans);
+}
+
+.plan #grid path {
+  stroke: rgb(var(--ink-rgb) / 0.07);
+}
+
+.plan #stairs-hatch line {
+  stroke: rgb(var(--ink-rgb) / 0.32);
+  stroke-width: 0.3;
+}
+
+.plan .space {
+  --fill: var(--surface);
+  --edge: var(--ink);
+  cursor: pointer;
+  outline: none;
+}
+
+.plan .space > polygon:not(.space__hatch) {
+  fill: var(--fill);
+  stroke: var(--edge);
+  stroke-width: 1.25px;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  transition: fill var(--t-med) ease, stroke-width var(--t-fast) ease;
+}
+
+.plan .space--hall {
+  --fill: var(--grass-200);
+}
+
+.plan .space--room {
+  --fill: var(--sky-200);
+}
+
+.plan .space--quiet {
+  --fill: var(--grass-100);
+}
+
+.plan .space--service {
+  --fill: var(--surface-3);
+}
+
+/* Corridors and concourses are the paths between: sand-coloured, with a dashed edge. */
+.plan .space--circulation {
+  --fill: var(--paper-2);
+  --edge: rgb(var(--ink-rgb) / 0.42);
+}
+
+.plan .space--circulation > polygon:not(.space__hatch) {
+  stroke-width: 1px;
+  stroke-dasharray: 5 4;
+}
+
+/* Heat: calm is grass, busy is sun, full is poppy, no data is neutral. */
+.plan .space--heat-calm {
+  --fill: var(--grass-200);
+  --edge: var(--grass-800);
+}
+
+.plan .space--heat-busy {
+  --fill: var(--sun-300);
+  --edge: var(--sun-700);
+}
+
+.plan .space--heat-full {
+  --fill: var(--poppy-200);
+  --edge: var(--poppy-700);
+}
+
+.plan .space--heat-none {
+  --fill: var(--surface-3);
+  --edge: var(--ink-3);
+}
+
+/* In heat view, places without a room record step back so the rooms carry the colour. */
+.plan:has(.space[class*='space--heat']) .space:not([class*='space--heat']) {
+  --fill: var(--surface-2);
+}
+
+.plan .space:hover > polygon:not(.space__hatch) {
+  stroke-width: 2px;
+}
+
+/* The selected place is highlighted like a marker on paper (heat colours are kept in heat view). */
+.plan .space.is-selected:not([class*='space--heat']) {
+  --fill: var(--sun-300);
+}
+
+.plan .space.is-selected > polygon:not(.space__hatch) {
+  stroke: var(--ink);
+  stroke-width: 2.5px;
+}
+
+.plan .space:focus-visible > polygon:not(.space__hatch) {
+  stroke: var(--focus);
+  stroke-width: 3px;
+}
+
+.plan .space__hatch {
+  stroke: none;
+  pointer-events: none;
+}
+
+.plan .space__label {
+  font-size: 2.1px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  fill: var(--ink);
+  paint-order: stroke;
+  stroke: var(--fill);
+  stroke-width: 0.5px;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+/* Path names hug the top edge, like street names on a park map, clear of the signage below them. */
+.plan .space--circulation .space__label {
+  font-family: var(--font-mono);
+  font-size: 1.3px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  fill: var(--ink-2);
+  transform: translateY(-1.3px);
+}
+
+.plan .space__sub {
+  font-family: var(--font-mono);
+  font-size: 1.6px;
+  font-weight: 600;
+  fill: var(--ink-2);
+  paint-order: stroke;
+  stroke: var(--fill);
+  stroke-width: 0.45px;
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Open-incident count for staff: a poppy dot in the room's corner. */
+.plan .space__pin circle {
+  fill: var(--poppy-700);
+  stroke: var(--surface);
+  stroke-width: 1.5px;
+  vector-effect: non-scaling-stroke;
+}
+
+.plan .space__pin text {
+  font-size: 2px;
+  font-weight: 750;
+  fill: var(--surface);
+  pointer-events: none;
+}
+
+/* Points of interest: small round signage badges, coloured by what they are. */
+.plan .poi {
+  --badge: var(--surface);
+  --glyph: var(--ink);
+  cursor: pointer;
+  outline: none;
+}
+
+.plan .poi circle {
+  fill: var(--badge);
+  stroke: var(--ink);
+  stroke-width: 1.25px;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0.25px 0.3px rgb(var(--ink-rgb) / 0.4));
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform var(--t-fast) var(--ease-spring);
+}
+
+.plan .poi text {
+  font-size: 1.35px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  fill: var(--glyph);
+  pointer-events: none;
+}
+
+.plan .poi--entrance {
+  --badge: var(--grass-700);
+  --glyph: var(--surface);
+}
+
+.plan .poi--accessible_entrance {
+  --badge: var(--sky-700);
+  --glyph: var(--surface);
+}
+
+.plan .poi--registration {
+  --badge: var(--sun-400);
+}
+
+.plan .poi--first_aid {
+  --badge: var(--poppy-700);
+  --glyph: var(--surface);
+}
+
+.plan .poi--first_aid text {
+  font-size: 2.3px;
+  font-weight: 800;
+}
+
+.plan .poi--toilets {
+  --badge: var(--sky-100);
+  --glyph: var(--sky-900);
+}
+
+.plan .poi--coffee {
+  --badge: var(--clay-300);
+}
+
+.plan .poi--lift,
+.plan .poi--stairs {
+  --badge: var(--ink);
+  --glyph: var(--paper);
+}
+
+.plan .poi--charging {
+  --badge: var(--sun-200);
+}
+
+.plan .poi--assembly {
+  --badge: var(--grass-100);
+  --glyph: var(--grass-900);
+}
+
+.plan .poi:hover circle {
+  transform: scale(1.15);
+}
+
+.plan .poi.is-selected circle {
+  stroke-width: 2.5px;
+  filter: drop-shadow(0 0 0.5px var(--sun-500)) drop-shadow(0 0 0.5px var(--sun-500)) drop-shadow(0 0.3px 0.3px rgb(var(--ink-rgb) / 0.4));
+}
+
+.plan .poi:focus-visible circle {
+  stroke: var(--focus);
+  stroke-width: 3px;
+}
+
+/* ---------------------------------------------------------------------------
+   3. Venue map: routes (drawn in every engine)
+   --------------------------------------------------------------------------- */
+
+.route-line {
+  fill: none;
+  stroke: var(--sky-700);
+  stroke-width: 0.85;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1.9 1.5;
+  filter: drop-shadow(0 0 0.3px var(--surface)) drop-shadow(0 0.3px 0.3px rgb(var(--ink-rgb) / 0.35));
+  animation: venue-route-flow 1.1s linear infinite;
+  pointer-events: none;
+}
+
+.route-line--iso {
+  stroke-width: 1.1;
+}
+
+@keyframes venue-route-flow {
+  to {
+    stroke-dashoffset: -3.4;
+  }
+}
+
+.route-start {
+  fill: var(--surface);
+  stroke: var(--sky-700);
+  stroke-width: 0.65;
+  pointer-events: none;
+}
+
+/* The destination: a sun pin with an ink ring and a slow pulse. */
+.route-end {
+  pointer-events: none;
+}
+
+.route-end > circle:not(.route-end__pulse) {
+  fill: var(--sun-500);
+  stroke: var(--ink);
+  stroke-width: 0.55;
+  filter: drop-shadow(0 0.4px 0.35px rgb(var(--ink-rgb) / 0.45));
+}
+
+.route-end__pulse {
+  fill: var(--sun-400);
+  opacity: 0.6;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: venue-pin-pulse 1.8s var(--ease-out) infinite;
+}
+
+@keyframes venue-pin-pulse {
+  from {
+    transform: scale(0.5);
+    opacity: 0.85;
+  }
+  to {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+.route-change {
+  pointer-events: none;
+}
+
+.route-change circle {
+  fill: var(--surface);
+  stroke: var(--sky-700);
+  stroke-width: 0.35;
+  stroke-dasharray: 0.9 0.5;
+}
+
+.route-change text {
+  font-size: 1.25px;
+  font-weight: 700;
+  fill: var(--sky-800);
+}
+
+/* ---------------------------------------------------------------------------
+   4. Venue map: 3D engine
+   --------------------------------------------------------------------------- */
+
+.iso {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: min(66vh, 640px);
+  margin: 0 auto;
+  overflow: visible;
+  font-family: var(--font-sans);
+}
+
+.iso #iso-slab stop:first-child {
+  stop-color: var(--surface);
+}
+
+.iso #iso-slab stop:last-child {
+  stop-color: var(--paper-2);
+}
+
+/* Each floor casts a soft shadow onto whatever is below it. */
+.iso__floor {
+  filter: drop-shadow(0 2.4px 2.2px rgb(var(--ink-rgb) / 0.2));
+}
+
+/* The floor plate: a drop shadow without blur gives the plate a visible edge, then a dark line under it. */
+.iso__slab {
+  fill: url(#iso-slab);
+  stroke: rgb(var(--ink-rgb) / 0.45);
+  stroke-width: 1px;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 1.1px 0 var(--paper-3)) drop-shadow(0 0.3px 0 rgb(var(--ink-rgb) / 0.3));
+}
+
+.iso__space {
+  --top: var(--surface);
+  --wall-lit: var(--paper-2);
+  --wall: var(--paper-3);
+  cursor: pointer;
+  outline: none;
+  transition: transform var(--t-med) var(--ease-spring);
+}
+
+.iso__space--hall {
+  --top: var(--grass-100);
+  --wall-lit: var(--grass-200);
+  --wall: var(--grass-300);
+}
+
+.iso__space--room {
+  --top: var(--sky-100);
+  --wall-lit: var(--sky-200);
+  --wall: var(--sky-300);
+}
+
+.iso__space--quiet {
+  --top: var(--grass-50);
+  --wall-lit: var(--grass-100);
+  --wall: var(--grass-200);
+}
+
+.iso__space--circulation {
+  --top: var(--paper-2);
+  --wall-lit: var(--paper-3);
+  --wall: var(--paper-3);
+}
+
+.iso__space--service {
+  --top: var(--surface-3);
+  --wall-lit: var(--paper-2);
+  --wall: var(--paper-3);
+}
+
+.iso__space.is-selected {
+  --top: var(--sun-300);
+  --wall-lit: var(--sun-400);
+  --wall: var(--sun-500);
+}
+
+.iso__space:hover,
+.iso__space.is-selected {
+  transform: translateY(-1.2px);
+}
+
+.iso__base {
+  fill: rgb(var(--ink-rgb) / 0.12);
+}
+
+.iso__wall {
+  fill: var(--wall);
+  stroke: rgb(var(--ink-rgb) / 0.5);
+  stroke-width: 0.75px;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.iso__wall--lit {
+  fill: var(--wall-lit);
+}
+
+.iso__top {
+  fill: var(--top);
+  stroke: rgb(var(--ink-rgb) / 0.72);
+  stroke-width: 1px;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  transition: fill var(--t-med) ease;
+}
+
+.iso__space:hover .iso__top {
+  fill: color-mix(in srgb, var(--top) 72%, var(--surface));
+}
+
+/* Heat has its own view. In 3D, a room at or over capacity keeps a poppy edge as a reminder. */
+.iso--heat-full .iso__top {
+  stroke: var(--poppy-700);
+  stroke-width: 1.75px;
+}
+
+.iso__space.is-selected .iso__top {
+  stroke: var(--ink);
+  stroke-width: 1.75px;
+}
+
+.iso__space:focus-visible .iso__top {
+  stroke: var(--focus);
+  stroke-width: 3px;
+}
+
+.iso__label {
+  font-size: 2.7px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  fill: var(--ink);
+  paint-order: stroke;
+  stroke: var(--top);
+  stroke-width: 0.6px;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.iso__floor-label {
+  font-family: var(--font-mono);
+  font-size: 2.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  fill: var(--grass-800);
+  paint-order: stroke;
+  stroke: var(--surface);
+  stroke-width: 0.6px;
+  stroke-linejoin: round;
+}
+
+/* ---------------------------------------------------------------------------
+   5. Venue map: directions and the selected place
+   --------------------------------------------------------------------------- */
+
+.map__panel {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  min-width: 0;
+}
+
+.map__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-5);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--e2);
+  min-width: 0;
+}
+
+.map__card h2 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 28px;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+
+.map__card > .row {
+  flex-wrap: nowrap;
+  align-items: flex-start;
+}
+
+.map__card > .row > .badge {
+  margin-top: 4px;
+}
+
+.map__card > .button {
+  align-self: flex-start;
+}
+
+.map__card .list-plain > li {
+  padding: 8px 0;
+}
+
+.route-sum {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  padding: 14px 16px;
+  border-radius: var(--r-md);
+  background: var(--sky-50);
+  border: 1px solid var(--sky-200);
+}
+
+.route-sum strong {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 44px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--sky-800);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* Steps read as a small trail: numbered sky stops joined by a dashed line, the last stop in sun. */
+.route-steps {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  counter-reset: venue-step;
+  font-size: 14px;
+}
+
+.route-steps > li {
+  position: relative;
+  counter-increment: venue-step;
+  min-height: 24px;
+  padding: 2px 0 14px 36px;
+  color: var(--text);
+}
+
+.route-steps > li::before {
+  content: counter(venue-step);
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1.5px solid var(--sky-700);
+  background: var(--surface);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--sky-800);
+}
+
+.route-steps > li::after {
+  content: '';
+  position: absolute;
+  left: 11.25px;
+  top: 27px;
+  bottom: 3px;
+  border-left: 1.5px dashed var(--sky-300);
+}
+
+.route-steps > li:last-child {
+  padding-bottom: 0;
+}
+
+.route-steps > li:last-child::after {
+  display: none;
+}
+
+.route-steps > li:last-child::before {
+  background: var(--sun-500);
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+/* ---------------------------------------------------------------------------
+   6. Live map: the world, sharing settings and lists
+   --------------------------------------------------------------------------- */
+
+.live-map .world {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1.5px solid var(--frame);
+  border-radius: var(--r-lg);
+  box-shadow: var(--print);
+  background-color: var(--sky-100);
+  background-image:
+    var(--grain),
+    radial-gradient(80% 90% at 50% 42%, var(--sky-50), var(--sky-100) 55%, var(--sky-200) 100%);
+  background-size: 220px 220px, auto;
+}
+
+.live-map .world path {
+  fill: var(--paper);
+  stroke: rgb(var(--ink-rgb) / 0.3);
+  stroke-width: 0.6px;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  transition: fill var(--t-fast) ease;
+}
+
+.live-map .world path:hover {
+  fill: var(--sun-200);
+}
+
+.live-map .world path.has-1 {
+  fill: var(--grass-100);
+}
+
+.live-map .world path.has-2 {
+  fill: var(--grass-200);
+}
+
+.live-map .world path.has-3 {
+  fill: var(--grass-400);
+}
+
+.live-map .world path.is-mine {
+  stroke: var(--ink);
+  stroke-width: 1.6px;
+}
+
+.live-map .world .dot {
+  fill: var(--sun-500);
+  stroke: var(--ink);
+  stroke-width: 1.5px;
+  vector-effect: non-scaling-stroke;
+}
+
+.live-map .world .dot--self {
+  fill: var(--sky-600);
+}
+
+.live-map .world .dot-halo {
+  fill: var(--sun-400);
+  opacity: 0.4;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: venue-halo 2.4s var(--ease-out) infinite;
+  pointer-events: none;
+}
+
+@keyframes venue-halo {
+  from {
+    transform: scale(0.6);
+    opacity: 0.55;
+  }
+  to {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+/* Sharing options: compact selectable pills, the radio and its text on one row. */
+.live-map .radio-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-top: 6px;
+}
+
+.live-map .radio-row label {
+  flex: 1 1 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 8px 16px 8px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  box-shadow: var(--e1);
+  font-size: 14px;
+  font-weight: 550;
+  line-height: 1.2;
+  color: var(--text);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--t-fast) ease, border-color var(--t-fast) ease, box-shadow var(--t-fast) ease, color var(--t-fast) ease;
+}
+
+.live-map .radio-row label:hover {
+  border-color: var(--grass-400);
+  background: var(--grass-50);
+}
+
+.live-map .radio-row label:has(input:checked) {
+  background: var(--grass-100);
+  border-color: var(--grass-600);
+  color: var(--grass-900);
+  box-shadow: inset 0 0 0 1px var(--grass-600);
+}
+
+.live-map .radio-row label:has(input:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.live-map .panel__body > label.row {
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.live-map .panel__body > label.row input {
+  margin-top: 1px;
+}
+
+.live-map .score-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.live-map .score-list > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding: 12px var(--s-5);
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+}
+
+.live-map .panel__head + .score-list > li:first-child {
+  border-top: 0;
+}
+
+.live-map .score-list > li > span:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Country totals: a count, never a list of who. */
+.live-map .score-list > li > strong:last-child {
+  min-width: 2.4em;
+  padding: 1px 10px;
+  border-radius: var(--r-pill);
+  background: var(--grass-100);
+  color: var(--grass-800);
+  font-size: 13px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------------------
+   7. Field Atlas: the progress header
+   --------------------------------------------------------------------------- */
+
+.atlas {
+  display: grid;
+  gap: var(--s-5);
+  min-width: 0;
+}
+
+.atlas .panel {
+  padding: var(--s-5);
+  min-width: 0;
+}
+
+.atlas-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto;
+  align-items: stretch;
+  gap: var(--s-4);
+  padding: var(--s-4);
+  border: 1.5px solid var(--frame);
+  border-radius: var(--r-lg);
+  background-color: var(--surface);
+  background-image:
+    var(--grain),
+    radial-gradient(60% 130% at 0% 100%, color-mix(in srgb, var(--grass-100) 90%, transparent), transparent 70%);
+  background-size: 220px 220px, auto;
+  box-shadow: var(--print);
+}
+
+.atlas-level {
+  display: flex;
+  align-items: center;
+  gap: var(--s-5);
+  min-width: 0;
+  padding: var(--s-2) var(--s-2) var(--s-2) var(--s-3);
+}
+
+/* The level medallion: a grass ring around the level number. */
+.atlas-mark {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  font-family: var(--font-serif);
+  font-size: 42px;
+  line-height: 1;
+  color: var(--grass-900);
+  font-variant-numeric: lining-nums;
+  background:
+    radial-gradient(closest-side, var(--surface) 0 50%, var(--grass-50) 69%, transparent 70.5%),
+    conic-gradient(from 210deg, var(--grass-300), var(--grass-500), var(--grass-700), var(--grass-500), var(--grass-300));
+  box-shadow: 0 0 0 4px var(--surface), 0 0 0 5px var(--line), var(--e3);
+}
+
+.atlas-level strong {
+  display: block;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.atlas-bar {
+  position: relative;
+  height: 12px;
+  margin-top: 12px;
+  border-radius: var(--r-pill);
+  background: var(--paper-2);
+  box-shadow: inset 0 1px 2px rgb(var(--ink-rgb) / 0.16), 0 1px 0 var(--hl);
+  overflow: hidden;
+}
+
+/* Quarter notches, like a game's XP track. */
+.atlas-bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(90deg, transparent 0 calc(25% - 1px), rgb(var(--ink-rgb) / 0.1) calc(25% - 1px) 25%);
+  pointer-events: none;
+}
+
+.atlas-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--grass-400), var(--grass-600));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--surface) 45%, transparent), inset 0 -1px 0 rgb(var(--ink-rgb) / 0.15);
+  transition: width var(--t-slow) var(--ease-out);
+}
+
+.atlas-xp {
+  margin-right: 2px;
+  font-family: var(--font-serif);
+  font-size: 28px;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* The monthly challenge: a sun-highlighted card with a small sun rising in its corner. */
+.atlas-head > .stack {
+  position: relative;
+  justify-content: center;
+  padding: var(--s-4) var(--s-5);
+  border-radius: var(--r-md);
+  border: 1px solid var(--sun-400);
+  background: linear-gradient(160deg, var(--sun-100) 0%, var(--sun-200) 100%);
+  box-shadow: inset 0 1px 0 var(--hl), var(--e1);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.atlas-head > .stack::before,
+.atlas-head > .stack::after {
+  content: '';
+  position: absolute;
+  top: -30px;
+  right: -30px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.atlas-head > .stack::before {
+  width: 104px;
+  height: 104px;
+  background: repeating-conic-gradient(from 0deg, var(--sun-400) 0 7deg, transparent 7deg 30deg);
+  -webkit-mask: radial-gradient(circle closest-side, transparent 0 58%, var(--ink) 60% 98%, transparent 100%);
+  mask: radial-gradient(circle closest-side, transparent 0 58%, var(--ink) 60% 98%, transparent 100%);
+  opacity: 0.7;
+}
+
+.atlas-head > .stack::after {
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  background: radial-gradient(circle at 35% 35%, var(--sun-300), var(--sun-500));
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--sun-300) 55%, transparent);
+}
+
+.atlas-head > .stack .eyebrow {
+  color: var(--sun-700);
+}
+
+.atlas-head > .stack > strong {
+  padding-right: 48px;
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 26px;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.atlas-head > .stack > .xs {
+  color: var(--ink-2);
+}
+
+.atlas-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 156px;
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--r-md);
+  background: var(--paper-2);
+  box-shadow: inset 0 1px 3px rgb(var(--ink-rgb) / 0.12), 0 1px 0 var(--hl);
+  text-align: center;
+}
+
+/* An empty medallion slot until the first badge arrives. */
+.atlas-chip:not(:has(svg))::before {
+  content: '';
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1.5px dashed var(--line-strong);
+  background: var(--surface-2);
+}
+
+.atlas-chip svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 4px 4px rgb(var(--ink-rgb) / 0.28));
+}
+
+/* ---------------------------------------------------------------------------
+   8. Field Atlas: tabs, layout and the mission map
+   --------------------------------------------------------------------------- */
+
+.atlas-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.atlas > .atlas-tabs {
+  padding-bottom: var(--s-3);
+  border-bottom: 1px solid var(--line);
+}
+
+/* The current tab is printed in sun, like the active item on a riso poster. */
+.atlas-tabs .button[aria-pressed='true'],
+.atlas-tabs .button[aria-pressed='true']:hover {
+  --btn-bg: var(--sun-400);
+  --btn-bg-hover: var(--sun-400);
+  --btn-fg: var(--ink);
+  --btn-edge: var(--frame);
+  box-shadow: var(--print-sm);
+}
+
+.atlas-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+  gap: var(--s-5);
+  align-items: start;
+}
+
+.atlas-map {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  min-width: 0;
+  padding: var(--s-4);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  background-color: var(--surface-2);
+  background-image:
+    var(--grain),
+    radial-gradient(70% 60% at 100% 100%, color-mix(in srgb, var(--grass-100) 75%, transparent), transparent 75%);
+  background-size: 220px 220px, auto;
+  box-shadow: var(--e2);
+}
+
+.atlas-map > svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  font-family: var(--font-sans);
+}
+
+.atlas-map .space {
+  fill: var(--surface);
+  stroke: rgb(var(--ink-rgb) / 0.75);
+  stroke-width: 1.2px;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.atlas-map .space--hall {
+  fill: var(--grass-200);
+}
+
+.atlas-map .space--room {
+  fill: var(--sky-200);
+}
+
+.atlas-map .space--quiet {
+  fill: var(--grass-100);
+}
+
+.atlas-map .space--service {
+  fill: var(--surface-3);
+}
+
+.atlas-map .space--circulation {
+  fill: var(--paper-2);
+  stroke: rgb(var(--ink-rgb) / 0.4);
+}
+
+/* Places that are not step-free keep their dashed outline, sized for the screen. */
+.atlas-map .space[stroke-dasharray] {
+  stroke-dasharray: 5 3.5;
+}
+
+.atlas-map .space--cond-busy {
+  stroke: var(--sun-600);
+  stroke-width: 2.5px;
+}
+
+.atlas-map .space--cond-caution {
+  fill: var(--sun-200);
+  stroke: var(--sun-700);
+  stroke-width: 2.5px;
+}
+
+.atlas-map .space--cond-avoid {
+  fill: var(--poppy-100);
+  stroke: var(--poppy-700);
+  stroke-width: 2.5px;
+}
+
+.atlas-map .space-label {
+  font-size: 2px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  text-anchor: middle;
+  fill: var(--ink);
+  paint-order: stroke;
+  stroke: var(--surface-2);
+  stroke-width: 0.45px;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.atlas-map .route {
+  fill: none;
+  stroke: var(--sky-700);
+  stroke-width: 0.85;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1.9 1.5;
+  filter: drop-shadow(0 0 0.3px var(--surface)) drop-shadow(0 0.3px 0.3px rgb(var(--ink-rgb) / 0.35));
+  animation: venue-route-flow 1.1s linear infinite;
+  pointer-events: none;
+}
+
+/* Live advisories: a small round "!" in the room's corner. */
+.atlas-advisory circle {
+  stroke-width: 1.25px;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0.3px 0.3px rgb(var(--ink-rgb) / 0.3));
+}
+
+.atlas-advisory text {
+  font-size: 3px;
+  font-weight: 800;
+  text-anchor: middle;
+  fill: var(--ink);
+  pointer-events: none;
+}
+
+.atlas-advisory--clear circle {
+  fill: var(--grass-200);
+  stroke: var(--grass-800);
+}
+
+.atlas-advisory--busy circle {
+  fill: var(--sun-300);
+  stroke: var(--sun-700);
+}
+
+.atlas-advisory--caution circle {
+  fill: var(--sun-500);
+  stroke: var(--ink);
+}
+
+.atlas-advisory--avoid circle {
+  fill: var(--poppy-700);
+  stroke: var(--poppy-800);
+}
+
+.atlas-advisory--avoid text {
+  fill: var(--surface);
+}
+
+/* Mission pins: open = grass ring, active = sun with an ink ring, done = grass with a check,
+   pending review = sky, locked = neutral. */
+.atlas-marker {
+  cursor: pointer;
+  outline: none;
+}
+
+.atlas-marker circle {
+  fill: var(--surface);
+  stroke: var(--grass-700);
+  stroke-width: 2px;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0.5px 0.45px rgb(var(--ink-rgb) / 0.35));
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform var(--t-fast) var(--ease-spring);
+}
+
+.atlas-marker text {
+  font-size: 3.5px;
+  font-weight: 750;
+  text-anchor: middle;
+  fill: var(--grass-800);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.atlas-marker--active circle {
+  fill: var(--sun-500);
+  stroke: var(--ink);
+  stroke-width: 2.25px;
+}
+
+.atlas-marker--active text {
+  fill: var(--ink);
+}
+
+.atlas-marker--done circle {
+  fill: var(--grass-600);
+  stroke: var(--grass-900);
+}
+
+.atlas-marker--done text {
+  fill: var(--surface);
+}
+
+.atlas-marker--pending circle {
+  fill: var(--sky-200);
+  stroke: var(--sky-700);
+}
+
+.atlas-marker--pending text {
+  fill: var(--sky-900);
+}
+
+.atlas-marker--locked circle {
+  fill: var(--surface-3);
+  stroke: var(--ink-3);
+  stroke-dasharray: 3 2.5;
+}
+
+.atlas-marker--locked text {
+  fill: var(--ink-3);
+}
+
+.atlas-marker:hover circle {
+  transform: scale(1.08);
+}
+
+.atlas-marker[aria-pressed='true'] circle {
+  stroke-width: 3px;
+  filter: drop-shadow(0 0 0.7px var(--sun-500)) drop-shadow(0 0 0.7px var(--sun-500)) drop-shadow(0 0.7px 0.6px rgb(var(--ink-rgb) / 0.4));
+}
+
+.atlas-marker:focus-visible circle {
+  stroke: var(--focus);
+  stroke-width: 3.5px;
+}
+
+.atlas-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+
+.atlas-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.atlas-legend span::before {
+  content: '';
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--grass-700);
+  background: var(--surface);
+}
+
+.atlas-legend .l-pending::before {
+  border-color: var(--sky-700);
+  background: var(--sky-200);
+}
+
+.atlas-legend .l-done::before {
+  border-color: var(--grass-900);
+  background: var(--grass-600);
+}
+
+.atlas-legend .l-locked::before {
+  border: 1.5px dashed var(--ink-3);
+  background: var(--surface-3);
+}
+
+.atlas-legend .l-advisory::before {
+  content: '!';
+  display: grid;
+  place-items: center;
+  border: 1.5px solid var(--ink);
+  background: var(--sun-500);
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.atlas-advisories {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.atlas-advisories > li {
+  position: relative;
+  padding: 8px 12px 8px 34px;
+  border: 1px solid var(--sun-300);
+  border-radius: var(--r-sm);
+  background: var(--sun-100);
+  color: var(--ink-2);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.atlas-advisories > li::before {
+  content: '!';
+  position: absolute;
+  left: 10px;
+  top: 8px;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink);
+  background: var(--sun-500);
+  font-size: 9.5px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.atlas-advisories strong {
+  color: var(--ink);
+}
+
+/* ---------------------------------------------------------------------------
+   9. Field Atlas: mission list, suggestions, mission card, notes
+   --------------------------------------------------------------------------- */
+
+.atlas-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--s-2);
+  counter-reset: atlas-mission;
+}
+
+.atlas-list > li {
+  counter-increment: atlas-mission;
+}
+
+/* Each row carries the same number as its pin on the map. */
+.atlas-list button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  width: 100%;
+  min-height: 58px;
+  padding: 10px 16px 10px 56px;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.35;
+  text-align: left;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  box-shadow: var(--e1);
+  cursor: pointer;
+  transition: transform var(--t-med) var(--ease-out), box-shadow var(--t-med) var(--ease-out), border-color var(--t-fast) ease, background var(--t-fast) ease;
+}
+
+.atlas-list button::before {
+  content: counter(atlas-mission);
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-top: -14px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink-2);
+  background: var(--surface);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.atlas-list button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--e3);
+  border-color: var(--line-strong);
+}
+
+.atlas-list button:active {
+  transform: translateY(1px);
+  box-shadow: var(--e1);
+}
+
+.atlas-list button[aria-current='true'] {
+  background: var(--sun-100);
+  border-color: var(--frame);
+  box-shadow: var(--print-sm);
+}
+
+.atlas-list button[aria-current='true']::before {
+  border-color: var(--ink);
+  background: var(--sun-500);
+}
+
+.atlas-list button > span:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.atlas-list button > span:last-child {
+  flex: none;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--grass-700);
+}
+
+.atlas ol.stack > li::marker {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--grass-800);
+}
+
+.atlas ol.stack > li > .xs {
+  margin-top: 4px;
+}
+
+.atlas-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+  gap: var(--s-3) var(--s-4);
+  align-items: end;
+}
+
+.atlas-form > .wide {
+  grid-column: 1 / -1;
+}
+
+.atlas-form textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
+.atlas-form > .button {
+  justify-self: start;
+}
+
+.atlas-form > label {
+  min-height: 40px;
+}
+
+/* The mission card: a clean card with a key-value list. */
+.atlas-panel {
+  display: grid;
+  gap: var(--s-4);
+  align-content: start;
+}
+
+section.atlas-panel h2 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 32px;
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+}
+
+section.atlas-panel dl {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  margin: 0;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+}
+
+section.atlas-panel dt,
+section.atlas-panel dd {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+section.atlas-panel dt {
+  padding-top: 13px;
+  padding-right: var(--s-4);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+section.atlas-panel dd {
+  margin: 0;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+/* The reward is the figure that matters, so it is set in the serif. */
+section.atlas-panel dd:first-of-type {
+  padding: 6px 0 4px;
+  font-family: var(--font-serif);
+  font-size: 28px;
+  line-height: 1.1;
+  color: var(--grass-800);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.atlas-note {
+  padding: 12px 14px 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  box-shadow: inset 3px 0 0 var(--line-strong);
+  color: var(--text-2);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.atlas-note--ok {
+  border-color: var(--grass-300);
+  background: var(--grass-50);
+  box-shadow: inset 3px 0 0 var(--grass-600);
+  color: var(--grass-900);
+}
+
+.atlas-note--warn {
+  border-color: var(--sun-400);
+  background: var(--sun-100);
+  box-shadow: inset 3px 0 0 var(--sun-500);
+  color: var(--ink);
+}
+
+.atlas-note--bad {
+  border-color: var(--poppy-200);
+  background: var(--poppy-100);
+  box-shadow: inset 3px 0 0 var(--poppy-700);
+  color: var(--poppy-800);
+}
+
+.atlas-answer {
+  padding: 12px 14px;
+  border: 1px solid var(--sky-200);
+  border-radius: var(--r-md);
+  background: var(--sky-50);
+}
+
+.atlas-answer > strong {
+  color: var(--sky-900);
+}
+
+.atlas-cites {
+  display: block;
+  margin-top: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--sky-800);
+  overflow-wrap: anywhere;
+}
+
+.atlas-cond {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 6px;
+  padding: 1px 10px;
+  border-radius: var(--r-pill);
+  background: var(--grass-100);
+  color: var(--grass-800);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.atlas-cond::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.atlas-cond--busy {
+  background: var(--sun-100);
+  color: var(--sun-700);
+}
+
+.atlas-cond--caution {
+  background: var(--sun-300);
+  color: var(--ink);
+}
+
+.atlas-cond--avoid {
+  background: var(--poppy-100);
+  color: var(--poppy-700);
+}
+
+/* ---------------------------------------------------------------------------
+   10. Field Atlas: the badge cabinet and XP history
+   --------------------------------------------------------------------------- */
+
+/* The current monthly challenge is the same sun card as in the header. */
+.atlas section[aria-labelledby='season-heading'] > .stack {
+  padding: var(--s-4) var(--s-5);
+  border: 1px solid var(--sun-400);
+  border-radius: var(--r-md);
+  background: linear-gradient(160deg, var(--sun-100) 0%, var(--sun-200) 100%);
+  box-shadow: inset 0 1px 0 var(--hl), var(--e1);
+}
+
+.atlas section[aria-labelledby='season-heading'] > .stack > div > strong {
+  display: block;
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: 26px;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.atlas section[aria-labelledby='season-heading'] > .stack > ul > li::marker {
+  color: var(--sun-700);
+}
+
+.atlas-grid-badges {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 156px), 1fr));
+  gap: var(--s-3);
+  padding: var(--s-3);
+  border-radius: var(--r-lg);
+  background: linear-gradient(180deg, var(--paper-2), var(--paper-3));
+  box-shadow: inset 0 2px 6px rgb(var(--ink-rgb) / 0.14), 0 1px 0 var(--hl);
+}
+
+/* Each badge stands on its own small shelf, like a medallion in a cabinet. */
+.atlas-badge {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 4px;
+  padding: 18px 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: linear-gradient(180deg, var(--surface), var(--surface-2));
+  box-shadow: var(--e2);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.atlas-badge::before {
+  content: '';
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  top: 104px;
+  height: 10px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, var(--paper-3), var(--paper-2));
+  box-shadow: 0 5px 6px -3px rgb(var(--ink-rgb) / 0.35), inset 0 1px 0 var(--hl);
+}
+
+.atlas-badge svg {
+  position: relative;
+  width: 92px;
+  height: 92px;
+  margin-bottom: 12px;
+  filter: drop-shadow(0 8px 7px rgb(var(--ink-rgb) / 0.22)) drop-shadow(0 2px 2px rgb(var(--ink-rgb) / 0.18));
+}
+
+/* A soft sheen across earned medallions. */
+.atlas-badge:not(.atlas-badge--locked)::after {
+  content: '';
+  position: absolute;
+  top: 18px;
+  left: calc(50% - 46px);
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 26%, color-mix(in srgb, var(--surface) 75%, transparent), transparent 42%);
+  pointer-events: none;
+}
+
+.atlas-badge--locked {
+  border-style: dashed;
+  border-color: var(--line-strong);
+  background: var(--surface-2);
+  box-shadow: inset 0 1px 3px rgb(var(--ink-rgb) / 0.08);
+}
+
+.atlas-badge--locked svg {
+  opacity: 0.7;
+  filter: none;
+}
+
+.atlas-badge--locked strong {
+  color: var(--text-2);
+}
+
+/* Positioned, so visually hidden captions and labels stay inside the table's scrolling wrapper. */
+.atlas-table {
+  position: relative;
+  font-variant-numeric: tabular-nums;
+}
+
+.atlas-table td {
+  vertical-align: middle;
+}
+
+.atlas .atlas-table td:first-child {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+.atlas .atlas-table td:nth-child(2) {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--grass-800);
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------------
+   11. Field Atlas management (organisers and operations)
+   --------------------------------------------------------------------------- */
+
+.atlas-manage .panel {
+  padding: var(--s-5) var(--s-6);
+  min-width: 0;
+}
+
+.atlas-manage .panel > h2 {
+  padding-bottom: var(--s-3);
+  border-bottom: 1px solid var(--line);
+}
+
+.atlas-manage .panel > h3 {
+  font-size: 14.5px;
+}
+
+/* Participation totals as a strip of printed figures. */
+dl.atlas-panel {
+  display: grid;
+  grid-template-rows: auto auto;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+dl.atlas-panel dt {
+  padding: 14px 16px 0;
+  border-left: 1px solid var(--line);
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: var(--text-2);
+}
+
+dl.atlas-panel dd {
+  margin: 0;
+  padding: 6px 16px 14px;
+  border-left: 1px solid var(--line);
+  font-family: var(--font-serif);
+  font-size: 42px;
+  line-height: 1;
+  color: var(--grass-800);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+dl.atlas-panel dt:first-of-type,
+dl.atlas-panel dd:first-of-type {
+  border-left: 0;
+}
+
+dl.atlas-panel dd:nth-of-type(4) {
+  color: var(--sky-700);
+}
+
+dl.atlas-panel dd:nth-of-type(5) {
+  color: var(--ink);
+}
+
+/* Review cards: evidence waiting is new work, so it carries the sky edge. */
+.atlas-manage li.atlas-note {
+  padding: var(--s-4);
+  border-color: var(--line);
+  background: var(--surface);
+  box-shadow: var(--e1), inset 3px 0 0 var(--sky-500);
+  color: var(--text);
+}
+
+.atlas-manage li.atlas-note > p {
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  overflow-wrap: anywhere;
+}
+
+.atlas-manage .panel > ul.stack > li:not(.atlas-note) {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  overflow-wrap: anywhere;
+}
+
+.atlas-once {
+  display: inline-block;
+  max-width: 100%;
+  padding: 12px 20px;
+  border: 1.5px dashed var(--frame);
+  border-radius: var(--r-md);
+  background: var(--sun-300);
+  box-shadow: var(--print-sm);
+  font-family: var(--font-mono);
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.atlas-manage .atlas-table {
+  min-width: 560px;
+}
+
+section[aria-labelledby='missions-heading'] .atlas-table td:nth-child(2) {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  color: var(--text-2);
+}
+
+section[aria-labelledby='missions-heading'] .atlas-table td:nth-child(n + 3):nth-child(-n + 6) {
+  font-variant-numeric: tabular-nums;
+}
+
+.atlas-manage .atlas-table td input:not([type='checkbox']) {
+  min-width: 120px;
+}
+
+/* ---------------------------------------------------------------------------
+   12. Responsive
+   --------------------------------------------------------------------------- */
+
+@media (max-width: 1100px) {
+  .map {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+  }
+
+  .map__panel {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .atlas-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .atlas-head {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .atlas-chip {
+    grid-column: 1 / -1;
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .atlas-chip:not(:has(svg))::before {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+@media (max-width: 900px) {
+  dl.atlas-panel {
+    grid-auto-flow: row;
+    grid-template-rows: none;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  dl.atlas-panel dt,
+  dl.atlas-panel dd {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  dl.atlas-panel dt {
+    padding: 12px 16px;
+    align-self: center;
+  }
+
+  dl.atlas-panel dd {
+    padding: 8px 16px;
+    font-size: 30px;
+    text-align: right;
+  }
+
+  dl.atlas-panel dt:first-of-type,
+  dl.atlas-panel dd:first-of-type {
+    border-top: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .map__toolbar {
+    justify-content: flex-start;
+  }
+
+  .map__turn {
+    flex: 1 1 100%;
+  }
+
+  .map__turn input {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+  }
+
+  .map__canvas {
+    padding: 6px;
+    box-shadow: var(--print-sm);
+  }
+
+  .map__canvas:has(> .plan)::after {
+    top: 8px;
+    right: 8px;
+    width: 20px;
+    height: 26px;
+  }
+
+  .map__legend {
+    position: static;
+    max-width: none;
+    margin-top: 6px;
+    box-shadow: none;
+  }
+
+  .map__card {
+    padding: var(--s-4);
+  }
+
+  /* The plan is fitted to the phone, so its labels and badges are set larger to stay readable. */
+  .plan .space__label {
+    font-size: 3px;
+  }
+
+  .plan .space--circulation .space__label {
+    font-size: 1.5px;
+    letter-spacing: 0.02em;
+    transform: translateY(-1.6px);
+  }
+
+  .plan .space__sub {
+    font-size: 2.3px;
+  }
+
+  .plan .poi circle,
+  .plan .poi text {
+    transform: scale(1.45);
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .plan .poi:hover circle {
+    transform: scale(1.6);
+  }
+
+  .route-line {
+    stroke-width: 1.1;
+  }
+
+  .iso__label {
+    font-size: 3.8px;
+  }
+
+  .iso__floor-label {
+    font-size: 3.4px;
+  }
+
+  .live-map .world {
+    box-shadow: var(--print-sm);
+  }
+
+  .live-map .score-list > li {
+    padding: 12px var(--s-4);
+  }
+
+  .atlas-head {
+    grid-template-columns: minmax(0, 1fr);
+    padding: var(--s-3);
+    box-shadow: var(--print-sm);
+  }
+
+  .atlas-level {
+    gap: var(--s-4);
+    padding: var(--s-2) 0 0;
+  }
+
+  .atlas-mark {
+    width: 66px;
+    height: 66px;
+    font-size: 34px;
+  }
+
+  .atlas-head > .stack {
+    padding: var(--s-4);
+  }
+
+  .atlas-head > .stack > strong {
+    font-size: 23px;
+  }
+
+  .atlas .panel,
+  .atlas-manage .panel {
+    padding: var(--s-4);
+  }
+
+  .atlas-map {
+    padding: var(--s-3);
+  }
+
+  .atlas-map .space-label {
+    font-size: 2.4px;
+  }
+
+  section.atlas-panel h2 {
+    font-size: 28px;
+  }
+
+  .atlas-grid-badges {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: var(--s-2);
+    gap: var(--s-2);
+  }
+
+  .atlas-once {
+    font-size: 20px;
+    letter-spacing: 0.16em;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   13. Reduced motion: the base stylesheet zeroes durations; keep pulses visible but still.
+   --------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .route-line,
+  .atlas-map .route {
+    animation: none;
+  }
+
+  .route-end__pulse {
+    animation: none;
+    opacity: 0.35;
+  }
+
+  .live-map .world .dot-halo {
+    animation: none;
+    opacity: 0.3;
+  }
+
+  .iso__space:hover,
+  .iso__space.is-selected {
+    transform: none;
+  }
+}

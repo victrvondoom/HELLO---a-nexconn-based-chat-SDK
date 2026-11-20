@@ -40,7 +40,7 @@ export function LeaderboardPanel({ eventId }: { eventId: string }) {
       {error ? <p className="atlas-note atlas-note--bad" role="alert">{error}</p> : null}
       {rows.length > 0 ? (
         <table className="atlas-table">
-          <caption className="sr-only">People who joined the leaderboard, by XP</caption>
+          <caption className="visually-hidden">People who joined the leaderboard, by XP</caption>
           <thead><tr><th scope="col">#</th><th scope="col">Name</th><th scope="col">Level</th><th scope="col">XP</th></tr></thead>
           <tbody>
             {rows.map((r) => (

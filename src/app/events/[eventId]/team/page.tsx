@@ -33,7 +33,7 @@ export default async function TeamPage({ params }: { params: Promise<{ eventId: 
         <LiveRefresh seconds={15} />
       </div>
 
-      <div className="card" style={{ overflow: 'hidden' }}>
+      <div className="card ops-table" style={{ overflow: 'hidden' }}>
         <div className="table-wrap">
           <table>
             <thead>

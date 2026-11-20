@@ -101,6 +101,34 @@ The policy is `decideVerification` in `src/domain/field/rules.ts`. AI never reac
 - Export includes the person's own Field Atlas records. Erasure deletes their attempts, ledger entries and badges, and
   unlinks their flags. Other people's records are not changed.
 
+## Design system: Meadow (`src/styles/*`)
+
+- One token file (`tokens.css`), then `base.css`, `components.css` (primitives), `shell.css`, and one file per area
+  (`landing`, `ops`, `social`, `venue`, `moments`), imported in that order by `src/app/layout.tsx`.
+- Palette roles: grass = primary/success, sky = links/info/live, sun = selected/current, poppy = danger only.
+  Type: Instrument Serif (display, >= 22px), Inter (reading), JetBrains Mono (labels). Use tokens, not hex.
+- Area files must not define the same class as another area file or as a primitive. `tests/unit/style-boundaries.test.ts`
+  enforces this (a `.tile` collision once broke the Games tiles). Compose with scoped selectors instead (`.panel.inline-form`).
+- Navigation model: `src/components/layout/nav-model.ts`. `.nav-count` marks unread notifications only (an e2e test
+  counts it). Phones get `MobileTabBar`; the sidebar hides below 900px.
+- `next dev` appends a Next.js block to this file; do not commit it.
+
+## Moments (`src/domain/moments`, `src/services/moments.ts`, `src/components/moments`)
+
+Pages: `/events/[eventId]/feed` (stories + feed), `/feed/reels`, `/feed/explore`, `/feed/saved`, `/feed/charter`.
+API: `/api/events/[eventId]/moments/**` and `/feed`. Seed: `src/store/moments-seed.ts`.
+
+- Open Feed Charter (`charter.ts`): "For you" is the sum of six announced criteria; ties by time then id. The ranker
+  receives only `RankInput` (author, time, community, commenters, likers). Each post carries `because`.
+- Posting rules R1-R5 (`rules.ts`) are enforced in services and cited in error messages. R3 (no identical text within
+  10 minutes) also applies to workflow-generated posts.
+- Stories expire after 24h and are purged (doc and media) unless kept in a highlight. Viewer lists are author-only.
+- Trending tags need >= 3 distinct people in 24h. Saves are private.
+- Profiles show the person's highlights (`ProfileHighlights`), played in the same story viewer under the same audience rules.
+- Nexconn mapping (`src/integrations/nexconn/moments.ts`) mirrors types verified in `@nexconn/chat@26.5.1`. It is a
+  mapping only: Nexconn is still not connected.
+- Export and erasure include stories, highlights, saves, and the person's views and reactions.
+
 ## Commands
 
 - `npm run typecheck`, `npm run lint`, `npm test` (vitest), `npm run build`, `npm run check`
@@ -131,6 +159,8 @@ persistence.
 - Field Atlas domain, verification, levels, seasons, badges, organiser management, Quest Director, export and erasure.
 - Unit tests (`tests/unit/field-rules.test.ts`), integration tests (`tests/integration/field-atlas.test.ts`), and a
   browser journey (`tests/e2e/field-atlas-flow.mjs`).
+- Meadow redesign (all pages, shell, landing) and Moments, with `tests/unit/moments-*.test.ts` and
+  `tests/integration/moments.test.ts`; all seven browser journeys and the 390-page route crawl pass (2026-11-20).
 - Defect sweep (16 fixes, see `docs/TEST_EVIDENCE.md`, 2026-11-19) and the live layer: Field Conditions and Season
   Pulse, with `tests/unit/field-live.test.ts`, `tests/unit/rate-limit.test.ts`, `tests/integration/field-live.test.ts`
   and `tests/e2e/field-live-flow.mjs`.

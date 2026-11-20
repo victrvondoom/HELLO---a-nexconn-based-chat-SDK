@@ -20,6 +20,7 @@ export default async function PeoplePage({
   const { eventId } = await params;
   const { q, tab: rawTab } = await searchParams;
   const tab: Tab = rawTab === 'network' ? 'network' : 'discover';
+  const onNetwork = tab === 'network';
   const query = (q ?? '').slice(0, 200).trim();
   const viewer = await loadEventViewer(eventId);
   const base = `/events/${eventId}/people`;
@@ -56,10 +57,10 @@ export default async function PeoplePage({
 
       <div className="row" style={{ justifyContent: 'space-between', marginBottom: 16, gap: 12 }}>
         <nav className="segmented" aria-label="People views">
-          <Link className={tab === 'discover' ? 'segmented__item is-active' : 'segmented__item'} href={base} aria-current={tab === 'discover' ? 'page' : undefined}>
+          <Link className={onNetwork ? 'segmented__item' : 'segmented__item is-active'} href={base} aria-current={tab === 'discover' ? 'page' : undefined}>
             Discover
           </Link>
-          <Link className={tab === 'network' ? 'segmented__item is-active' : 'segmented__item'} href={`${base}?tab=network`} aria-current={tab === 'network' ? 'page' : undefined}>
+          <Link className={onNetwork ? 'segmented__item is-active' : 'segmented__item'} href={`${base}?tab=network`} aria-current={tab === 'network' ? 'page' : undefined}>
             Your network
           </Link>
         </nav>

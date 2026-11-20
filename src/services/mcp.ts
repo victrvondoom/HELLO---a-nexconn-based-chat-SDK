@@ -55,7 +55,7 @@ const TOOLS: Tool[] = [
     return { unread: feed.unread, items: feed.items.slice(0, 20).map((n) => ({ body: n.body, at: new Date(n.createdAt).toISOString(), read: n.readAt !== null })) };
   }),
   tool('hello_feed', 'The latest posts in the event feed.', false, none, async (ctx, t) => {
-    const posts = await listFeed(ctx, t.eventId, t.userId, { scope: 'all', communityId: null, authorId: null });
+    const posts = await listFeed(ctx, t.eventId, t.userId, { scope: 'latest', communityId: null, authorId: null });
     return posts.slice(0, 20).map((p) => ({ id: p.id, author: p.author.name, text: p.text, likes: p.likeCount, comments: p.commentCount, at: new Date(p.createdAt).toISOString() }));
   }),
   tool('hello_workflows', 'Workflows this person may run.', false, none, async (ctx, t) => {

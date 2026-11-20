@@ -2,6 +2,7 @@ import { DomainError } from '../domain/errors';
 import { audit, type ServiceContext } from './context';
 import { ownProfileText } from './social';
 import { deletePost } from './feed';
+import { deleteStory } from './moments';
 import { endAllSessions } from './auth';
 
 /**
@@ -79,7 +80,8 @@ export async function exportMyData(ctx: ServiceContext, userId: string) {
       items: sealed.map((m) => ({ id: m.id, from: m.senderId, to: m.recipientId, at: new Date(m.createdAt).toISOString(), iv: m.iv, ciphertext: m.ciphertext })),
     },
     country: (await ctx.store.docGet('prefs', userId))?.country ?? null,
-    posts: (await ctx.store.docList('posts', { authorId: userId })).map((p) => ({ id: p.id, at: new Date(p.createdAt).toISOString(), text: p.text, mediaId: p.mediaId })),
+    posts: (await ctx.store.docList('posts', { authorId: userId })).map((p) => ({ id: p.id, at: new Date(p.createdAt).toISOString(), text: p.text, mediaId: p.mediaId, backdrop: p.backdrop ?? null })),
+    moments: await exportMoments(ctx, userId, eventIds),
     comments: (await ctx.store.docList('comments', { authorId: userId })).map((c) => ({ postId: c.postId, at: new Date(c.createdAt).toISOString(), text: c.text })),
     communities: (await ctx.store.docList('communities')).filter((c) => c.memberIds.includes(userId)).map((c) => ({ id: c.id, name: c.name, owner: c.ownerId === userId })),
     liveLocation: (await ctx.store.docList('locations', { userId })).map((l) => ({ audience: l.audience, approximate: l.approximate, until: new Date(l.expiresAt).toISOString() })),
@@ -91,8 +93,45 @@ export async function exportMyData(ctx: ServiceContext, userId: string) {
   };
 }
 
+/**
+ * Moments: the person's stories, highlights and saves, and what they did on other people's stories (views
+ * and reactions). The other side of a view, who watched your story, belongs to your stories and is in them.
+ */
+async function exportMoments(ctx: ServiceContext, userId: string, eventIds: string[]) {
+  const iso = (at: number) => new Date(at).toISOString();
+  const [stories, highlights, saves] = await Promise.all([
+    ctx.store.docList('stories', { authorId: userId }),
+    ctx.store.docList('storyHighlights', { ownerId: userId }),
+    ctx.store.docList('savedPosts', { userId }),
+  ]);
+  const others = (await Promise.all(eventIds.map((eventId) => ctx.store.docList('stories', { eventId })))).flat().filter((s) => s.authorId !== userId);
+  return {
+    stories: stories.map((s) => ({
+      id: s.id,
+      kind: s.kind,
+      text: s.text,
+      backdrop: s.backdrop,
+      mediaId: s.mediaId,
+      spaceId: s.spaceId,
+      audience: s.audience,
+      createdAt: iso(s.createdAt),
+      expiresAt: iso(s.expiresAt),
+      views: s.views.length,
+      reactions: s.reactions.length,
+    })),
+    highlights: highlights.map((h) => ({ id: h.id, title: h.title, storyIds: h.storyIds })),
+    saves: saves.map((s) => ({ postId: s.postId, at: iso(s.createdAt) })),
+    storyReactions: others.flatMap((s) => s.reactions.filter((r) => r.userId === userId).map((r) => ({ storyId: s.id, reactionId: r.reactionId, at: iso(r.at) }))),
+    storyViews: others.flatMap((s) => s.views.filter((v) => v.userId === userId).map((v) => ({ storyId: s.id, at: iso(v.at) }))),
+  };
+}
+
 export interface ErasureReport {
   fieldAtlasRecords: number;
+  /** Own stories (with their files), highlights and saves. */
+  momentsRecords: number;
+  /** The person's views and reactions removed from other people's stories. */
+  storyInteractions: number;
   /** Notifications addressed to the person. They used to be left behind. */
   notifications: number;
   /** Notes the person wrote on payments they made. The payment record is kept for accountability. */
@@ -132,13 +171,47 @@ async function eraseFieldAtlas(ctx: ServiceContext, userId: string, eventIds: st
   return removed;
 }
 
+/**
+ * Moments: own stories (with their files), highlights and saves are deleted, and the person's views and
+ * reactions are taken off everyone else's stories, so no story's viewer list still names them.
+ */
+async function eraseMoments(ctx: ServiceContext, userId: string, eventIds: string[]): Promise<{ records: number; interactions: number }> {
+  let records = 0;
+  let interactions = 0;
+  for (const h of await ctx.store.docList('storyHighlights', { ownerId: userId })) {
+    await ctx.store.docDelete('storyHighlights', h.id);
+    records += 1;
+  }
+  for (const s of await ctx.store.docList('stories', { authorId: userId })) {
+    await deleteStory(ctx, s);
+    records += 1;
+  }
+  for (const s of await ctx.store.docList('savedPosts', { userId })) {
+    await ctx.store.docDelete('savedPosts', s.id);
+    records += 1;
+  }
+  for (const eventId of eventIds) {
+    for (const s of await ctx.store.docList('stories', { eventId })) {
+      const count = s.views.filter((v) => v.userId === userId).length + s.reactions.filter((r) => r.userId === userId).length;
+      if (count === 0) continue;
+      await ctx.store.docMutate('stories', s.id, (x) => ({ ...x, views: x.views.filter((v) => v.userId !== userId), reactions: x.reactions.filter((r) => r.userId !== userId) }));
+      interactions += count;
+    }
+  }
+  return { records, interactions };
+}
+
 export async function eraseMe(ctx: ServiceContext, userId: string): Promise<ErasureReport> {
   const user = await ctx.store.getUser(userId);
   if (!user) throw new DomainError('NOT_FOUND', 'No account found.');
   const eventIds = await eventsOf(ctx, userId);
   await ctx.store.deleteProfile(userId);
+  // Before the media sweep below: a story's file is deleted with the story.
+  const moments = await eraseMoments(ctx, userId, eventIds);
   const report: ErasureReport = {
     fieldAtlasRecords: await eraseFieldAtlas(ctx, userId, eventIds),
+    momentsRecords: moments.records,
+    storyInteractions: moments.interactions,
     notifications: await ctx.store.deleteNotificationsFor(userId),
     paymentNotesRedacted: await ctx.store.redactPaymentNotesFrom(userId, ERASED_TEXT),
     follows: await ctx.store.removeAllFollows(userId),
@@ -188,7 +261,7 @@ export async function eraseMe(ctx: ServiceContext, userId: string): Promise<Eras
       'privacy.erase',
       'user',
       userId,
-      `Erased on request: ${report.fieldAtlasRecords} Field Atlas records, ${report.notifications} notifications, ${report.follows} follows, ${report.deviceKeys} keys, ${report.privateMessages} private messages; ${report.messagesRedacted} messages, ${report.reportsRedacted} reports and ${report.paymentNotesRedacted} payment notes redacted.`,
+      `Erased on request: ${report.fieldAtlasRecords} Field Atlas records, ${report.momentsRecords} Moments records (stories, highlights, saves), ${report.storyInteractions} story views and reactions, ${report.notifications} notifications, ${report.follows} follows, ${report.deviceKeys} keys, ${report.privateMessages} private messages; ${report.messagesRedacted} messages, ${report.reportsRedacted} reports and ${report.paymentNotesRedacted} payment notes redacted.`,
     );
   }
   return report;

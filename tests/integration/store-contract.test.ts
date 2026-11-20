@@ -45,7 +45,7 @@ describe(`store contract (${STORE_KIND})`, () => {
 
   it('returns records exactly as written, and keeps insertion order in lists', async () => {
     const h = await createHarness();
-    const docs = ['c', 'a', 'b'].map((id) => ({ id: `pst-${id}`, eventId: h.eventId, authorId: h.users.attendeeAda, communityId: null, text: `post ${id}`, mediaId: null, mediaKind: null, repostOf: null, likes: [], createdAt: 1 }));
+    const docs = ['c', 'a', 'b'].map((id) => ({ id: `pst-${id}`, eventId: h.eventId, authorId: h.users.attendeeAda, communityId: null, text: `post ${id}`, mediaId: null, mediaKind: null, repostOf: null, backdrop: null, likes: [], createdAt: 1 }));
     for (const d of docs) await h.store.docPut('posts', d);
     expect((await h.store.docList('posts', { authorId: h.users.attendeeAda })).map((p) => p.id)).toEqual(['pst-c', 'pst-a', 'pst-b']);
     expect(await h.store.docGet('posts', 'pst-a')).toEqual(docs[1]);

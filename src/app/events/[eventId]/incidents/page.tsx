@@ -91,7 +91,7 @@ export default async function IncidentsPage({
           </span>
         </div>
       ) : (
-        <div className="card" style={{ overflow: 'hidden' }}>
+        <div className="card ops-table" style={{ overflow: 'hidden' }}>
           <div className="table-wrap">
             <table>
               <thead>

@@ -1,110 +1,74 @@
 import Link from 'next/link';
-import { NavLinks, type NavLinkItem } from './NavLinks';
-import { CommandPalette } from './CommandPalette';
+import { NavLinks, NavMore } from './NavLinks';
+import { CreateMenu } from './CreateMenu';
+import { MobileTabBar } from './MobileTabBar';
+import { buildNav, type NavInput } from './nav-model';
 import { HaloMark, Wordmark } from '@/components/brand/Wordmark';
+import { Hills } from '@/components/brand/Scenery';
+import { Avatar } from '@/components/social/Avatar';
 
-interface EventNavProps {
-  eventId: string;
+interface EventNavProps extends NavInput {
   eventName: string;
   displayName: string;
   roleLabel: string;
-  operational: boolean;
-  canApprove: boolean;
-  canAudit: boolean;
-  canManageAtlas: boolean;
-  unread: number;
   isDemo: boolean;
+  canPost: boolean;
 }
 
 /**
- * Navigation is role-aware for presentation only. Each page re-checks the viewer's
- * capability on the server, so a hidden link is never the security control.
+ * The sidebar on wide screens and the tab bar on phones. Navigation is role-aware for presentation only:
+ * each page re-checks the viewer's capability on the server, so a hidden link is never the security control.
  */
 export function EventNav(props: EventNavProps) {
+  const nav = buildNav(props);
   const base = `/events/${props.eventId}`;
-  const primary: NavLinkItem[] = [
-    { href: base, label: 'Today', icon: 'home', exact: true },
-    { href: `${base}/flow`, label: 'Workflow canvas', icon: 'flow' },
-    { href: `${base}/conversation`, label: 'Conversation', icon: 'conversation' },
-    { href: `${base}/incidents`, label: props.operational ? 'Incidents' : 'My requests', icon: 'incidents' },
-    { href: `${base}/announcements`, label: 'Announcements', icon: 'megaphone' },
-    { href: `${base}/map`, label: 'Venue map', icon: 'map' },
-    { href: `${base}/atlas`, label: 'Field Atlas', icon: 'sparkle' },
-    { href: `${base}/sessions`, label: 'Sessions and rooms', icon: 'sessions' },
-    { href: `${base}/people`, label: 'People', icon: 'people' },
-    { href: `${base}/messages`, label: 'Private messages', icon: 'lock' },
-    { href: `${base}/notifications`, label: 'Notifications', icon: 'bell', count: props.unread },
-  ];
-  const social: NavLinkItem[] = [
-    { href: `${base}/feed`, label: 'Feed', icon: 'feed' },
-    { href: `${base}/communities`, label: 'Communities', icon: 'groups' },
-    { href: `${base}/calls`, label: 'Calls', icon: 'video' },
-    { href: `${base}/games`, label: 'Games', icon: 'game' },
-    { href: `${base}/live-map`, label: 'Live map', icon: 'pin' },
-  ];
-  const ops: NavLinkItem[] = props.operational
-    ? [
-        { href: `${base}/operations`, label: props.canApprove ? 'Operations and approvals' : 'Operations', icon: 'operations' },
-        { href: `${base}/team`, label: 'Team', icon: 'team' },
-        ...(props.canManageAtlas ? [{ href: `${base}/atlas/manage`, label: 'Atlas management', icon: 'sparkle' as const }] : []),
-        { href: `${base}/agents`, label: 'Agent mesh', icon: 'agents' },
-      ]
-    : [];
-  const governance: NavLinkItem[] = props.canAudit ? [{ href: `${base}/audit`, label: 'Audit trail', icon: 'shield' }] : [];
 
   return (
-    <aside className="sidebar" aria-label="Event navigation">
-      <Link href={base} className="brand" aria-label="HELLO home">
-        <HaloMark size={34} />
-        <span className="brand__text">
-          <Wordmark height={26} id="wm-nav" title="HELLO" />
-          <span className="brand__sub">Event coordination</span>
-        </span>
-      </Link>
+    <>
+      <aside className="sidebar" aria-label="Event navigation">
+        <Link href={base} className="brand" aria-label="HELLO home">
+          <HaloMark size={36} />
+          <span className="brand__text">
+            <Wordmark height={24} id="wm-nav" title="HELLO" />
+            <span className="brand__sub">Your event, at home</span>
+          </span>
+        </Link>
 
-      <div className="event-card">
-        <strong>{props.eventName}</strong>
-        <span>{props.isDemo ? 'Demo event · seeded data' : 'Event'}</span>
-      </div>
+        <div className="event-card">
+          <Hills id="hills-nav" className="event-card__scene" />
+          <span className="event-card__text">
+            <strong>{props.eventName}</strong>
+            <span>
+              <span className="event-card__dot" aria-hidden="true" />
+              {props.isDemo ? 'Demo event · seeded data' : 'Happening now'}
+            </span>
+          </span>
+        </div>
 
-      <CommandPalette
-        items={[...primary, ...social, ...ops, ...governance, { href: `${base}/settings`, label: 'Profile and settings', icon: 'settings' }]}
-      />
+        <CreateMenu eventId={props.eventId} canPost={props.canPost} />
 
-      <nav aria-label="Primary" className="stack" style={{ gap: 2 }}>
-        <NavLinks items={primary} />
-        <div className="nav-group">Community</div>
-        <NavLinks items={social} />
-        {ops.length > 0 ? <div className="nav-group">Operations</div> : null}
-        <NavLinks items={ops} />
-        {governance.length > 0 ? <div className="nav-group">Governance</div> : null}
-        <NavLinks items={governance} />
-      </nav>
+        <nav aria-label="Primary" className="nav">
+          {nav.groups.map((group) => (
+            <div key={group.id} className="nav-section">
+              {group.label ? <div className="nav-group">{group.label}</div> : null}
+              <NavLinks items={group.items} />
+            </div>
+          ))}
+          <div className="nav-section">
+            <NavMore items={nav.more} />
+          </div>
+        </nav>
 
-      <nav aria-label="Account" className="stack" style={{ gap: 2, marginTop: 8 }}>
-        <div className="nav-group">Account</div>
-        <NavLinks items={[{ href: `${base}/settings`, label: 'Profile and settings', icon: 'settings' }]} />
-      </nav>
+        <Link href={nav.settings.href} className="nav-foot">
+          <Avatar name={props.displayName} size={36} />
+          <span className="nav-foot__text">
+            <strong>{props.displayName}</strong>
+            <span className="faint xs">{props.roleLabel} · Profile and settings</span>
+          </span>
+        </Link>
+      </aside>
 
-      <div className="nav-foot">
-        <span className="nav-foot__avatar" aria-hidden="true">
-          {initials(props.displayName)}
-        </span>
-        <span style={{ minWidth: 0 }}>
-          <strong>{props.displayName}</strong>
-          <span className="faint xs">{props.roleLabel}</span>
-        </span>
-      </div>
-    </aside>
+      <MobileTabBar eventId={props.eventId} groups={nav.groups} more={nav.more} settings={nav.settings} canPost={props.canPost} />
+    </>
   );
-}
-
-function initials(name: string): string {
-  return name
-    .replace(/\(.*?\)/g, '')
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((p) => p.charAt(0).toUpperCase())
-    .join('');
 }
