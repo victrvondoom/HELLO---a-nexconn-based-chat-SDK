@@ -141,7 +141,7 @@ mission panel, the field guide and Quest Director's ranking.
 - `tests/e2e/field-live-flow.mjs`, 8/8 in Chromium: advisory on the map, no report text, panel and pulse rendered,
   staff cancel the incidents in another session and the attendee's map drops them on the next poll without a reload,
   momentum appears after three real completions, no overflow at 390 px, no console errors.
-  Screenshot: `docs/screenshots/field-conditions.png`.
+  Screenshot: `docs/screenshots/field-atlas.jpg` (Field Atlas page; regenerated with the Meadow redesign).
 
 ### Results after the change
 

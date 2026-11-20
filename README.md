@@ -1,17 +1,18 @@
 # HELLO — One conversation. Everyone connected.
 
-![HELLO landing page: "One conversation. Everyone connected." with the 3D halo and the agent steps for a microphone fault in Room 3](docs/screenshots/landing.png)
+![HELLO landing page: "One conversation. Everyone connected." over a deep blue sky and layered green hills with a lone tree, and glass cards for the agent steps](docs/screenshots/landing.jpg)
 
 HELLO is an AI-assisted coordination layer for physical events. An attendee describes a problem in
 ordinary words ("The microphone in Room 3 has stopped working."). HELLO works out the room, session and
 team concerned, checks whether someone already reported it, routes it to staff with the right skill,
-keeps a record of every step, and asks the reporter to confirm when it is fixed.
+keeps a record of every step, and asks the reporter to confirm when it is fixed. Between the problems, the event
+shares its **Moments**: stories, reels, a feed and explore, ordered by six published rules instead of a secret algorithm.
 
 > **Status: working prototype, not a production system.** The domain logic, workflows and UI are
 > implemented and tested. Persistence is an in-memory demo store, messaging is not connected to Nexconn,
 > and sign-in is a demo shortcut. See [Status](#status) before using this for a real event.
 
-**Contents:** [Quick start](#quick-start) · [Screenshots](#screenshots) · [What it does](#what-it-does-implemented) ·
+**Contents:** [Quick start](#quick-start) · [Screenshots](#screenshots) · [Moments](#moments) · [What it does](#what-it-does-implemented) ·
 [Agent mesh](#agent-mesh) · [Architecture](#architecture) · [Demo walkthrough](#demo-walkthrough-judge-scenario) ·
 [Commands](#commands) · [Status](#status)
 
@@ -33,7 +34,7 @@ in the demo is seeded, illustrative data. Full instructions are under [Installat
 | Accounts | Register and sign in with a handle and password; server-side sessions | `/signin`, `src/services/auth.ts` |
 | Durable storage | Everything saved to disk when `HELLO_DATA_DIR` is set | `src/lib/persistence.ts` |
 | Workflow canvas | Live graph of the event; one-click workflows that run with your own permissions | `/events/:id/flow` |
-| Feed | Posts, pictures, videos, likes, comments, shares, Following and Videos views | `/events/:id/feed` |
+| Moments | Stories (24 h), reels, explore, saves, highlights and a feed ordered by the Open Feed Charter | `/events/:id/feed` |
 | Communities | Open groups with their own feed and group calls | `/events/:id/communities` |
 | Calls | Video, voice and screen sharing for up to 8, browser to browser (WebRTC) | `/events/:id/calls` |
 | Games | Four in a row (two players, live) and a quiz written from the schedule | `/events/:id/games` |
@@ -50,12 +51,45 @@ the real interface, not mock-ups.
 
 | | |
 |---|---|
-| ![Demo sign-in page with a card for each seeded demo role](docs/screenshots/demo-sign-in.png) | ![Conversation: one message about Room 3 becomes two incident cards, free sessions and a pending room change](docs/screenshots/conversation.png) |
-| **Demo sign-in.** Each seeded role (attendee, speaker, volunteer, operations, organiser) sees a different HELLO. Access is decided on the server for every request. | **Conversation.** "The microphone is not working, and there are too many people in Room 3." becomes two concerns, each attached to an existing incident with its match confidence. Free sessions are offered, and the room change waits for an organiser. |
-| ![Incident detail with the workflow rail, acknowledgement timer and ranked staff recommendations](docs/screenshots/incident.png) | ![Operations view with open incidents, acknowledgement timers and room occupancy with data sources](docs/screenshots/operations.png) |
+| ![Home for an attendee: open requests, upcoming sessions and the latest announcement, with the grouped sidebar and the Create button](docs/screenshots/home.jpg) | ![Moments: a row of story rings, the feed with a "Why this" chip on each post, and the Open Feed Charter beside it](docs/screenshots/moments.jpg) |
+| **Home.** What matters to you right now. The sidebar is grouped (home, the event, people, team), with rarely used tools under More; search, notifications and your profile sit in the top bar. | **Moments.** Story rings at the top, then a feed ordered by six announced rules. Every post has a "Why this" chip naming the rules that placed it. |
+| ![A story by Dr Ines on an open-sky backdrop, pinned to Room 3 with a directions link, quick reactions and a private reply](docs/screenshots/story.jpg) | ![Reels: one full-height visual post with like, comment, save and share on the right](docs/screenshots/reels.jpg) |
+| **Stories.** Gone after 24 hours unless kept in a highlight. A story can be pinned to a room, with one-tap directions on the venue map. Reactions, private replies, and a "Seen by" list for the author only. | **Reels.** One visual moment per screen. Videos play only while on screen, and the order is fixed while you watch. |
+| ![Explore: tag search, trending tags with how many people used them, and a grid of painted backdrop posts](docs/screenshots/explore.jpg) | ![The Open Feed Charter page listing the six ranking rules with their points, what is never used, the story order and the posting rules](docs/screenshots/charter.jpg) |
+| **Explore.** A tag trends only when at least three different people used it in the last day, so one account cannot fake a trend. | **Open Feed Charter.** Rendered from the same constants the ranking code uses: the six rules and their points, what is never used, the story order, the posting rules R1–R5, and the Nexconn message types. |
+| ![A speaker's profile with a meadow header, follow state, counts, a story highlight and their posts](docs/screenshots/profile.jpg) | ![Conversation: one message about Room 3 becomes two incident cards with match confidence and directions](docs/screenshots/conversation.jpg) |
+| **Profile.** Follow and message, the person's highlights (stories kept past 24 hours) and their posts, newest first. | **Ask HELLO.** "The microphone is not working, and there are too many people in Room 3." becomes two concerns, each attached to an existing incident with its match confidence. The room change waits for an organiser. |
+| ![Incident detail with the workflow rail, acknowledgement timer and ranked staff recommendations](docs/screenshots/incident.jpg) | ![Operations view with open incidents, acknowledgement timers, rooms with load bars and the approval queue](docs/screenshots/operations.jpg) |
 | **Incident (staff view).** The workflow rail, the acknowledgement timer, every person's report kept separately, and staff ranked by skill, load, availability and location, with reasons. | **Operations (organiser view).** Live counts, the acknowledgement board (most overdue first), rooms with occupancy and where each figure comes from, approvals and signal review. |
-| ![Venue map in plan view with a route from the main entrance to Room 3](docs/screenshots/venue-map.png) | ![Conversation on a phone, with the composer at the bottom of the screen](docs/screenshots/conversation-mobile.png) |
-| **Venue map.** Plan, 3D and live-heat views of one venue model. Directions are computed on the device, with a step-free option. | **Phone.** The same conversation at 390 px wide. The navigation becomes scrolling strips and the composer stays on screen. |
+| ![Venue map in plan view printed on paper, with a route to Room 3](docs/screenshots/venue-map.jpg) | ![Field Atlas: level medallion, XP, the monthly challenge and missions on the venue plan](docs/screenshots/field-atlas.jpg) |
+| **Venue map.** Plan, 3D and live-heat views of one venue model. Directions are computed on the device, with a step-free option. | **Field Atlas.** Missions on the venue plan, XP and levels, and a monthly challenge. Rewards are awarded by the server only after verification. |
+| ![Demo sign-in grouped by role, with an avatar for each seeded person](docs/screenshots/demo-sign-in.jpg) | ![Command palette searching "reels" and finding Moments by keyword](docs/screenshots/command-palette.jpg) |
+| **Demo sign-in.** Seeded people grouped by role. Each role sees a different HELLO, and access is decided on the server for every request. | **Search or jump (⌘K).** Matches page names and keywords, so "reels" finds Moments. It lists only pages your role can open. |
+| ![Moments on a phone, with story rings and the bottom tab bar with a raised Create button](docs/screenshots/moments-mobile.jpg) | ![Ask HELLO on a phone, with the composer above the tab bar](docs/screenshots/conversation-mobile.jpg) |
+| **Phone: Moments.** A bottom tab bar (Home, Moments, Create, Messages, Menu); Create offers a story, a post or a problem report. | **Phone: Ask HELLO.** The same conversation at 390 px, with the composer kept above the tab bar. |
+
+## Moments
+
+Instagram-style social features for the people in the same building, built so the ordering is explainable.
+
+- **Stories** (`/feed`): text on six painted backdrops, or a picture or video. Optional place (a room you choose,
+  never your location) and audience (everyone at the event, or your followers). Deleted after 24 hours unless kept in
+  a highlight; views are recorded once and visible only to the author. Six quick reactions and a private reply.
+- **Feed, reels, explore, saved** (`/feed`, `/feed/reels`, `/feed/explore`, `/feed/saved`): double-tap to like,
+  comments, shares and private saves. The feed ends with "You are all caught up" instead of scrolling forever.
+- **Open Feed Charter** (`/feed/charter`, `src/domain/moments/charter.ts`): "For you" is the sum of six announced
+  criteria (your fresh post, people you follow, your communities, freshness, distinct commenters, likes by people you
+  follow). The ranking function receives only author, time, community, commenters and likers, so it cannot use
+  anything else; ties break by time, then id. Unit tests check determinism and that every point comes from an
+  announced rule.
+- **Posting rules R1–R5** (`src/domain/moments/rules.ts`): length, at most 10 hashtags, no identical text within
+  10 minutes, at most 10 stories an hour, your own media only. The server enforces them and names the rule in the error.
+- **Built on Nexconn messages** (`src/integrations/nexconn/moments.ts`): stories and posts map to custom message types
+  (`HL:Story`, `HL:Post`) on the event's community channel, likes and reactions to message reactions, a story view to a
+  read receipt, and a story reply to a reference message. The shapes were checked against `@nexconn/chat@26.5.1`. It is
+  a mapping only: Nexconn is not connected in this build.
+- **Privacy:** data export includes your stories, highlights, saves and reactions; erasure deletes them and removes
+  your views and reactions from other people's stories.
 
 ## The problem
 
@@ -92,15 +126,13 @@ accountable workflow.
 
 ## Quick navigation and voice input
 
-- **Command palette.** Press **⌘K** (Ctrl+K on Windows and Linux), or click **Jump to…** in the sidebar, then type a
-  page name. It lists only the pages your role can open (an attendee never sees the audit trail), and each page still
+- **Command palette.** Press **⌘K** (Ctrl+K on Windows and Linux), or click **Search or jump to…** in the top bar, then
+  type a page name or a keyword ("feed" finds Moments). It lists only the pages your role can open (an attendee never sees the audit trail), and each page still
   re-checks access on the server. Arrow keys move, Enter opens and Esc closes.
 - **Speak instead of typing.** In browsers with speech recognition (Chrome, Edge, Safari), the composer shows a
   microphone button. What you say is added to the message box for you to check before sending; nothing is sent
   automatically. The browser's own speech service does the transcription and may send the audio to its provider. The
   button says so, and the microphone is allowed for HELLO's own pages only (`Permissions-Policy: microphone=(self)`).
-
-![Command palette filtered to "aud", showing Audit trail for an organiser](docs/screenshots/command-palette.png)
 
 ## Why HELLO, and what it solves that other event apps don't
 
@@ -159,12 +191,19 @@ treated as instructions. A hung or failing provider becomes a FAILED step in the
 
 ## Design
 
-The interface uses a white "diamond" theme with a single sky-blue accent family. Bright sky blue is used for
-light, glow and the brand. Deep sky blue is used for text and filled controls, so contrast stays AA on white.
-The HELLO wordmark is drawn as rounded SVG strokes, and its O is a halo with a diamond inside. The landing and
-sign-in pages show a 3D halo drawn on a canvas: a lit, depth-sorted ring of points around a brilliant-cut gem.
-It draws one still frame for people who prefer reduced motion, and it pauses when off screen or in a hidden
-tab. Inter and Nunito are self-hosted at build time by `next/font`.
+The "Meadow" design system is meant to feel like home: sky above, grass underfoot, warm paper in between.
+
+- **Colour roles:** grass green for primary actions and success, sky blue for links and live state, a sun-yellow
+  highlighter for the current page and selected items, poppy red only for danger. Every text colour passes WCAG AA on
+  both paper and cards.
+- **Type:** Instrument Serif for titles and large figures, Inter for reading, JetBrains Mono for labels. All three are
+  self-hosted at build time by `next/font`.
+- **Depth:** layered shadows, cards that lift on hover, and a landing page whose hills, clouds and sun move at
+  different speeds with the pointer and the scroll. People who prefer reduced motion get a still scene (the story timer
+  is the one animation kept, because it is a clock).
+- **Code:** `src/styles/tokens.css`, then `base.css`, `components.css` (primitives), `shell.css`, and one file per area.
+  `tests/unit/style-boundaries.test.ts` fails if two area files define the same class.
+- **Phones:** below 900 px the sidebar becomes a bottom tab bar with a raised Create button and a Menu sheet.
 
 ## Workplace features
 
@@ -217,7 +256,8 @@ src/
   app/                   Pages (App Router) and API route handlers
     api/                 Thin HTTP adapters over services
     events/[eventId]/    Event pages: conversation, incidents, operations, sessions, people, …
-  components/           Client and server UI components
+  components/           Client and server UI components (layout/ shell, moments/ stories and feed)
+  styles/               Meadow design system: tokens, primitives, shell and one stylesheet per area
   domain/               Pure business rules (no framework or I/O imports)
     incidents/          lifecycle, classification, duplicate detection
     assignments/        explainable assignment scoring
@@ -225,11 +265,12 @@ src/
     approvals/          trust levels, four-eyes rule, execution rules
     intelligence/      signal pattern detection
     notifications/      dedupe keys
+    moments/            Open Feed Charter, story rules, tags, posting rules
     permissions.ts      capability table and authorize()
   services/             Use cases; the only layer that writes state
   store/                HelloStore contract, in-memory implementation, demo seed
   ai/                   Intent schema, provider boundary, deterministic interpreter
-  integrations/nexconn/ Configuration status (no live connection)
+  integrations/nexconn/ Configuration status and the Moments message mapping (no live connection)
   lib/                  Runtime, sessions (demo), HTTP envelope, validation, rate limiting, logging
 supabase/
   migrations/           0001_core_schema.sql
@@ -323,7 +364,7 @@ npm run dev         # development server
 npm test            # unit and integration tests
 npm run test:e2e    # browser checks: judge flow (13), features (10), workflow audit (22), private messages (6); needs a running server
 npm run test:routes # visits every page as every demo role; checks permitted pages load and forbidden ones answer 404
-npm run screenshots # regenerates docs/screenshots/*.png from a running demo server
+npm run screenshots # regenerates docs/screenshots/*.jpg from a running demo server
 npm run typecheck   # TypeScript
 npm run lint        # ESLint
 npm run build       # production build
@@ -360,6 +401,8 @@ instance has its own copy, and demo sign-in is not authentication. See [docs/dep
 | Profiles, follows, data export and erasure | Implemented and tested; memory store only |
 | End-to-end encrypted private messages | Implemented; tested in Node and between two real browser profiles. **No forward secrecy**, one key per device |
 | Venue map (plan, 3D, heat) and step-free routing | Implemented and tested; the venue is hand-drawn demo data |
+| Moments: stories, highlights, reels, explore, saves, Open Feed Charter, posting rules | Implemented and tested (unit, integration, browser route crawl); memory store only |
+| Meadow redesign: every page, shell with phone tab bar, landing scene | Implemented; checked by seven Playwright journeys and a crawl of 390 pages as every role |
 | Content-Security-Policy and cross-site Origin check | Implemented (production builds) |
 | Browser end-to-end test of the judge flow (13 checks, Playwright) | Implemented; run against a demo server |
 | Visual regression, accessibility audit, load tests | **Not done** |

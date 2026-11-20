@@ -333,8 +333,10 @@ code {
   }
 }
 
+/* Reduced motion removes decoration, not timing. The story progress bar is the stories' clock (its
+   animationend advances to the next story), so it keeps its real duration; a 0.001ms bar skipped every story. */
 @media (prefers-reduced-motion: reduce) {
-  *,
+  *:not(.story-bar__fill),
   *::before,
   *::after {
     animation-duration: 0.001ms !important;
