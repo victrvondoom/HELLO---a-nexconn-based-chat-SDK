@@ -133,9 +133,9 @@ export function StoryComposer({ eventId, places, onClose, onShared }: { eventId:
 
         <div className="story-compose__controls">
           {mode === 'TEXT' ? (
-            <div className="swatches swatches--dark" role="radiogroup" aria-label="Backdrop">
+            <div className="bswatch-row bswatch-row--dark" role="radiogroup" aria-label="Backdrop">
               {BACKDROPS.map((b) => (
-                <button key={b} type="button" role="radio" aria-checked={backdrop === b} className={`swatch backdrop--${b}`} title={BACKDROP_LABEL[b]} onClick={() => { setBackdrop(b); }}>
+                <button key={b} type="button" role="radio" aria-checked={backdrop === b} className={`bswatch backdrop--${b}`} title={BACKDROP_LABEL[b]} onClick={() => { setBackdrop(b); }}>
                   <span className="visually-hidden">{BACKDROP_LABEL[b]}</span>
                 </button>
               ))}

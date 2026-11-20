@@ -121,12 +121,12 @@ export function PostComposer({ eventId, communityId, onPosted, autoOpen = false 
         </div>
       ) : null}
       {file === null ? (
-        <div className="swatches" role="radiogroup" aria-label="Backdrop">
-          <button type="button" role="radio" aria-checked={backdrop === null} className="swatch swatch--none" onClick={() => { setBackdrop(null); }}>
+        <div className="bswatch-row" role="radiogroup" aria-label="Backdrop">
+          <button type="button" role="radio" aria-checked={backdrop === null} className="bswatch bswatch--none" onClick={() => { setBackdrop(null); }}>
             <span className="visually-hidden">No backdrop</span>
           </button>
           {BACKDROPS.map((b) => (
-            <button key={b} type="button" role="radio" aria-checked={backdrop === b} className={`swatch backdrop--${b}`} title={BACKDROP_LABEL[b]} onClick={() => { setBackdrop(b); }}>
+            <button key={b} type="button" role="radio" aria-checked={backdrop === b} className={`bswatch backdrop--${b}`} title={BACKDROP_LABEL[b]} onClick={() => { setBackdrop(b); }}>
               <span className="visually-hidden">{BACKDROP_LABEL[b]}</span>
             </button>
           ))}

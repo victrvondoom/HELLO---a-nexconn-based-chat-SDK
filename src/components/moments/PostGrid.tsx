@@ -12,7 +12,7 @@ function Tile({ post }: { post: PostView }) {
     return shown.media.kind === 'VIDEO' ? (
       <>
         <video src={shown.media.url} muted playsInline preload="metadata" aria-hidden="true" />
-        <span className="tile__badge" aria-hidden="true">
+        <span className="mtile__badge" aria-hidden="true">
           <Icon name="play" size={14} />
         </span>
       </>
@@ -21,7 +21,7 @@ function Tile({ post }: { post: PostView }) {
     );
   }
   return (
-    <div className={shown.backdrop ? `tile__words backdrop backdrop--${shown.backdrop}` : 'tile__words'}>
+    <div className={shown.backdrop ? `mtile__words backdrop backdrop--${shown.backdrop}` : 'mtile__words'}>
       <span>{shown.text}</span>
     </div>
   );
@@ -48,12 +48,12 @@ export function PostGrid({ eventId, posts, now, onChanged, empty }: { eventId: s
   }
   return (
     <>
-      <ul className="tile-grid list-reset">
+      <ul className="mgrid list-reset">
         {posts.map((post) => (
           <li key={post.id}>
-            <button type="button" className="tile" onClick={() => { setOpenId(post.id); }} aria-label={`Open post by ${post.author.name}: ${(post.repost ?? post).text.slice(0, 80) || 'picture or video'}`}>
+            <button type="button" className="mtile" onClick={() => { setOpenId(post.id); }} aria-label={`Open post by ${post.author.name}: ${(post.repost ?? post).text.slice(0, 80) || 'picture or video'}`}>
               <Tile post={post} />
-              <span className="tile__stats" aria-hidden="true">
+              <span className="mtile__stats" aria-hidden="true">
                 <span>
                   <Icon name="heart" size={15} /> {post.likeCount}
                 </span>
