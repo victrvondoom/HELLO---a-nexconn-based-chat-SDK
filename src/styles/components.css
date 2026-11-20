@@ -993,6 +993,14 @@ tbody tr:last-child td {
   color: var(--paper);
 }
 
+/* On phones the bottom tab bar (shell.css) takes the bottom edge, so toasts sit above it. */
+@media (max-width: 900px) {
+  .toast-region {
+    right: 16px;
+    bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 12px);
+  }
+}
+
 @keyframes toast-in {
   from {
     opacity: 0;

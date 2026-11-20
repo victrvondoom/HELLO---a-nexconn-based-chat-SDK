@@ -2009,6 +2009,66 @@
   background: var(--grass-100);
 }
 
+/* ---------- profile highlights ---------- */
+
+.highlights {
+  margin-top: var(--s-6);
+}
+
+.highlights__row {
+  display: flex;
+  gap: 18px;
+  overflow-x: auto;
+  padding: 4px 2px 8px;
+}
+
+.highlights__hint {
+  margin-top: var(--s-4);
+}
+
+.highlight {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 84px;
+  padding: 0;
+  font: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.highlight__ring {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: 0 0 0 1.5px var(--line-strong), var(--e2);
+  transition: transform var(--t-med) var(--ease-spring);
+}
+
+.highlight:hover .highlight__ring {
+  transform: translateY(-2px) scale(1.04);
+}
+
+.highlight__cover {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.highlight__title {
+  max-width: 100%;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ---------- responsive ---------- */
 
 @media (max-width: 1100px) {

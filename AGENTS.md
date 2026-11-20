@@ -101,7 +101,8 @@ The policy is `decideVerification` in `src/domain/field/rules.ts`. AI never reac
   (`landing`, `ops`, `social`, `venue`, `moments`), imported in that order by `src/app/layout.tsx`.
 - Palette roles: grass = primary/success, sky = links/info/live, sun = selected/current, poppy = danger only.
   Type: Instrument Serif (display, >= 22px), Inter (reading), JetBrains Mono (labels). Use tokens, not hex.
-- Area files must not redefine primitives or each other's top-level classes (a `.tile` collision once broke Games).
+- Area files must not define the same class as another area file or as a primitive. `tests/unit/style-boundaries.test.ts`
+  enforces this (a `.tile` collision once broke the Games tiles). Compose with scoped selectors instead (`.panel.inline-form`).
 - Navigation model: `src/components/layout/nav-model.ts`. `.nav-count` marks unread notifications only (an e2e test
   counts it). Phones get `MobileTabBar`; the sidebar hides below 900px.
 - `next dev` appends a Next.js block to this file; do not commit it.
@@ -117,6 +118,7 @@ API: `/api/events/[eventId]/moments/**` and `/feed`. Seed: `src/store/moments-se
   10 minutes) also applies to workflow-generated posts.
 - Stories expire after 24h and are purged (doc and media) unless kept in a highlight. Viewer lists are author-only.
 - Trending tags need >= 3 distinct people in 24h. Saves are private.
+- Profiles show the person's highlights (`ProfileHighlights`), played in the same story viewer under the same audience rules.
 - Nexconn mapping (`src/integrations/nexconn/moments.ts`) mirrors types verified in `@nexconn/chat@26.5.1`. It is a
   mapping only: Nexconn is still not connected.
 - Export and erasure include stories, highlights, saves, and the person's views and reactions.

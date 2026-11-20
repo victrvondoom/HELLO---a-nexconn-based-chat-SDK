@@ -10,6 +10,8 @@ import { Icon } from '@/components/ui/Icon';
 
 import { FeedView } from '@/components/feed/FeedView';
 import { listFeed } from '@/services/feed';
+import { listHighlights } from '@/services/moments';
+import { ProfileHighlights } from '@/components/moments/ProfileHighlights';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,7 +31,10 @@ export default async function ProfilePage({ params }: { params: Promise<{ eventI
     if (error instanceof DomainError && (error.code === 'NOT_FOUND' || error.code === 'FORBIDDEN')) notFound();
     throw error;
   }
-  const posts = await listFeed(viewer.ctx, eventId, viewer.userId, { scope: 'latest', communityId: null, authorId: profile.userId });
+  const [posts, highlights] = await Promise.all([
+    listFeed(viewer.ctx, eventId, viewer.userId, { scope: 'latest', communityId: null, authorId: profile.userId }),
+    listHighlights(viewer.ctx, eventId, viewer.userId, profile.userId),
+  ]);
 
   return (
     <div className="page" style={{ maxWidth: 920 }}>
@@ -105,6 +110,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ eventI
           ) : null}
         </div>
       </article>
+      <ProfileHighlights eventId={eventId} owner={{ id: profile.userId, name: profile.displayName }} isSelf={profile.isSelf} now={viewer.ctx.now()} initial={highlights} />
       <section style={{ marginTop: 24 }} aria-labelledby="posts-heading">
         <h2 id="posts-heading" style={{ marginBottom: 12 }}>Posts</h2>
         <FeedView eventId={eventId} initial={{ now: viewer.ctx.now(), posts }} authorId={userId} canPost={false} />
