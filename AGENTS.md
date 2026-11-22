@@ -175,9 +175,12 @@ Collections: `plans` (`eventId:userId`), `avSignals` (`sessionId:kind:userId`), 
 ## Nexconn SDKs (`src/integrations/nexconn`)
 
 `@nexconn/chat`, `@nexconn/chatui`, `@nexconn/call` (peer override in `package.json`). `NEXCONN_APP_SECRET` is
-server-only; `tests/unit/nexconn.test.ts` scans client files for it. `POST /api/nexconn/token` returns 503 until
-`NexconnTokenIssuer` is implemented from the official Platform Chat API docs. The official agent skill is vendored
-in `.claude/skills/nexconn-chat` (its doc cache is git-ignored).
+server-only; `tests/unit/nexconn.test.ts` scans client files for it. `POST /api/nexconn/token` issues a user token
+with a signed Platform Chat API call (`createSignedTokenIssuer`: SHA-1 of secret + nonce + timestamp, primary then
+backup host for `NEXCONN_AREA`, default SG). Nexconn user ids are `nexconnUserId(helloId)` (letters and digits only).
+The data centre is always passed to the browser SDK (`areaCode`). In this cloud container Node's `fetch` reaches the
+Nexconn hosts only with `NODE_USE_ENV_PROXY=1`. The official agent skill is vendored in `.claude/skills/nexconn-chat`
+(its doc cache is git-ignored).
 
 ## Moments (`src/domain/moments`, `src/services/moments.ts`, `src/components/moments`)
 

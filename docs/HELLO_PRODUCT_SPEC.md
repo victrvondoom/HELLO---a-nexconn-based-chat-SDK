@@ -51,4 +51,4 @@ team) and a folded "Someone specific" list for testers. `/signin` keeps accounts
 | Graph database (FalkorDB/Neo4j) | — | Planned (`docs/HELLO_EVENT_GRAPH.md`) |
 | Create a game (own quiz) | Games | Built, verified |
 | Workflow canvas: connected graph | Everything else → Workflow canvas | Fixed, verified (every node connected, edges painted) |
-| Nexconn Chat SDK, Chat UI, Call SDK | `src/integrations/nexconn` | Installed; token issuance externally blocked (credentials + docs) |
+| Nexconn Chat SDK, Chat UI, Call SDK | `src/integrations/nexconn` | Installed; token call written from the docs and checked against Nexconn's hosts; a real token waits for the App Secret |

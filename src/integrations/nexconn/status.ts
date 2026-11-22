@@ -13,8 +13,8 @@
  * States:
  *   NOT_CONFIGURED        no NEXCONN_APP_KEY. HELLO works on its own; the chat gateway connects networks.
  *   KEY_ONLY              App Key present, App Secret missing: the server cannot issue user tokens.
- *   READY_FOR_TOKENS      App Key and App Secret present. Token issuance still needs the verified server
- *                         API call in src/integrations/nexconn/token.ts (see docs/nexconn-integration.md).
+ *   READY_FOR_TOKENS      App Key and App Secret present: POST /api/nexconn/token issues user tokens through the
+ *                         signed Platform Chat API call in src/integrations/nexconn/token.ts.
  */
 export type NexconnState = 'NOT_CONFIGURED' | 'KEY_ONLY' | 'READY_FOR_TOKENS';
 

@@ -75,9 +75,21 @@ Verified from `@nexconn/chat@26.2.1` type definitions (`docs/IMPLEMENTATION_AUDI
 token API was not verified, so HELLO does not include one. The SDK needs a browser, so call it from a client
 component and never send the app secret to the browser.
 
+## Token issuance (written from the docs, 2026-11-22)
+
+`POST /api/nexconn/token` (signed-in HELLO person) calls `POST https://<base>/v4/auth/access-token/issue` with headers
+`App-Key`, `Nonce`, `Timestamp` (ms) and `Signature = hex SHA-1(AppSecret + Nonce + Timestamp)`, body
+`{ userId, name }`, and returns `{ appKey, area, nexconnUserId, token }`. Base URL by `NEXCONN_AREA`: SG
+`api.sg-light-api.com` / `api-b.sg-light-api.com`, NA `api.us-light-api.com` / `api-b…`, SA `api.sau-light-api.com` /
+`api-b…`; the backup is used after a 5 s timeout, a network error or a 5xx; a 401 is not retried. Sources:
+docs.nexconn.ai `/platform-chat-api/prepare-to-use-api/auth.md`, `/base-url.md`, `/platform-chat-api/user/register.md`.
+Checked live: both Singapore hosts answer `401 / 1004 Signature error` to a deliberately wrong signature. A real
+token has not been issued yet: that needs `NEXCONN_APP_SECRET`.
+
 ## Not verified, and why
 
-- Nexconn's server API, token issuance and webhook format: they need a Nexconn account and its documentation.
+- A token issued with the real App Secret, and a browser connecting with it (needs `NEXCONN_APP_SECRET`).
+- Nexconn's webhook format.
   The bridge (Option A) or the transport (Option B) is where they go; nothing else in HELLO depends on them.
 - Delivery receipts for every Nexconn message type.
 

@@ -15,11 +15,13 @@ export type NexconnConnection =
 
 export async function connectNexconn(options: { calls?: boolean } = {}): Promise<NexconnConnection> {
   const response = await fetch('/api/nexconn/token', { method: 'POST' });
-  const body = (await response.json()) as { ok: true; data: { appKey: string; token: string } } | { ok: false; error: { code: string; message: string } };
+  const body = (await response.json()) as { ok: true; data: { appKey: string; area: string; token: string } } | { ok: false; error: { code: string; message: string } };
   if (!body.ok) return { connected: false, reason: body.error.code, message: body.error.message };
 
-  const { NCEngine } = await import('@nexconn/chat');
-  NCEngine.initialize({ appKey: body.data.appKey });
+  const { NCEngine, AreaCode } = await import('@nexconn/chat');
+  // The data centre is always explicit: the SDK's type definitions disagree about its default.
+  const areaCode = AreaCode[body.data.area as keyof typeof AreaCode] as (typeof AreaCode)[keyof typeof AreaCode] | undefined;
+  NCEngine.initialize({ appKey: body.data.appKey, ...(areaCode !== undefined ? { areaCode } : {}) });
   const result = await NCEngine.connect({ token: body.data.token });
   if (result.code !== 0 || !result.data) return { connected: false, reason: `NEXCONN_${result.code}`, message: 'Nexconn refused the connection.' };
 

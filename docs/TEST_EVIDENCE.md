@@ -3,6 +3,16 @@
 Recorded on 2026-11-17 on branch `claude/eager-ritchie-argdtp`. Each row is a command that was run, with its result.
 A failing run is recorded here too. Nothing is marked as passing without a run.
 
+## Nexconn token call and data centre (2026-11-22)
+
+| Command | Result |
+|---|---|
+| `npx tsc --noEmit`, `npm run lint` | Pass. |
+| `npx vitest run` | 63 files; 667 passed, 3 skipped. `tests/unit/nexconn.test.ts` now covers the SHA-1 signature, headers and body, failover to the backup host (timeout, network error, 503), no retry on 401, Nexconn refusals, alphanumeric user ids, and the data centre. |
+| `curl` to `api.sg-light-api.com` and `api-b.sg-light-api.com` with App Key `pkfcgjstpvbo8` and a deliberately wrong signature | Both `401 {"code":1004,"errorMessage":"Signature error"}`: hosts reachable, App Key recognised, signature checked. |
+| Node `fetch` to the same host | Fails with `ENOTFOUND` in this cloud container unless `NODE_USE_ENV_PROXY=1`; with it, `401`. Container-specific. |
+| Issue a real token | Not run: `NEXCONN_APP_SECRET` is not set. |
+
 ## Minimal companion, Plan B, Steadfast, connected canvas (2026-11-22, branch `claude/admiring-albattani-xkgn2t`)
 
 Scope: one-button entry, five destinations, Today/Explore/Live, live room, plan, Plan B and seat holds, venue
