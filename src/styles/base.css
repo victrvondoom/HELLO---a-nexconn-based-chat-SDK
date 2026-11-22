@@ -26,16 +26,18 @@ body {
   font-variation-settings: 'wdth' 96;
 }
 
-/* Pure white, with the light of a sunset at the edges of the window: teal from the left, rani and saffron from the
-   bottom corners. The glow is fixed, so glass panels scrolling over it pick up colour like panes in a jharokha. */
+/* Pure white, with coloured light at the edges, as through the old glass of a jharokha: blue and teal from the left,
+   sky from the right, peach from below, and a faint low sunbeam across the upper right. Fixed, so glass panels
+   scrolling over it pick up the colour. */
 body {
   min-height: 100vh;
   background-color: var(--paper);
   background-image:
-    radial-gradient(40% 50% at -6% 8%, rgb(30 155 183 / 0.16), transparent 70%),
-    radial-gradient(36% 46% at 106% 4%, rgb(131 145 232 / 0.18), transparent 70%),
-    radial-gradient(40% 40% at -4% 104%, rgb(214 51 127 / 0.12), transparent 70%),
-    radial-gradient(44% 44% at 104% 104%, rgb(242 165 22 / 0.16), transparent 70%);
+    linear-gradient(122deg, transparent 62%, rgb(255 236 200 / 0.32) 68%, transparent 76%),
+    linear-gradient(90deg, rgb(93 127 214 / 0.2), transparent 14%),
+    radial-gradient(30% 45% at 0% 62%, rgb(63 179 154 / 0.18), transparent 70%),
+    linear-gradient(270deg, rgb(143 178 232 / 0.22), transparent 13%),
+    linear-gradient(0deg, rgb(242 154 140 / 0.16), rgb(244 194 122 / 0.06) 12%, transparent 24%);
   background-attachment: fixed;
 }
 

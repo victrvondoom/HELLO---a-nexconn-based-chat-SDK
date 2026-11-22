@@ -117,9 +117,11 @@ The policy is `decideVerification` in `src/domain/field/rules.ts`. AI never reac
   stored data and keep their names (`meadow`, `clover`...); only `BACKDROP_LABEL` changed.
 - Surfaces are glass on pure white: `.card`/`.panel` use `--glass`, `--glass-edge` and `--glass-blur`; the body carries
   a fixed sunset glow at its edges. `--frame` is a light edge and `--print` a soft shadow (no offset block print).
-- Landing hero: a cusped Mughal arch (`Jharokha.tsx`, computed path) lit from behind in a carved wall at sunset. It
-  greets in seven scripts (`scripts.ts`, Tiro per script, not preloaded) and stops turning on hover, focus, a pick, or
-  reduced motion.
+- Landing hero: `Jharokha.tsx` draws an original SVG scene (no image files): a weathered green plaster wall, nested
+  carved frames with relief filigree (SVG lighting filters), a cusped Mughal arch with three bevelled mouldings, light
+  blooming through the opening, a sunbeam and coloured edge haze. The words sit in the light: a greeting turning
+  through seven scripts (`scripts.ts`, Tiro per script, not preloaded; it stops on hover or reduced motion) and the
+  gold headline. The app body repeats the coloured edge haze.
 - Sidebar: about a dozen everyday items; every other page is under "More" (`nav-model.ts`), and all are in the
   command palette and the phone menu.
 
