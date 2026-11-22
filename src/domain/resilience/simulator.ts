@@ -1,12 +1,12 @@
 import { has, type Placement, type Schedule, type World } from './world';
 
 /**
- * The CON-FUZZ simulator: s' = F(s, Δ).
+ * The Steadfast simulator: s' = F(s, Δ).
  *
  * Applies the fixed operations playbook to schedule `s` under disruption mask `Δ`, then measures a normalised
  * margin for every constraint family. A schedule fails critically when any margin is below zero.
  *
- * Playbook (fixed, documented in docs/HELLO_CONFUZZ.md):
+ * Playbook (fixed, documented in docs/HELLO_STEADFAST.md):
  *   1. A session whose room is lost moves to the standby room in the same slot, if the standby room is
  *      available and free. Sessions are handled in (slot, session id) order, so the result is deterministic.
  *   2. Otherwise the session has no room.

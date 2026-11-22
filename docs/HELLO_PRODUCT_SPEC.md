@@ -10,7 +10,7 @@ HELLO is one application for physical technology events with two connected sides
 (the same `Event`, `Room`, `Session`, `Membership` and `Incident` records):
 
 - **The attendee companion**: what is on, what to see, who to meet, the live room, Plan B, care.
-- **Event operations**: incidents, rooms and AV, approvals, and CON-FUZZ schedule verification.
+- **Event operations**: incidents, rooms and AV, approvals, and Steadfast schedule verification.
 
 Principle: *more useful context from fewer interactions*. The experience is minimal; the depth is underneath.
 
@@ -28,7 +28,7 @@ four tabs plus Menu.
 | Explore | `/events/:id/explore` | One search (sessions, people, rooms, guides, posts…), the programme with add-to-plan, topics, every other tool | Built, verified |
 | Live | `/events/:id/now`, `/now/:sessionId` | Rooms running now; the live room: timeline, questions grouped by similarity, can't hear / can't see, room QR | Built, verified. Captions, audio, slides: externally blocked (no media provider) |
 | People | `/events/:id/people` | Existing directory, follows, profiles | Built (existing). Kairos layer planned |
-| Operations | `/events/:id/operations` | Tabs: Board, Venue and AV (seats, holds, AV signals, mark full), Resilience (CON-FUZZ) | Built, verified |
+| Operations | `/events/:id/operations` | Tabs: Board, Venue and AV (seats, holds, AV signals, mark full), Resilience (Steadfast) | Built, verified |
 
 Sign-in: `/demo` is one button, **Enter HELLO**, with an optional three-way choice (attending, speaking, on the
 team) and a folded "Someone specific" list for testers. `/signin` keeps accounts.
@@ -45,7 +45,7 @@ team) and a folded "Someone specific" list for testers. `/signin` keeps accounts
 | AV signals → one incident | Live room → Operations | Built, verified (3 distinct people in 60 s) |
 | Questions with similar-question grouping | Live room | Built, verified |
 | Care mode ("I need a break"), offline | Today quick help → `/care` | Built; offline cache via `public/sw.js` (production builds) |
-| CON-FUZZ | Operations → Resilience | Built, verified (`docs/HELLO_CONFUZZ.md`) |
+| Steadfast | Operations → Resilience | Built, verified (`docs/HELLO_STEADFAST.md`) |
 | Kairos networking, relationship memory, follow-ups | People | Planned (`docs/HELLO_NETWORKING_KAIROS.md`) |
 | Speed networking, sponsor offers | People | Planned |
 | Graph database (FalkorDB/Neo4j) | — | Planned (`docs/HELLO_EVENT_GRAPH.md`) |

@@ -4,7 +4,7 @@ import { checkMonotone, verifyExact, type Certificate, type MonotonicityReport }
 import { idsOf, makeSchedule, popcount, type DisruptionId, type Placement, type Schedule, type World } from './world';
 
 /**
- * Stages D to E of CON-FUZZ: propose a fix, cost it, let an adversarial Critic attack it, verify it exactly.
+ * Stages D to E of Steadfast: propose a fix, cost it, let an adversarial Critic attack it, verify it exactly.
  * Everything is deterministic and pure. The pipeline stops at a proposal: approving and executing it is a
  * human decision taken in the service layer (src/services/resilience.ts), never here.
  */

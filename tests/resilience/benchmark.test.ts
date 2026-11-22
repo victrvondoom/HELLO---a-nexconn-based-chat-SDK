@@ -7,13 +7,13 @@ import { falseRobust, minimalFailingSets, recallAt } from './groundtruth';
 /**
  * Offline benchmark: Minimal Failure Recall@B and false-robust runs for each search algorithm, across the
  * v1 world and 40 seeded variations (41 worlds). Ground truth comes only from the offline evaluator.
- * Run `npx vitest run tests/resilience/benchmark.test.ts` to print the table recorded in docs/HELLO_CONFUZZ.md.
+ * Run `npx vitest run tests/resilience/benchmark.test.ts` to print the table recorded in docs/HELLO_STEADFAST.md.
  */
 const WORLDS = [benchmarkWorldV1(), ...Array.from({ length: 40 }, (_, i) => seededWorld(i + 1))];
 const ALGORITHMS: Algorithm[] = ['random', 'greedy', 'cardinality', 'monotone'];
 const BUDGETS = [16, 32, 64, 256];
 
-describe('CON-FUZZ benchmark (41 worlds)', () => {
+describe('Steadfast benchmark (41 worlds)', () => {
   const truth = WORLDS.map(({ world, baseline }) => minimalFailingSets(world, baseline));
   const certified = WORLDS.map(({ world, baseline }) => checkMonotone(world, baseline).monotone);
 

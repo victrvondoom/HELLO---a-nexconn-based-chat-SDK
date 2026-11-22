@@ -1,5 +1,5 @@
 /**
- * CON-FUZZ: conference resilience verification. Worlds and schedules.
+ * Steadfast: conference resilience verification. Worlds and schedules.
  *
  * A world is a bounded, versioned description of a venue and a programme, plus the eight atomic disruptions
  * HELLO v1 models. A disruption set is an 8-bit mask, so a world has exactly 2^8 = 256 disruption subsets.

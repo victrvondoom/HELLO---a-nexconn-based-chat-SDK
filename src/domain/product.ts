@@ -730,7 +730,7 @@ export interface CustomMap {
 }
 
 
-// --- Event companion: personal plan, live room, Plan B seat holds, CON-FUZZ proposals ---
+// --- Event companion: personal plan, live room, Plan B seat holds, Steadfast proposals ---
 
 /** A person's declared plan for one event (Grace Period's "personal intent"). Private to its owner. */
 export interface PersonalPlan {
@@ -798,7 +798,7 @@ export interface ScheduleChange {
   toStartsAt: number;
 }
 
-/** A CON-FUZZ proposal, bound to the exact schedule version it was verified against. Staff only. */
+/** A Steadfast proposal, bound to the exact schedule version it was verified against. Staff only. */
 export interface ScheduleProposal {
   id: string;
   eventId: string;

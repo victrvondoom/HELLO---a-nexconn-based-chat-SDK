@@ -1,8 +1,8 @@
-# CON-FUZZ: conference resilience verification
+# Steadfast: schedule resilience verification
 
 Status: **verified and working** (domain, service, Operations panel, tests). Written 2026-11-22.
 
-CON-FUZZ answers one question for an event supervisor: *if this incident happens, possibly with other things
+Steadfast answers one question for an event supervisor: *if this incident happens, possibly with other things
 going wrong at the same time, does the schedule still work, and what is the cheapest change that provably
 does?* It never changes the schedule on its own. It stops at a human approval card.
 

@@ -21,7 +21,7 @@ const STATUS: Record<ScheduleProposal['status'], string> = {
 const time = (ms: number) => new Date(ms).toISOString().slice(11, 16);
 
 /**
- * CON-FUZZ in Operations: choose an incident (or disruptions), run the check, and read the approval card.
+ * Steadfast in Operations: choose an incident (or disruptions), run the check, and read the approval card.
  * Everything on the card is simulator evidence. Approve is offered only to people who may decide, and the
  * server re-checks that and the schedule version on every decision.
  */

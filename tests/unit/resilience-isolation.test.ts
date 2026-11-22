@@ -9,7 +9,7 @@ function files(dir: string): string[] {
   });
 }
 
-describe('CON-FUZZ ground truth isolation', () => {
+describe('Steadfast ground truth isolation', () => {
   it('is imported by no application code: search, Critic, proposer, services and routes never see it', () => {
     const offenders = files('src').filter((f) => /(from\s*['"][^'"]*groundtruth|import\(\s*['"][^'"]*groundtruth|require\(\s*['"][^'"]*groundtruth)/.test(readFileSync(f, 'utf8')));
     expect(offenders).toEqual([]);

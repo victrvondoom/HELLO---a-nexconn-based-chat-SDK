@@ -2,7 +2,7 @@ import type { IncidentCategory, Room, Session } from '../types';
 import { makeSchedule, makeWorld, type DisruptionId, type Placement, type Schedule, type World } from './world';
 
 /**
- * Builds a CON-FUZZ world from the live event, keeping the event's own room and session ids, so the simulator,
+ * Builds a Steadfast world from the live event, keeping the event's own room and session ids, so the simulator,
  * the proposal, the approval and the schedule update all speak about the same records (no copies).
  *
  * Only sessions that have not started are in the world: the past cannot be rescheduled. Slots are the

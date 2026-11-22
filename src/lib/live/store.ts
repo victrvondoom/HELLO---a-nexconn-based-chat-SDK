@@ -43,7 +43,7 @@ function docEvent(collection: CollectionName, doc: Record<string, unknown> | nul
   // A custom map: a shared one refreshes everyone's map page; a private one only its owner's.
   if (collection === 'customMaps') return { eventId, topic: collection, audience: doc?.shared === true ? EVERYONE : people([doc?.ownerId as string | undefined], false) };
   // A plan is its owner's alone. Questions and seat ledgers refresh the live room and Plan B for everyone
-  // (the page re-reads through the API, which hides authors' identities). AV signals and CON-FUZZ proposals
+  // (the page re-reads through the API, which hides authors' identities). AV signals and Steadfast proposals
   // are staff matters: only staff are nudged, and the signal's own author.
   if (collection === 'plans') return { eventId, topic: collection, audience: people([doc?.userId as string | undefined], false) };
   if (collection === 'liveQuestions' || collection === 'seatLedgers') return { eventId, topic: collection, audience: EVERYONE };

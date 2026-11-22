@@ -8,7 +8,7 @@ import { minimalFailingSets } from '../resilience/groundtruth';
 
 const { world, baseline } = benchmarkWorldV1();
 
-describe('CON-FUZZ world and simulator', () => {
+describe('Steadfast world and simulator', () => {
   it('matches the v1 benchmark assumptions', () => {
     expect(world.sessions).toHaveLength(12);
     expect(world.rooms.filter((r) => !r.standby)).toHaveLength(5);
@@ -40,7 +40,7 @@ describe('CON-FUZZ world and simulator', () => {
   });
 });
 
-describe('CON-FUZZ search', () => {
+describe('Steadfast search', () => {
   it('counts each distinct query once and serves repeats from the cache for free', () => {
     const oracle = new Oracle(world, baseline, 3);
     oracle.run(1);
@@ -69,7 +69,7 @@ describe('CON-FUZZ search', () => {
   });
 });
 
-describe('CON-FUZZ repair, Critic and exact verification', () => {
+describe('Steadfast repair, Critic and exact verification', () => {
   const incident = maskOf(['step_free_route_closure']);
   const analysis = resolve(world, baseline, incident);
 

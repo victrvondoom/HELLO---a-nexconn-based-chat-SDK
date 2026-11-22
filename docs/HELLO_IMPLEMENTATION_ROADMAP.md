@@ -9,7 +9,7 @@
 | 4 | Capy Plan B | Done: filters, score, step-free routes, atomic holds, room-full QR |
 | 5 | Personal learning | Planned (needs captions) |
 | 6–8 | Kairos graph, relationship memory, speed networking | Planned (needs a graph store) |
-| 9 | CON-FUZZ | Done: simulator, search, benchmark, Critic, exact verifier, approval, execution |
+| 9 | Steadfast | Done: simulator, search, benchmark, Critic, exact verifier, approval, execution |
 | 10 | Integration and hardening | In progress: tests A–H below |
 
 ## Cross-module tests

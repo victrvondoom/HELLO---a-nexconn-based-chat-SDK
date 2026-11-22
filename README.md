@@ -8,7 +8,7 @@ event, rooms, sessions, people and incidents):
 
 - **For attendees**: what is on, what to see, who to meet, the live session room, a Plan B with a held seat
   when a room is full, and a one-tap "I need a break" that works offline.
-- **For the team**: incidents and AV signals, rooms and seats, approvals, and **CON-FUZZ**, which proves a
+- **For the team**: incidents and AV signals, rooms and seats, approvals, and **Steadfast**, which proves a
   schedule change survives every combination of eight disruptions before an organiser approves it.
 
 The experience is minimal; the depth is underneath.
@@ -18,7 +18,7 @@ The experience is minimal; the depth is underneath.
 > layer and the official-schedule reconciler are not done; the [status table](#status) says exactly what is.
 
 **Contents:** [Quick start](#quick-start) · [Five destinations](#five-destinations) · [Architecture](#architecture) ·
-[Live sessions](#live-sessions) · [Plan B](#plan-b-and-seat-holds) · [CON-FUZZ](#con-fuzz) · [Nexconn](#nexconn) ·
+[Live sessions](#live-sessions) · [Plan B](#plan-b-and-seat-holds) · [Steadfast](#steadfast) · [Nexconn](#nexconn) ·
 [Security](#security-and-privacy) · [Setup](#setup) · [Tests](#tests) · [Status](#status)
 
 ## Quick start
@@ -41,14 +41,14 @@ sixteen seeded, fictional people. Every person, room, session and figure in the 
 | **Explore** | One search for sessions, people, rooms, topics and guides; the programme with *Add to plan*; topics; every other tool in HELLO. |
 | **Live** | Rooms running now and next. A session's live room: timeline, questions grouped by similarity, *Can't hear* / *Can't see*, and the room's QR code. |
 | **People** | The directory, follows and profiles. |
-| **Operations** (staff) | Board (incidents and their targets), Venue and AV (seats, Plan B holds, AV signals, *Mark full*), Resilience (CON-FUZZ). |
+| **Operations** (staff) | Board (incidents and their targets), Venue and AV (seats, Plan B holds, AV signals, *Mark full*), Resilience (Steadfast). |
 
 Nothing was removed: Moments, Ask HELLO, private messages, the schedule, the venue map (2D, 3D, heat, floors),
 announcements, communities, Kingdom and its map, calls, games (now with **Create a game**), Field Atlas, the
 workflow canvas, the privacy filter and more are under **Everything else**, in the command palette (⌘K) and in
 the phone menu. Their details are in [docs/FEATURE_REFERENCE.md](docs/FEATURE_REFERENCE.md).
 
-| Live room | CON-FUZZ approval card | Workflow canvas |
+| Live room | Steadfast approval card | Workflow canvas |
 |---|---|---|
 | ![A live room: title, speaker, timeline, add to plan, an honest note that captions are not connected, and grouped questions](docs/screenshots/live-room.jpg) | ![Operations, Resilience tab: incident picker, disruption chips and a proposal awaiting approval](docs/screenshots/resilience.jpg) | ![The workflow canvas with every node connected and each workflow linked to what it reads and writes](docs/screenshots/canvas.jpg) |
 
@@ -62,7 +62,7 @@ the phone menu. Their details are in [docs/FEATURE_REFERENCE.md](docs/FEATURE_RE
  ┌─────────────────────────────── Next.js server ───────────────────────────────────────┐
  │ Routes ─► Services: the only layer that decides (requireCapability on every call)     │
  │   live-room  plan · AV signals · questions · seat holds · Plan B · care · venue board │
- │   resilience CON-FUZZ check · approval gate · execution · targeted notifications      │
+ │   resilience Steadfast check · approval gate · execution · targeted notifications      │
  │   incidents · approvals · workflows · games · people · search · moments · …           │
  │        ▼                                                                              │
  │ Pure domain (no storage, clock or AI): companion/ · resilience/ · venue/ · incidents/ │
@@ -73,7 +73,7 @@ the phone menu. Their details are in [docs/FEATURE_REFERENCE.md](docs/FEATURE_RE
  └──────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-Every module uses the event's own ids: CON-FUZZ builds its world from the live rooms and sessions, Plan B ranks
+Every module uses the event's own ids: Steadfast builds its world from the live rooms and sessions, Plan B ranks
 the same sessions, AV signals file ordinary incidents. Capacity and one-shot decisions are conditional writes
 (a row lock on Postgres), so concurrent requests cannot over-allocate seats or approve twice.
 More: [docs/HELLO_ARCHITECTURE.md](docs/HELLO_ARCHITECTURE.md), [docs/architecture.md](docs/architecture.md).
@@ -98,7 +98,7 @@ time over the real venue graph, each option with its reasons. **Hold my seat** c
 conditional write and lasts 10 minutes; in the tests, 10 people racing for 3 seats get exactly 3. Staff can mark
 a room full; its door QR sends each person to their own Plan B. ([docs/HELLO_SCHEDULER.md](docs/HELLO_SCHEDULER.md))
 
-## CON-FUZZ
+## Steadfast
 
 A deterministic simulator `s' = F(s, Δ)` checks a schedule against every subset of eight disruptions (2⁸ = 256):
 demand surge, primary room loss, standby room loss, step-free route closure, AV failure, speaker delay, speaker
@@ -108,7 +108,7 @@ reproduces it, finds the minimal failing disruption sets, proposes a fix, lets a
 cheaper rejected fixes with the disruption that breaks each, and **stops at an approval card**. Only an
 organiser can approve; a stale proposal is refused; after approval, only the speakers, attendees with the
 session planned or held, and staff are told. No AI is involved. Benchmark over 41 worlds and every limitation:
-[docs/HELLO_CONFUZZ.md](docs/HELLO_CONFUZZ.md).
+[docs/HELLO_STEADFAST.md](docs/HELLO_STEADFAST.md).
 
 ## Nexconn
 
@@ -164,9 +164,9 @@ research (optional).
 npm run check        # typecheck, lint, unit + integration tests, production build
 npm test             # vitest: 63 files, 663 tests
 npm run test:postgres   # the integration suite on Postgres (HELLO_TEST_DATABASE_URL)
-npx vitest run tests/resilience/benchmark.test.ts   # CON-FUZZ benchmark table
+npx vitest run tests/resilience/benchmark.test.ts   # Steadfast benchmark table
 # browser journeys, against a production demo server (HELLO_DEMO_MODE=true npx next start -p 3000):
-node tests/e2e/companion-flow.mjs   # entry, five destinations, canvas, live room, Plan B, CON-FUZZ, offline care, create a game
+node tests/e2e/companion-flow.mjs   # entry, five destinations, canvas, live room, Plan B, Steadfast, offline care, create a game
 npm run test:e2e     # every journey;  npm run test:routes  crawls every page as every role
 ```
 
@@ -176,11 +176,11 @@ Each browser suite resets the demo first. Evidence for this pass: [docs/TEST_EVI
 
 | | Area |
 |---|---|
-| **Verified and working** | One-button entry; five-destination navigation and phone tab bar; Today; Explore; Live hub and live room (questions, can't hear/see → one AV incident, Better now?); personal plan; Plan B with atomic seat holds and room-full QR; venue and AV board; CON-FUZZ end to end with approval and targeted notifications; care page offline (production build); Create a game; workflow canvas fully connected and painted; all earlier features listed in [docs/FEATURE_REFERENCE.md](docs/FEATURE_REFERENCE.md) |
+| **Verified and working** | One-button entry; five-destination navigation and phone tab bar; Today; Explore; Live hub and live room (questions, can't hear/see → one AV incident, Better now?); personal plan; Plan B with atomic seat holds and room-full QR; venue and AV board; Steadfast end to end with approval and targeted notifications; care page offline (production build); Create a game; workflow canvas fully connected and painted; all earlier features listed in [docs/FEATURE_REFERENCE.md](docs/FEATURE_REFERENCE.md) |
 | **Implemented, externally blocked** | Nexconn token issuance (needs credentials and the Platform Chat API docs); Nexconn Call SDK at runtime (peer override untested without credentials); captions, listen-in audio and slides (no media provider) |
 | **Partial** | Schedule reconciliation: approved changes reconcile plans and notify; the two-minute official-feed reconciler (Grace Period) is not built. People worth meeting: declared interests and planned speakers only |
 | **Planned** | Graph database and Kairos (ranking, relationship memory, follow-ups, cross-event recall, contact QR), speed networking, sponsor offers, jargon coach and recap, post-talk report ([docs/HELLO_IMPLEMENTATION_ROADMAP.md](docs/HELLO_IMPLEMENTATION_ROADMAP.md)) |
-| **Demo-only** | Demo sign-in; seeded people, venue, occupancy and incidents; the CON-FUZZ v1 benchmark world and its 40 seeded variations |
+| **Demo-only** | Demo sign-in; seeded people, venue, occupancy and incidents; the Steadfast v1 benchmark world and its 40 seeded variations |
 
 Known limitations: an approved multi-session change is applied session by session (the approval itself is
 decided once); rate limits are per instance; private messages have no forward secrecy; visual regression,

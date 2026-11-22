@@ -10,7 +10,7 @@ async function code(p: Promise<unknown>): Promise<string> {
   );
 }
 
-describe('CON-FUZZ on the live event (Test E)', () => {
+describe('Steadfast on the live event (Test E)', () => {
   it('reproduces an incident, proposes a certified fix, and changes nothing until a human approves', async () => {
     const h = await createHarness();
     const before = await h.store.listSessions(h.eventId);

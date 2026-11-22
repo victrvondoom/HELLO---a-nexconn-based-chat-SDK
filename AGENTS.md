@@ -163,14 +163,14 @@ Collections: `plans` (`eventId:userId`), `avSignals` (`sessionId:kind:userId`), 
 - `/care` is plain server HTML so `public/sw.js` can cache it. The worker caches only that page and
   `/_next/static`. It registers in production builds only. Clone a response before handing it on.
 
-## CON-FUZZ (`src/domain/resilience`, `src/services/resilience.ts`, Operations → Resilience)
+## Steadfast (`src/domain/resilience`, `src/services/resilience.ts`, Operations → Resilience)
 
 - Pure and deterministic. 8 disruptions, 256 subsets. `worldFromEvent` keeps the event's own ids.
 - Ground truth lives only in `tests/resilience/groundtruth.ts`; `tests/unit/resilience-isolation.test.ts` fails if
   `src/` imports it. Monotone pruning only with a certificate for that exact world and schedule.
 - A proposal is never applied without an organiser (`approval.decide`, signed-in session). Approval re-checks the
   world, baseline and proposed versions and the certificate digest; a mismatch marks it `STALE`.
-- Benchmark: `npx vitest run tests/resilience/benchmark.test.ts`; numbers in `docs/HELLO_CONFUZZ.md`.
+- Benchmark: `npx vitest run tests/resilience/benchmark.test.ts`; numbers in `docs/HELLO_STEADFAST.md`.
 
 ## Nexconn SDKs (`src/integrations/nexconn`)
 
@@ -262,7 +262,7 @@ persistence.
 
 - 2026-11-22: minimal one-button entry, five-destination navigation with the Kingdom door, Today/Explore/Live
   pages, live room (questions, AV signals → one incident), personal plan, Plan B with atomic seat holds, venue
-  board, offline care, CON-FUZZ with approval gate, Create a game, Nexconn Call SDK and token boundary, and the
+  board, offline care, Steadfast with approval gate, Create a game, Nexconn Call SDK and token boundary, and the
   workflow canvas fix (its edge layer was 0px wide under `svg { max-width: 100% }`, so no edge was painted).
   Evidence in `docs/TEST_EVIDENCE.md`.
 

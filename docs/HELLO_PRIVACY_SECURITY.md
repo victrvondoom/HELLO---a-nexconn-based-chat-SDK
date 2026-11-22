@@ -1,4 +1,4 @@
-# Privacy and security for the companion and CON-FUZZ (2026-11-22)
+# Privacy and security for the companion and Steadfast (2026-11-22)
 
 | Rule | How it holds | Test |
 |---|---|---|

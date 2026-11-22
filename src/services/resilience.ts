@@ -9,7 +9,7 @@ import { DISRUPTIONS, DISRUPTION_LABEL, makeSchedule, maskOf, type DisruptionId 
 import { audit, notify, requireCapability, type ServiceContext } from './context';
 
 /**
- * CON-FUZZ in the event: reproduce an incident on the live schedule, search for failure combinations, propose
+ * Steadfast in the event: reproduce an incident on the live schedule, search for failure combinations, propose
  * a fix, let the Critic attack it, verify all 256 disruption subsets, and stop at a human approval card.
  *
  * Authority: operations staff and organisers may run a check (`approval.request`); only someone who may decide
@@ -51,7 +51,7 @@ export async function runResilienceCheck(ctx: ServiceContext, eventId: string, u
   const audience = await affectedPeople(ctx, eventId, changes.map((c) => c.sessionId));
 
   const proposal: ScheduleProposal = {
-    id: ctx.newId('cfz'),
+    id: ctx.newId('sfp'),
     eventId,
     incidentId: incident?.id ?? null,
     createdByUserId: userId,

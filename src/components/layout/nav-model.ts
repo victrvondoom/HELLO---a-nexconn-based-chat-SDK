@@ -48,7 +48,7 @@ export function buildNav(input: NavInput): Nav {
     { href: `${base}/people`, label: 'People', icon: 'people', keywords: 'profiles follow network attendees connections meet' },
   ];
   if (input.operational) {
-    primary.push({ href: `${base}/operations`, label: 'Operations', icon: 'operations', keywords: 'ops board sla approvals incidents av rooms resilience con-fuzz verification' });
+    primary.push({ href: `${base}/operations`, label: 'Operations', icon: 'operations', keywords: 'ops board sla approvals incidents av rooms resilience steadfast verification' });
   }
   const groups: NavGroup[] = [{ id: 'main', label: null, items: primary }];
 

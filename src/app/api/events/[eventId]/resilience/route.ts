@@ -9,7 +9,7 @@ export const GET = viewerRoute<{ eventId: string }>('resilience.list', async ({ 
   return jsonOk({ proposals: await listProposals(ctx, params.eventId, userId) });
 });
 
-/** Runs a CON-FUZZ check. Signed-in sessions only (viewerRoute): an access token or an agent cannot. */
+/** Runs a Steadfast check. Signed-in sessions only (viewerRoute): an access token or an agent cannot. */
 export const POST = viewerRoute<{ eventId: string }>('resilience.check', async ({ userId, params, request }) => {
   const input = await parseBody(request, RunCheckSchema, 'Choose an incident or disruptions to check.');
   const { ctx } = await getRuntime();

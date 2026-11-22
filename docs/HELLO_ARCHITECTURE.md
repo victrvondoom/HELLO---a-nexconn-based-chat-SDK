@@ -8,7 +8,7 @@
    ┌───────────────────────── Next.js server ─────────────────────────────────────────┐
    │ Routes (parse + rate limit) ──► Services (authority: requireCapability)           │
    │   live-room.ts  plan · AV signals · questions · seat holds · Plan B · care        │
-   │   resilience.ts CON-FUZZ check · approval gate · execution · targeted notify      │
+   │   resilience.ts Steadfast check · approval gate · execution · targeted notify      │
    │   incidents.ts  (AV signals file reports through the same pipeline)               │
    │   workflows.ts, games.ts, people.ts, search.ts, … (existing)                      │
    │        │                         │                                                │
@@ -29,13 +29,13 @@
 
 ## Authority boundaries
 
-- **Shared event context**: every module uses the event's own `Room`, `Session`, `Incident` ids. CON-FUZZ builds
+- **Shared event context**: every module uses the event's own `Room`, `Session`, `Incident` ids. Steadfast builds
   its world from them (`worldFromEvent`) instead of copying; Plan B ranks the same sessions; AV signals file
   ordinary incidents.
 - **Services decide**, React only presents. Every route goes through a service that calls `requireCapability`.
 - **Concurrency**: one-shot transitions and capacity checks are conditional `docMutate` calls (row lock on
   Postgres, synchronous in memory): seat holds, proposal approval, AV-signal claiming.
-- **AI**: none of the new modules calls a model. CON-FUZZ, Plan B, question grouping and AV aggregation are
+- **AI**: none of the new modules calls a model. Steadfast, Plan B, question grouping and AV aggregation are
   deterministic. No model can approve, publish a schedule or award anything.
 - **Nexconn** is the messaging transport. HELLO's backend stays authoritative for approvals, reservations,
   certificates and staff assignments; nothing received over chat can forge them.

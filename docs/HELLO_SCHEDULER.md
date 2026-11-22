@@ -24,7 +24,7 @@ opens Today with `?planb=<session>`, i.e. each person's own alternatives with "H
 
 ## Reconciliation (partial)
 
-Built: when an organiser approves a CON-FUZZ change, the sessions move and exactly the people concerned are
+Built: when an organiser approves a Steadfast change, the sessions move and exactly the people concerned are
 notified (speakers, attendees with the session in their plan or a held seat, staff); Today shows the change.
 Planned (Grace Period): ingesting an official schedule feed (iCal/JSON/CSV with ETag) every two minutes into
 versioned snapshots, a diff against each plan, and Plan B for plans that no longer fit.

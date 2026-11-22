@@ -1,7 +1,7 @@
 /* global process, console, navigator */
 /**
  * Companion journey (2026-11-22): one-button entry, the five destinations, the connected workflow canvas,
- * the live room, a room marked full leading to a Plan B seat hold, a CON-FUZZ check approved by an organiser,
+ * the live room, a room marked full leading to a Plan B seat hold, a Steadfast check approved by an organiser,
  * and the care page opening offline. Needs a production demo server (the offline worker registers only in
  * production builds): HELLO_DEMO_MODE=true npx next start -p 3000. BASE_URL and CHROMIUM_PATH are optional.
  *
@@ -93,7 +93,7 @@ const nadia = await org.newPage();
 nadia.on('pageerror', (e) => errors.push(e.message));
 await nadia.request.post(`${BASE}/api/demo/session`, { data: { userId: 'u-org-nadia' } });
 
-await step('C7 an organiser runs CON-FUZZ and approves a fix verified on all 256 combinations', async () => {
+await step('C7 an organiser runs Steadfast and approves a fix verified on all 256 combinations', async () => {
   await nadia.goto(`${BASE}/events/${E}/operations?tab=resilience`);
   await nadia.getByRole('button', { name: 'Run resilience check' }).click();
   await nadia.getByRole('button', { name: 'Approve change' }).waitFor({ timeout: 30000 });

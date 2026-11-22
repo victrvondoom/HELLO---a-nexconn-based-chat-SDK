@@ -3,11 +3,11 @@
 Recorded on 2026-11-17 on branch `claude/eager-ritchie-argdtp`. Each row is a command that was run, with its result.
 A failing run is recorded here too. Nothing is marked as passing without a run.
 
-## Minimal companion, Plan B, CON-FUZZ, connected canvas (2026-11-22, branch `claude/admiring-albattani-xkgn2t`)
+## Minimal companion, Plan B, Steadfast, connected canvas (2026-11-22, branch `claude/admiring-albattani-xkgn2t`)
 
 Scope: one-button entry, five destinations, Today/Explore/Live, live room, plan, Plan B and seat holds, venue
-board, offline care, CON-FUZZ, Create a game, Nexconn Call SDK and token boundary, workflow canvas fix. Specs:
-[HELLO_PRODUCT_SPEC.md](HELLO_PRODUCT_SPEC.md), [HELLO_CONFUZZ.md](HELLO_CONFUZZ.md).
+board, offline care, Steadfast, Create a game, Nexconn Call SDK and token boundary, workflow canvas fix. Specs:
+[HELLO_PRODUCT_SPEC.md](HELLO_PRODUCT_SPEC.md), [HELLO_STEADFAST.md](HELLO_STEADFAST.md).
 
 | Command | Result |
 |---|---|
@@ -15,8 +15,8 @@ board, offline care, CON-FUZZ, Create a game, Nexconn Call SDK and token boundar
 | `npm run lint` | Passes. |
 | `npx vitest run` | 63 files; 663 passed, 3 skipped (baseline 55 files, 625 passed). New: `tests/unit/resilience.test.ts`, `tests/unit/resilience-isolation.test.ts`, `tests/unit/nexconn.test.ts`, `tests/resilience/benchmark.test.ts`, `tests/integration/resilience.test.ts`, `tests/integration/live-room.test.ts`, `tests/integration/flow-graph.test.ts`, `tests/integration/custom-quiz.test.ts`. |
 | `npm run build` | Passes. |
-| `npx vitest run tests/resilience/benchmark.test.ts` | Table in HELLO_CONFUZZ.md: 41 worlds, 24 monotone; minimal-set enumeration exact at B=256 in every world. |
-| `node tests/e2e/companion-flow.mjs` (production build, demo mode) | 9/9, no page errors: one-button entry, nav = Today/Explore/Live/People, canvas edge layer painted (1122×976 px), add to plan → Today, live-room question, mark full → room-full QR → Plan B seat held, organiser approves a CON-FUZZ fix with 256/256 subsets, care page opens with the network off, custom quiz created. |
+| `npx vitest run tests/resilience/benchmark.test.ts` | Table in HELLO_STEADFAST.md: 41 worlds, 24 monotone; minimal-set enumeration exact at B=256 in every world. |
+| `node tests/e2e/companion-flow.mjs` (production build, demo mode) | 9/9, no page errors: one-button entry, nav = Today/Explore/Live/People, canvas edge layer painted (1122×976 px), add to plan → Today, live-room question, mark full → room-full QR → Plan B seat held, organiser approves a Steadfast fix with 256/256 subsets, care page opens with the network off, custom quiz created. |
 | `judge-flow`, `features-flow`, `field-atlas-flow`, `workflow-audit`, `product-flow` (same server, one at a time) | 13/13, 10/10, 19/19, 22/22, all passed; no page errors. |
 | `node tests/e2e/route-crawl.mjs` (now with Explore, Live, live room, room-full, care, Plan B, Operations tabs) | 490 pages, 60 correctly denied, 10 problems: all on `/privacy-filter`, whose self-hosted models are absent because `npm run privacy:assets` needs network access this container does not have. Not caused by this change. |
 | `npm run test:postgres`, `chat-bridge-flow`, `call-flow`, `live-flow`, `privacy-*-flow`, `private-messages`, `outbox-flow`, `field-live-flow` | Not run in this pass (no Postgres, no chat secret, no privacy models). |
