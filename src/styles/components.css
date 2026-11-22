@@ -76,8 +76,8 @@ a.panel:hover {
   color: var(--btn-fg);
   background: var(--btn-bg);
   border: 1px solid var(--btn-edge);
-  border-radius: var(--r-md);
-  padding: 10px 16px;
+  border-radius: var(--r-pill);
+  padding: 10px 18px;
   min-height: 40px;
   cursor: pointer;
   text-decoration: none;
@@ -86,7 +86,7 @@ a.panel:hover {
     inset 0 1px 0 rgb(255 255 255 / 0.22),
     inset 0 -2px 0 rgb(0 0 0 / 0.14),
     0 1px 2px rgb(var(--ink-rgb) / 0.18),
-    0 8px 18px -10px rgb(31 111 53 / 0.75);
+    0 8px 18px -10px rgb(42 56 150 / 0.75);
   transition: background var(--t-fast) ease, transform var(--t-fast) var(--ease-out), box-shadow var(--t-med) var(--ease-out);
 }
 
@@ -99,7 +99,7 @@ a.panel:hover {
     inset 0 1px 0 rgb(255 255 255 / 0.22),
     inset 0 -2px 0 rgb(0 0 0 / 0.14),
     0 2px 4px rgb(var(--ink-rgb) / 0.16),
-    0 14px 24px -12px rgb(31 111 53 / 0.8);
+    0 14px 24px -12px rgb(42 56 150 / 0.8);
 }
 
 .button:active {
@@ -139,7 +139,7 @@ a.panel:hover {
   box-shadow: var(--e2);
 }
 
-/* Sky: secondary actions that move you somewhere (directions, open, join). */
+/* Peacock: secondary actions that move you somewhere (directions, open, join). */
 .button--sky {
   --btn-bg: var(--sky-700);
   --btn-bg-hover: var(--sky-800);
@@ -147,10 +147,10 @@ a.panel:hover {
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.22),
     inset 0 -2px 0 rgb(0 0 0 / 0.14),
-    0 8px 18px -10px rgb(21 101 168 / 0.75);
+    0 8px 18px -10px rgb(11 100 120 / 0.7);
 }
 
-/* Sun: the editorial accent. Ink text on the highlighter, with a printed offset shadow. */
+/* Kesar: the editorial accent. Ink on saffron, with an offset shadow like a block print slightly out of register. */
 .button--sun {
   --btn-bg: var(--sun-500);
   --btn-bg-hover: var(--sun-400);
@@ -173,7 +173,7 @@ a.panel:hover {
   --btn-bg: var(--poppy-700);
   --btn-bg-hover: var(--poppy-800);
   --btn-edge: var(--poppy-800);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.2), 0 8px 18px -10px rgb(179 38 30 / 0.7);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.2), 0 8px 18px -10px rgb(176 38 28 / 0.7);
 }
 
 .button--quiet-danger {
@@ -193,14 +193,14 @@ a.panel:hover {
   min-height: 32px;
   padding: 7px 12px;
   font-size: 13px;
-  border-radius: var(--r-sm);
+  border-radius: var(--r-pill);
 }
 
 .button--lg {
   min-height: 50px;
   padding: 14px 22px;
-  font-size: 15.5px;
-  border-radius: 14px;
+  font-size: 16px;
+  border-radius: var(--r-pill);
 }
 
 .button--block {
@@ -646,11 +646,11 @@ table {
 
 th {
   text-align: left;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-family: var(--font-sans);
+  font-variation-settings: 'wdth' 86;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   color: var(--text-3);
   padding: 10px var(--s-4);
   border-bottom: 1px solid var(--line);
@@ -740,19 +740,19 @@ tbody tr:last-child td {
   border: 1px dashed var(--line-strong);
   border-radius: var(--r-lg);
   background:
-    radial-gradient(120px 60px at 50% 100%, rgb(124 197 107 / 0.18), transparent 70%),
+    radial-gradient(120px 60px at 50% 100%, rgb(131 145 232 / 0.18), transparent 70%),
     var(--surface-2);
   color: var(--text-2);
   font-size: 14px;
 }
 
-/* A small sprout above every empty state: nothing here yet, but something will grow. */
+/* A small diya above every empty state: nothing here yet, but the lamp is lit. */
 .empty::before {
   content: '';
   width: 44px;
   height: 36px;
   margin-bottom: 4px;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 36'%3E%3Cpath d='M4 33h36' stroke='%2314231a' stroke-opacity='.25' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M22 33V17' stroke='%231f6f35' stroke-width='2.4' stroke-linecap='round'/%3E%3Cpath d='M22 20c0-7 5-12 13-12 0 8-5 12-13 12z' fill='%2347a75a'/%3E%3Cpath d='M22 23c0-6-4-10-11-10 0 6 4 10 11 10z' fill='%237cc56b'/%3E%3C/svg%3E") no-repeat center / contain;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 36'%3E%3Cpath d='M4 33h36' stroke='%23181a35' stroke-opacity='.2' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M7 22h30c-2 7-8 10-15 10S9 29 7 22z' fill='%23d9861a'/%3E%3Cpath d='M7 22h30' stroke='%232a3896' stroke-width='2' stroke-linecap='round'/%3E%3Cpath d='M22 4c5 6 6 11 0 16-6-5-5-10 0-16z' fill='%23f6bc4a'/%3E%3Cpath d='M22 11c2 3 2 6 0 8-2-2-2-5 0-8z' fill='%23d6337f'/%3E%3C/svg%3E") no-repeat center / contain;
 }
 
 .empty strong {
@@ -800,7 +800,7 @@ tbody tr:last-child td {
   height: 8px;
   border-radius: 50%;
   background: var(--grass-500);
-  box-shadow: 0 0 0 3px rgb(71 167 90 / 0.18);
+  box-shadow: 0 0 0 3px rgb(84 102 214 / 0.18);
 }
 
 .live__dot::after {
@@ -836,7 +836,7 @@ tbody tr:last-child td {
   gap: 6px 18px;
   padding: 9px 16px;
   border-radius: var(--r-pill);
-  background: rgb(255 253 247 / 0.86);
+  background: rgb(255 255 255 / 0.86);
   border: 1px solid var(--line);
   box-shadow: var(--e2);
   font-size: 13.5px;
@@ -982,7 +982,7 @@ tbody tr:last-child td {
   font: inherit;
   font-size: 18px;
   line-height: 1;
-  color: rgb(245 241 230 / 0.7);
+  color: rgb(251 250 247 / 0.7);
   background: transparent;
   border: 0;
   cursor: pointer;
@@ -1019,7 +1019,7 @@ tbody tr:last-child td {
 }
 
 .dialog::backdrop {
-  background: rgb(15 61 30 / 0.28);
+  background: rgb(24 32 92 / 0.28);
   backdrop-filter: blur(4px);
 }
 
@@ -1098,7 +1098,7 @@ tbody tr:last-child td {
   justify-content: center;
   align-items: flex-start;
   padding: 12vh 16px 16px;
-  background: rgb(15 61 30 / 0.26);
+  background: rgb(24 32 92 / 0.26);
   backdrop-filter: blur(5px);
   animation: fade-in var(--t-med) ease;
 }
@@ -1165,13 +1165,14 @@ tbody tr:last-child td {
   min-width: 84px;
   padding: 2px 8px;
   border-radius: var(--r-pill);
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-family: var(--font-sans);
+  font-variation-settings: 'wdth' 86;
+  font-size: 12.5px;
+  letter-spacing: 0.01em;
   text-align: center;
   color: var(--grass-800);
   background: var(--grass-100);
+  font-weight: 600;
 }
 
 .palette__detail {
@@ -1238,4 +1239,47 @@ tbody tr:last-child td {
 
 .status-page h1 {
   font-size: clamp(40px, 6vw, 64px);
+}
+
+/* ---------- Jharokha motifs ---------- */
+
+/* The woven band: a block-printed border, used to open and close a surface. Height is set where it is used. */
+.weave {
+  height: 8px;
+  background: var(--weave) 0 50% / auto 100% repeat-x;
+  image-rendering: pixelated;
+}
+
+/* A rangoli flower (components/brand/Motifs.tsx). Decorative; it never takes pointer events. */
+.rangoli {
+  display: block;
+  flex-shrink: 0;
+  overflow: visible;
+  pointer-events: none;
+  filter: drop-shadow(0 6px 10px rgb(var(--ink-rgb) / 0.12));
+}
+
+/* A blue-pottery medallion (components/brand/Motifs.tsx): a painted rim, a white glaze line, the lotus tile. */
+.medallion {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--rim);
+  box-shadow: 0 14px 30px -16px rgb(var(--ink-rgb) / 0.5);
+}
+
+.medallion::before {
+  content: '';
+  position: absolute;
+  inset: 13%;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.medallion__lotus {
+  position: relative;
+  width: 70%;
+  height: 70%;
 }

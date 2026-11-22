@@ -89,7 +89,7 @@ try {
   await ada.page.goto(page('/atlas'));
   await shot(ada.page, 'field-atlas');
   await ada.page.keyboard.press('Control+k');
-  await ada.page.getByLabel('Search pages').last().fill('reels');
+  await ada.page.getByLabel('Search the event').fill('reels');
   await shot(ada.page, 'command-palette');
   await ada.context.close();
 

@@ -101,12 +101,22 @@ The policy is `decideVerification` in `src/domain/field/rules.ts`. AI never reac
 - Export includes the person's own Field Atlas records. Erasure deletes their attempts, ledger entries and badges, and
   unlinks their flags. Other people's records are not changed.
 
-## Design system: Meadow (`src/styles/*`)
+## Design system: Jharokha (`src/styles/*`, `src/components/brand/*`)
 
 - One token file (`tokens.css`), then `base.css`, `components.css` (primitives), `shell.css`, and one file per area
   (`landing`, `ops`, `social`, `venue`, `moments`), imported in that order by `src/app/layout.tsx`.
-- Palette roles: grass = primary/success, sky = links/info/live, sun = selected/current, poppy = danger only.
-  Type: Instrument Serif (display, >= 22px), Inter (reading), JetBrains Mono (labels). Use tokens, not hex.
+- Indian craft on a lime-washed wall. Palette: neel indigo = primary, peacock = links/info/live, kesar saffron =
+  selected/current, rani pink = Moments and decoration, mehendi green = success, sindoor = danger only. The older role
+  names (`--grass-*` = neel, `--sky-*` = peacock, `--sun-*` = kesar, `--poppy-*` = sindoor, `--clay-*` = rani) are kept
+  as aliases so area files did not change; new code may use either. Use tokens, not hex.
+- Type: Tiro Devanagari Hindi (display, >= 22px; Latin and Devanagari), Anek Latin (reading; `wdth` axis, labels at
+  86), JetBrains Mono (figures and code only). Labels are sentence case, never tracked all-caps.
+- Motifs, each with one meaning: `--weave` (woven border: opens and closes a page, top of the top bar), `--rim`
+  (blue-pottery rim: unseen story rings, medallions), `--arch` (jharokha ogee mask: the landing window), rangoli
+  flowers (`Motifs.tsx`, decoration only), the ghat (`Scenery.tsx`, the event postcard). Moments backdrop keys are
+  stored data and keep their names (`meadow`, `clover`...); only `BACKDROP_LABEL` changed.
+- Landing hero: `Jharokha.tsx` greets in seven scripts (`scripts.ts`, Tiro per script, not preloaded). It stops turning
+  on hover, focus, a pick, or reduced motion.
 - Area files must not define the same class as another area file or as a primitive. `tests/unit/style-boundaries.test.ts`
   enforces this (a `.tile` collision once broke the Games tiles). Compose with scoped selectors instead (`.panel.inline-form`).
 - Navigation model: `src/components/layout/nav-model.ts`. `.nav-count` marks unread notifications only (an e2e test

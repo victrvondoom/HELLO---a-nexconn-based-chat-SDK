@@ -1,400 +1,286 @@
 /* =============================================================================
-   Landing: the meadow hero, editorial sections, the Moments phone, the agent mesh.
+   Landing: the jharokha hero, editorial sections, the Moments phone, the agent mesh.
    .mesh, .agent-card, .scope and .orbit-chip__dot are shared with the /agents page.
    ============================================================================= */
 
 .landing {
-  --land: clamp(250px, 38vh, 360px);
   min-height: 100vh;
   overflow-x: clip;
 }
 
-/* ---------- top navigation, floating over the sky ---------- */
+/* The woven border that opens and closes the page, like the edge of a sari. */
+.landing__weave {
+  height: 12px;
+}
+
+/* ---------- top navigation ---------- */
 
 .landing__nav {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--s-4);
-  padding: 20px clamp(16px, 4vw, 48px);
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 18px clamp(16px, 4vw, 48px);
 }
 
 .landing__brand {
   display: inline-flex;
   align-items: center;
-  padding: 8px 14px;
-  border-radius: 14px;
-  background: var(--paper);
-  border: 1.5px solid var(--frame);
-  box-shadow: var(--print);
-  transition: transform var(--t-fast) var(--ease-out), box-shadow var(--t-fast) var(--ease-out);
-}
-
-.landing__brand:hover {
-  transform: translate(-1px, -1px);
-  box-shadow: 4px 4px 0 var(--frame);
+  padding: 6px 4px;
 }
 
 .landing__links {
   display: flex;
   align-items: center;
-  gap: clamp(14px, 2vw, 26px);
+  gap: clamp(14px, 2vw, 28px);
 }
 
 .landing__links a:not(.button) {
-  color: #fff;
-  font-size: 14.5px;
-  font-weight: 560;
-  text-shadow: 0 1px 2px rgb(4 30 60 / 0.35);
+  color: var(--ink-2);
+  font-size: 15px;
+  font-weight: 540;
 }
 
 .landing__links a:not(.button):hover {
-  color: #fff;
+  color: var(--neel-700);
   text-decoration: underline;
+  text-decoration-color: var(--kesar-500);
 }
 
-/* Over the sky, a secondary action is frosted glass. */
-.button--glass {
-  --btn-bg: rgb(255 255 255 / 0.12);
-  --btn-bg-hover: rgb(255 255 255 / 0.22);
-  --btn-fg: #fff;
-  --btn-edge: rgb(255 255 255 / 0.55);
-  box-shadow: 0 10px 30px -18px rgb(4 30 60 / 0.8);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-}
-
-.button--glass:hover {
-  box-shadow: 0 14px 30px -16px rgb(4 30 60 / 0.8);
-}
-
-/* ---------- the meadow scene ---------- */
+/* ---------- hero: words on the left, the window on the right ---------- */
 
 .hero {
-  position: relative;
-}
-
-.meadow {
-  --px: 0;
-  --py: 0;
-  --scroll: 0;
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  min-height: min(100svh, 980px);
-}
-
-.meadow__sky {
-  position: absolute;
-  inset: 0;
-  z-index: -3;
-  background-image:
-    var(--grain),
-    linear-gradient(
-      180deg,
-      #10366a 0%,
-      #1a5597 32%,
-      #2a72b9 calc(100% - var(--land) - 30px),
-      #6fb2e4 calc(100% - var(--land) + 80px),
-      #cfe8f3 calc(100% - var(--land) * 0.4),
-      #e9f2e6 100%
-    );
-  background-size: 220px 220px, auto;
-}
-
-/* The sun: one soft radial with no hard edge, so no ring shows against the sky. */
-.meadow__sun {
-  position: absolute;
-  right: 1%;
-  top: -3%;
-  width: 300px;
-  height: 300px;
-  border-radius: 50%;
-  background: radial-gradient(circle, #fffdf0 0 15%, #fdeeb4 21%, rgb(253 233 164 / 0.42) 30%, rgb(253 233 164 / 0.14) 44%, rgb(253 233 164 / 0) 64%);
-  translate: calc(var(--px) * -10px) calc(var(--py) * -6px + var(--scroll) * 240px);
-  transition: translate 0.9s var(--ease-out);
-}
-
-/* A cloud is three soft lobes, blurred a little: puffy rather than a pill. */
-.meadow__cloud {
-  position: absolute;
-  height: 70px;
-  background:
-    radial-gradient(34% 70% at 26% 66%, #fff 0 62%, transparent 64%),
-    radial-gradient(30% 92% at 52% 46%, #fff 0 62%, transparent 64%),
-    radial-gradient(28% 64% at 78% 66%, #fff 0 62%, transparent 64%),
-    radial-gradient(60% 40% at 52% 82%, #fff 0 70%, transparent 72%);
-  filter: blur(7px);
-  opacity: 0.62;
-  will-change: transform;
-  animation: cloud-sail 70s linear infinite alternate;
-  translate: calc(var(--px) * -16px) calc(var(--scroll) * 180px);
-  transition: translate 0.9s var(--ease-out);
-}
-
-.meadow__cloud--a {
-  top: 7%;
-  left: 24%;
-  width: 280px;
-}
-
-.meadow__cloud--b {
-  top: 44%;
-  left: 60%;
-  width: 380px;
-  height: 84px;
-  opacity: 0.42;
-  animation-duration: 90s;
-}
-
-.meadow__cloud--c {
-  top: 8%;
-  left: 68%;
-  width: 200px;
-  height: 52px;
-  opacity: 0.5;
-  animation-duration: 60s;
-  animation-direction: alternate-reverse;
-}
-
-.meadow__cloud--d {
-  top: 56%;
-  left: 36%;
-  width: 230px;
-  height: 50px;
-  opacity: 0.3;
-  animation-duration: 80s;
-}
-
-@keyframes cloud-sail {
-  from {
-    transform: translateX(-40px);
-  }
-  to {
-    transform: translateX(60px);
-  }
-}
-
-.meadow__land {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: var(--land);
-  z-index: -1;
-  pointer-events: none;
-}
-
-.meadow__layer {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  will-change: translate;
-  transition: translate 0.8s var(--ease-out);
-}
-
-/* Far layers move least with the pointer and lag most on scroll: that difference is the depth. */
-.meadow__layer--far {
-  translate: calc(var(--px) * -6px) calc(var(--scroll) * 150px);
-}
-
-.meadow__layer--back {
-  translate: calc(var(--px) * -13px) calc(var(--scroll) * 100px);
-}
-
-.meadow__layer--mid {
-  translate: calc(var(--px) * -22px) calc(var(--scroll) * 56px);
-}
-
-.meadow__layer--near {
-  translate: calc(var(--px) * -36px) calc(var(--scroll) * 18px);
-}
-
-.meadow__walker {
-  animation: meadow-walk 48s linear infinite;
-}
-
-@keyframes meadow-walk {
-  0% {
-    transform: translate(-120px, 26px);
-    opacity: 0;
-  }
-  6% {
-    opacity: 1;
-  }
-  94% {
-    opacity: 1;
-  }
-  100% {
-    transform: translate(150px, -30px);
-    opacity: 0;
-  }
-}
-
-.meadow__content {
-  position: relative;
-  z-index: 1;
-  flex: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.7fr);
-  gap: var(--s-8);
-  align-items: start;
-  width: 100%;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  gap: clamp(32px, 4vw, 64px);
+  align-items: center;
   max-width: 1320px;
   margin: 0 auto;
-  padding: clamp(100px, 14vh, 136px) clamp(16px, 5vw, 64px) calc(var(--land) + 8px);
+  padding: clamp(24px, 5vh, 56px) clamp(16px, 5vw, 64px) clamp(56px, 9vh, 96px);
 }
-
-/* ---------- hero copy ---------- */
 
 .hero__copy {
-  max-width: 780px;
-  color: #fff;
-}
-
-.hero__eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--sun-300);
-}
-
-.hero__eyebrow::before {
-  content: '';
-  width: 28px;
-  height: 2px;
-  border-radius: 2px;
-  background: var(--sun-400);
+  max-width: 720px;
 }
 
 .hero h1 {
-  margin-top: 16px;
-  font-size: clamp(46px, min(6.8vw, 10.5vh), 100px);
-  line-height: 0.94;
-  letter-spacing: -0.03em;
-  color: #fff;
-  text-shadow: 0 2px 30px rgb(4 30 60 / 0.35);
+  font-size: clamp(42px, min(4.7vw, 9vh), 72px);
+  line-height: 1.06;
+  letter-spacing: -0.02em;
+  color: var(--ink);
 }
 
 .hero h1 em {
-  color: var(--sun-300);
+  color: var(--neel-700);
 }
 
 .hero__lead {
-  margin-top: 22px;
-  max-width: 64ch;
-  font-size: clamp(16px, 1.35vw, 18.5px);
-  line-height: 1.62;
-  color: rgb(255 255 255 / 0.94);
-  text-shadow: 0 1px 2px rgb(4 30 60 / 0.4);
+  margin-top: 26px;
+  max-width: 56ch;
+  font-size: clamp(16.5px, 1.3vw, 18.5px);
+  line-height: 1.65;
+  color: var(--ink-2);
 }
 
 .hero__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 14px;
-  margin-top: 30px;
+  gap: 12px;
+  margin-top: 32px;
 }
 
-/* The live figures stand on the grass like a sign by the path. */
 .hero__live {
-  position: absolute;
-  left: clamp(16px, 5vw, 64px);
-  bottom: calc(var(--land) * 0.32);
+  margin-top: 28px;
+}
+
+/* ---------- the jharokha ---------- */
+
+.jharokha {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 58px;
   margin: 0;
 }
 
-/* ---------- floating agent chips: glass cards at different depths ---------- */
-
-.hero__floats {
+.jharokha__frame {
   position: relative;
-  min-height: 440px;
+  width: min(100%, 420px);
+  aspect-ratio: 400 / 520;
 }
 
-.float-chip {
+/* Carved stone around the opening: a band of lime wash edged with a saffron line, both cut to the same arch. */
+.jharokha__frame::before,
+.jharokha__frame::after {
+  content: '';
   position: absolute;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 18px 12px 12px;
-  border-radius: 18px;
-  font-weight: 620;
-  font-size: 15px;
-  color: #fff;
-  background: rgb(255 255 255 / 0.14);
-  border: 1px solid rgb(255 255 255 / 0.4);
-  box-shadow: 0 24px 50px -24px rgb(4 30 60 / 0.75), inset 0 1px 0 rgb(255 255 255 / 0.35);
-  -webkit-backdrop-filter: blur(12px) saturate(1.3);
-  backdrop-filter: blur(12px) saturate(1.3);
-  animation: chip-bob 7s ease-in-out infinite;
-  transition: translate 0.7s var(--ease-out);
+  -webkit-mask: var(--arch) center / 100% 100% no-repeat;
+  mask: var(--arch) center / 100% 100% no-repeat;
 }
 
-.float-chip small {
-  display: block;
-  margin-top: 2px;
-  font-size: 12.5px;
-  font-weight: 500;
-  color: rgb(255 255 255 / 0.86);
+.jharokha__frame::before {
+  inset: -16px -16px 0;
+  background: var(--kesar-500);
 }
 
-.float-chip__num {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  flex-shrink: 0;
+.jharokha__frame::after {
+  inset: -14px -14px 0;
+  background: var(--paper);
+}
+
+.jharokha__window {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background:
+    radial-gradient(60% 34% at 50% 66%, rgb(252 229 181 / 0.85), transparent 70%),
+    var(--dawn-gradient);
+  -webkit-mask: var(--arch) center / 100% 100% no-repeat;
+  mask: var(--arch) center / 100% 100% no-repeat;
+}
+
+/* Steps down to the water: the ghat at the foot of the window. */
+.jharokha__ghat {
+  position: absolute;
+  inset: auto 0 0;
+  height: 15%;
+  background: repeating-linear-gradient(180deg, rgb(16 21 63 / 0.9) 0 8px, rgb(16 21 63 / 0.7) 8px 12px);
+}
+
+/* The medallion: a blue-pottery rim around an indigo glaze, holding the greeting. */
+.jharokha__medallion {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 6px;
+  width: 68%;
+  aspect-ratio: 1;
+  margin-top: 8%;
+  padding: 16px;
   border-radius: 50%;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--ink);
-  background: var(--sun-400);
-  border: 1.5px solid var(--frame);
+  text-align: center;
+  background:
+    radial-gradient(circle at 50% 38%, var(--neel-600), var(--neel-800) 70%, var(--neel-900));
+  box-shadow: 0 24px 50px -20px rgb(16 21 63 / 0.7);
 }
 
-.float-chip--1 {
-  top: 10%;
-  left: 0;
-  translate: calc(var(--px) * 26px) calc(var(--py) * 16px);
+.jharokha__medallion::before {
+  content: '';
+  position: absolute;
+  inset: -12px;
+  border-radius: 50%;
+  background: var(--rim);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 13px), #000 calc(100% - 12px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 13px), #000 calc(100% - 12px));
 }
 
-.float-chip--2 {
-  top: 40%;
-  right: 6%;
-  animation-delay: -2.4s;
-  translate: calc(var(--px) * 40px) calc(var(--py) * 24px);
+.jharokha__hello {
+  font-size: clamp(32px, 3.6vw, 50px);
+  line-height: 1.25;
+  color: #fff;
+  animation: jharokha-in 600ms var(--ease-out);
 }
 
-.float-chip--3 {
-  top: 68%;
-  left: 14%;
-  animation-delay: -4.6s;
-  translate: calc(var(--px) * 18px) calc(var(--py) * 12px);
+.jharokha__caption {
+  font-size: 14px;
+  font-weight: 560;
+  font-variation-settings: 'wdth' 86;
+  color: var(--kesar-300);
 }
 
-@keyframes chip-bob {
-  0%,
-  100% {
-    transform: translateY(0);
+@keyframes jharokha-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
   }
-  50% {
-    transform: translateY(-10px);
-  }
+}
+
+/* Rangoli flowers gathered at the foot of the window, spilling past its edges. */
+.jharokha__flowers {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+}
+
+.jharokha__flowers .rangoli {
+  position: absolute;
+}
+
+.jharokha__f1 {
+  left: -58px;
+  bottom: -30px;
+}
+
+.jharokha__f2 {
+  left: 30px;
+  bottom: -40px;
+}
+
+.jharokha__f3 {
+  left: -40px;
+  bottom: 72px;
+}
+
+.jharokha__f4 {
+  right: 74px;
+  bottom: -26px;
+}
+
+.jharokha__f5 {
+  right: -52px;
+  bottom: -34px;
+}
+
+.jharokha__f6 {
+  right: -34px;
+  bottom: 70px;
+}
+
+.jharokha__f7 {
+  left: 50%;
+  top: -52px;
+  translate: -50% 0;
+}
+
+/* The script picker: each language names itself. */
+.jharokha__picker {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  max-width: 440px;
+}
+
+.jharokha__script {
+  min-height: 36px;
+  padding: 4px 13px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: 15px;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease-out), border-color var(--t-fast) var(--ease-out);
+}
+
+.jharokha__script:hover {
+  border-color: var(--neel-400);
+  color: var(--neel-800);
+}
+
+.jharokha__script[aria-pressed='true'] {
+  border-color: var(--kesar-500);
+  background: var(--kesar-100);
+  color: var(--kesar-700);
 }
 
 /* ---------- sections ---------- */
@@ -414,12 +300,12 @@
 .section__head h2,
 .moments-intro h2,
 .cta-band h2 {
-  margin-top: 12px;
+  margin-top: 0;
   font-family: var(--font-serif);
   font-weight: 400;
-  font-size: clamp(36px, 4.8vw, 64px);
-  line-height: 1.02;
-  letter-spacing: -0.022em;
+  font-size: clamp(34px, 4.2vw, 56px);
+  line-height: 1.08;
+  letter-spacing: -0.015em;
 }
 
 .section__head h2 em,
@@ -468,7 +354,7 @@
   border-radius: 18px 18px 4px 18px;
   color: #fff;
   background: var(--grass-700);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.2), 0 10px 20px -12px rgb(31 111 53 / 0.8);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.2), 0 10px 20px -12px rgb(42 56 150 / 0.8);
   font-size: 15px;
 }
 
@@ -521,8 +407,8 @@
   padding: clamp(40px, 6vw, 72px) clamp(16px, 4vw, 40px);
   border-radius: 36px;
   background:
-    radial-gradient(60% 80% at 10% 50%, rgb(124 197 107 / 0.18), transparent 70%),
-    radial-gradient(50% 70% at 90% 20%, rgb(109 184 238 / 0.16), transparent 70%);
+    radial-gradient(60% 80% at 10% 50%, rgb(131 145 232 / 0.18), transparent 70%),
+    radial-gradient(50% 70% at 90% 20%, rgb(87 190 212 / 0.16), transparent 70%);
 }
 
 .moments-intro__copy > p {
@@ -567,7 +453,7 @@
   border-radius: 13px;
   color: var(--grass-800);
   background: var(--grass-100);
-  box-shadow: inset 0 0 0 1px rgb(31 111 53 / 0.12);
+  box-shadow: inset 0 0 0 1px rgb(42 56 150 / 0.12);
 }
 
 .phone {
@@ -576,7 +462,7 @@
   height: 620px;
   padding: 11px;
   border-radius: 48px;
-  background: linear-gradient(145deg, #1d3a28, #0f2418);
+  background: linear-gradient(145deg, var(--neel-800), var(--neel-950));
   box-shadow:
     0 0 0 1.5px var(--frame),
     inset 0 0 0 2px rgb(255 255 255 / 0.08),
@@ -713,9 +599,8 @@
   padding: 26px;
   text-align: center;
   background:
-    radial-gradient(130% 60% at 25% 112%, #2f7d3a 0 50%, transparent 51%),
-    radial-gradient(110% 55% at 85% 118%, #47a75a 0 52%, transparent 53%),
-    linear-gradient(180deg, #1f5f9f, #5aa5de 70%, #bfe1f7);
+    repeating-linear-gradient(180deg, rgb(16 21 63 / 0.9) 0 6px, rgb(16 21 63 / 0.72) 6px 9px) 0 100% / 100% 20% no-repeat,
+    var(--dawn-gradient);
 }
 
 .phone__post-art span {
@@ -723,7 +608,7 @@
   font-size: 23px;
   line-height: 1.15;
   color: #fff;
-  text-shadow: 0 2px 14px rgb(4 30 60 / 0.5);
+  text-shadow: 0 2px 14px rgb(16 21 63 / 0.5);
 }
 
 .phone__post-art b {
@@ -844,13 +729,14 @@
   align-items: center;
   padding: 3px 9px;
   border-radius: var(--r-pill);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-family: var(--font-sans);
+  font-variation-settings: 'wdth' 86;
+  font-size: 12px;
+  letter-spacing: 0.01em;
   white-space: nowrap;
   background: var(--surface-3);
   color: var(--text-2);
+  font-weight: 600;
 }
 
 .scope--READ_ONLY {
@@ -894,7 +780,7 @@
   border-radius: 14px;
   color: var(--grass-800);
   background: var(--grass-100);
-  box-shadow: inset 0 0 0 1px rgb(31 111 53 / 0.12);
+  box-shadow: inset 0 0 0 1px rgb(42 56 150 / 0.12);
 }
 
 .feature h3 {
@@ -918,23 +804,35 @@
   justify-content: space-between;
   flex-wrap: wrap;
   gap: var(--s-6);
-  padding: 52px 52px 150px;
+  padding: 56px 56px 150px;
   overflow: hidden;
-  border-radius: 32px;
-  border: 1.5px solid var(--frame);
-  box-shadow: var(--print), var(--e3);
+  border-radius: 200px 200px 28px 28px / 120px 120px 28px 28px;
+  box-shadow: var(--e3);
   background:
-    radial-gradient(120% 60% at 18% 122%, #2a7134 0 50%, transparent 51%),
-    radial-gradient(100% 55% at 86% 126%, #3f9445 0 52%, transparent 53%),
-    radial-gradient(150% 52% at 50% 136%, #5daa4a 0 55%, transparent 56%),
+    repeating-linear-gradient(180deg, rgb(16 21 63 / 0.92) 0 10px, rgb(16 21 63 / 0.72) 10px 15px) 0 100% / 100% 70px no-repeat,
     var(--grain),
-    linear-gradient(180deg, #164a88 0%, #2a72b9 48%, #8ec9f2 78%, #d8eef0);
-  background-size: auto, auto, auto, 220px 220px, auto;
+    var(--dawn-gradient);
+  background-size: 100% 70px, 220px 220px, auto;
   color: #fff;
+}
+
+/* Flowers set on the steps of the ghat. */
+.cta-band__flowers {
+  position: absolute;
+  right: 48px;
+  bottom: 20px;
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  pointer-events: none;
 }
 
 .cta-band__copy {
   max-width: 620px;
+}
+
+.section + .landing__weave {
+  margin-top: clamp(64px, 8vw, 104px);
 }
 
 .cta-band h2 {
@@ -943,7 +841,7 @@
 }
 
 .cta-band h2 em {
-  color: var(--sun-300);
+  color: var(--kesar-300);
 }
 
 .cta-band p {
@@ -965,12 +863,19 @@
 /* ---------- responsive ---------- */
 
 @media (max-width: 1100px) {
-  .meadow__content {
+  .hero {
     grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    text-align: left;
   }
 
-  .hero__floats {
-    display: none;
+  .hero__copy {
+    justify-self: start;
+  }
+
+  /* Room above the arch for its finial flower. */
+  .jharokha {
+    margin-top: 48px;
   }
 
   .how {
@@ -979,35 +884,8 @@
 }
 
 @media (max-width: 900px) {
-  .landing {
-    --land: 250px;
-  }
-
   .landing__links a:not(.button) {
     display: none;
-  }
-
-  .meadow {
-    min-height: 0;
-  }
-
-  .meadow__content {
-    padding-top: 104px;
-    padding-bottom: calc(var(--land) + 12px);
-  }
-
-  /* On a phone the sun sets just above the hills, clear of the words. */
-  .meadow__sun {
-    top: auto;
-    right: -40px;
-    bottom: calc(var(--land) - 150px);
-    width: 220px;
-    height: 220px;
-  }
-
-  .hero__live {
-    position: static;
-    margin-top: 22px;
   }
 
   .moments-intro {
@@ -1031,16 +909,33 @@
 }
 
 @media (max-width: 600px) {
-  .landing__brand {
-    padding: 6px 10px;
-  }
-
   .hero h1 {
-    font-size: clamp(44px, 13vw, 60px);
+    font-size: clamp(40px, 11.5vw, 56px);
   }
 
   .hero__actions .button {
     flex: 1 1 auto;
+  }
+
+  /* Keep the flowers inside the screen on a phone. */
+  .jharokha__frame {
+    width: min(78vw, 340px);
+  }
+
+  .jharokha__f1 {
+    left: -26px;
+  }
+
+  .jharokha__f3 {
+    left: -18px;
+  }
+
+  .jharokha__f5 {
+    right: -24px;
+  }
+
+  .jharokha__f6 {
+    right: -14px;
   }
 
   .phone {
@@ -1050,9 +945,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .meadow__cloud,
-  .meadow__walker,
-  .float-chip {
+  .jharokha__hello {
     animation: none;
   }
 

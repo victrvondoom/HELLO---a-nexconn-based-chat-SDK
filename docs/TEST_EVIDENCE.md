@@ -290,3 +290,25 @@ passes. `npm run test:e2e`: 10 journeys pass (judge 13/13, features 10/10, workf
 product, Field Atlas 19/19, field live 8/8, live 9/9, outbox 3/3, call 4/4). Route crawl: 330 pages, 0 problems.
 
 Not run here: HawkScan (no `HAWK_API_KEY` in this environment). CI has not run yet on GitHub at the time of writing.
+
+## 2026-11-22: Jharokha redesign (Indian traditional design system)
+
+Replaces the Meadow look with "Jharokha": neel indigo, peacock, kesar saffron, rani pink and mehendi green on a
+lime-washed wall with a woven grid; Tiro Devanagari Hindi and Anek Latin; a woven pixel border, blue-pottery story
+rings, rangoli flowers, a ghat-at-dawn event card and profile cover; and a landing hero (`Jharokha.tsx`) that says hello
+in seven scripts (Hindi, Kannada, Tamil, Telugu, Bangla, Punjabi, English). Token role names are kept as aliases, so no
+area file had to change its variables. Moments backdrop keys are unchanged (stored data); only their labels changed.
+
+| Check | Result |
+|---|---|
+| `npm run typecheck`, `npm run lint` | clean |
+| `npm test` | 53 files, 620 pass, 3 skipped (includes `style-boundaries.test.ts`) |
+| `tests/e2e/judge-flow.mjs` | 13/13 (dev server, demo mode) |
+| `tests/e2e/product-flow.mjs` | all pass |
+| `tests/e2e/features-flow.mjs` | 10/10 |
+| `npm run test:routes` | 400 pages, 45 correctly denied; 10 problems, all `/privacy-filter` 404s for model files that `npm run privacy:assets` downloads (git-ignored, not present in this container) |
+| `npm run screenshots` | all README screenshots regenerated; the palette step's selector was updated to the current input label ("Search the event") |
+
+Not run here: `npm run build`. Turbopack's production build stalls at "Creating an optimized production build" in this
+container, with no CPU or network activity, for the unchanged code as well, so the stall is environmental. CI builds on
+GitHub. HawkScan was not run (no `HAWK_API_KEY`).
