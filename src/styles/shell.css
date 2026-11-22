@@ -20,9 +20,9 @@
   flex-direction: column;
   gap: var(--s-3);
   padding: var(--s-5) var(--s-3) var(--s-3);
-  background:
-    linear-gradient(180deg, rgb(255 255 255 / 0.94), rgb(251 250 247 / 0.94) 60%, rgb(241 240 234 / 0.96)),
-    var(--paper);
+  background: rgb(255 255 255 / 0.62);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
   border-right: 1px solid var(--line);
   box-shadow: 8px 0 30px -26px rgb(var(--ink-rgb) / 0.5);
   overflow-y: auto;
@@ -431,8 +431,8 @@
   gap: var(--s-4);
   min-height: var(--topbar-h);
   padding: 10px var(--s-8);
-  background: rgb(251 250 247 / 0.8);
-  border-bottom: 1px solid var(--line);
+  background: rgb(255 255 255 / 0.66);
+  border-bottom: 1px solid rgb(var(--ink-rgb) / 0.07);
   -webkit-backdrop-filter: saturate(1.3) blur(14px);
   backdrop-filter: saturate(1.3) blur(14px);
 }
@@ -916,7 +916,7 @@
   .tabbar__create:active,
   .tabbar__create[aria-expanded='true'] {
     transform: translate(2px, 2px) rotate(45deg);
-    box-shadow: 1px 1px 0 var(--frame);
+    box-shadow: var(--e1);
   }
 }
 

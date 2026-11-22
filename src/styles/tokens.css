@@ -118,12 +118,12 @@
   --clay-300: var(--rani-300);
 
   /* ---- chuna (lime-wash) and ink ---- */
-  --paper: #fbfaf7;
-  --paper-2: #f1f0ea;
-  --paper-3: #e6e4dc;
+  --paper: #ffffff;
+  --paper-2: #f4f4f7;
+  --paper-3: #e9e9ef;
   --surface: #ffffff;
-  --surface-2: #f7f6f2;
-  --surface-3: #efeee8;
+  --surface-2: #f7f7fa;
+  --surface-3: #efeff4;
   --ink: #181a35;
   --ink-2: #3e4166;
   --ink-3: #5d6084;
@@ -133,7 +133,8 @@
   --rani-rgb: 214 51 127;
   --line: rgb(var(--ink-rgb) / 0.11);
   --line-strong: rgb(var(--ink-rgb) / 0.2);
-  --frame: var(--neel-900);
+  /* Edges are light glass, not printed ink. */
+  --frame: rgb(var(--ink-rgb) / 0.12);
 
   /* ---- semantic roles ---- */
   --bg: var(--paper);
@@ -198,8 +199,12 @@
   --e2: 0 1px 0 var(--hl) inset, 0 1px 2px rgb(var(--ink-rgb) / 0.05), 0 10px 24px -12px rgb(var(--ink-rgb) / 0.2);
   --e3: 0 1px 0 var(--hl) inset, 0 2px 4px rgb(var(--ink-rgb) / 0.05), 0 22px 44px -18px rgb(var(--ink-rgb) / 0.28);
   --e4: 0 0 0 1px rgb(var(--ink-rgb) / 0.06), 0 18px 40px -12px rgb(var(--ink-rgb) / 0.2), 0 50px 100px -30px rgb(var(--ink-rgb) / 0.38);
-  --print: 3px 3px 0 var(--frame);
-  --print-sm: 2px 2px 0 var(--frame);
+  --print: var(--e3);
+  --print-sm: var(--e2);
+  /* Glass: a translucent white pane with a lit top edge, used by cards, panels and bars. */
+  --glass: rgb(255 255 255 / 0.68);
+  --glass-edge: 0 0 0 1px rgb(255 255 255 / 0.7) inset, 0 1px 0 rgb(255 255 255 / 1) inset;
+  --glass-blur: blur(20px) saturate(1.6);
   --glow: 0 0 0 3px rgb(var(--neel-rgb) / 0.2);
   --shadow-1: var(--e1);
   --shadow-2: var(--e2);

@@ -26,18 +26,17 @@ body {
   font-variation-settings: 'wdth' 96;
 }
 
-/* A lime-washed wall with a faint woven grid, and the first light of morning at the top: indigo on the left, saffron
-   on the right. Every layer is background, so it textures the wall and never the content on top of it. */
+/* Pure white, with the light of a sunset at the edges of the window: teal from the left, rani and saffron from the
+   bottom corners. The glow is fixed, so glass panels scrolling over it pick up colour like panes in a jharokha. */
 body {
   min-height: 100vh;
   background-color: var(--paper);
   background-image:
-    var(--grain),
-    radial-gradient(1100px 380px at 12% -140px, rgb(var(--neel-rgb) / 0.1), transparent 70%),
-    radial-gradient(900px 360px at 92% -160px, rgb(var(--kesar-rgb) / 0.14), transparent 70%),
-    var(--weft);
-  background-size: 220px 220px, auto, auto, 28px 28px, 28px 28px;
-  background-repeat: repeat, no-repeat, no-repeat, repeat, repeat;
+    radial-gradient(40% 50% at -6% 8%, rgb(30 155 183 / 0.16), transparent 70%),
+    radial-gradient(36% 46% at 106% 4%, rgb(131 145 232 / 0.18), transparent 70%),
+    radial-gradient(40% 40% at -4% 104%, rgb(214 51 127 / 0.12), transparent 70%),
+    radial-gradient(44% 44% at 104% 104%, rgb(242 165 22 / 0.16), transparent 70%);
+  background-attachment: fixed;
 }
 
 ::selection {

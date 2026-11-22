@@ -40,6 +40,8 @@ function docEvent(collection: CollectionName, doc: Record<string, unknown> | nul
   if (collection === 'workflowRuns') return { eventId, topic: collection, audience: people([doc?.actorId as string | undefined], true) };
   // Places belong to their owner: the owner's open pages refresh, and nobody else is told anything changed.
   if (collection === 'places' || collection === 'placeCollections' || collection === 'placeVisits' || collection === 'placeImports') return { eventId, topic: collection, audience: people([doc?.ownerId as string | undefined], false) };
+  // A custom map: a shared one refreshes everyone's map page; a private one only its owner's.
+  if (collection === 'customMaps') return { eventId, topic: collection, audience: doc?.shared === true ? EVERYONE : people([doc?.ownerId as string | undefined], false) };
   if (collection === 'fieldFlags') return { eventId, topic: collection, audience: people([], true) };
   // Privacy filter: settings are the owner's alone; an alert is told only to the person it is for.
   if (collection === 'privacyFilters') return { eventId: null, topic: collection, audience: people([doc?.userId as string | undefined], false) };

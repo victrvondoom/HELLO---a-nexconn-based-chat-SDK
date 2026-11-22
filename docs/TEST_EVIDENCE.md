@@ -312,3 +312,18 @@ area file had to change its variables. Moments backdrop keys are unchanged (stor
 Not run here: `npm run build`. Turbopack's production build stalls at "Creating an optimized production build" in this
 container, with no CPU or network activity, for the unchanged code as well, so the stall is environmental. CI builds on
 GitHub. HawkScan was not run (no `HAWK_API_KEY`).
+
+## 2026-11-22, second pass: glass redesign, calmer navigation, custom maps
+
+- Pure white with frosted-glass cards and panels, a fixed sunset glow at the page edges, soft shadows in place of the
+  offset block print; the landing hero is a cusped Mughal arch lit from behind in a carved wall at sunset.
+- Sidebar trimmed to the everyday items; Live, My places, Field Atlas, Kingdom 3D, Kingdom map and Privacy filter moved
+  under "More" with the workflow canvas and live map. No page was removed.
+- Custom maps: from a picture, a video frame or a sketch, with pins, private or shared.
+
+| Check | Result |
+|---|---|
+| `npm run typecheck`, `npm run lint` | clean |
+| `npm test` | 54 files, 623 pass, 3 skipped (new: `tests/integration/custom-maps.test.ts`, 3 tests) |
+| Browser journey (scratch script, dev server) | sketch saved, pin dropped and saved, map shared, a second attendee sees it read-only: all pass |
+| `npm run build` | not run here (Turbopack production build stalls in this container); CI builds on GitHub |

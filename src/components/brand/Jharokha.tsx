@@ -1,18 +1,50 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { GREETINGS, type Greeting } from './scripts';
-import { Rangoli } from './Motifs';
+import { Lotus } from './Motifs';
 
 const TURN_MS = 3200;
 
 /**
- * The landing hero's window: an ogee arch at dawn, a blue-pottery medallion inside it, and "hello" in seven of
- * India's scripts. The greeting turns on its own until someone picks a language, hovers or focuses the window, or
- * prefers reduced motion; then it stays where they left it. Each greeting carries its `lang`, so a screen reader
- * pronounces it in that language.
+ * A Mughal cusped arch in a 1000 x 1000 box: straight jambs up to the springline, then two circular arcs that meet
+ * in a point (a two-centred arch), with the edge broken into lobes that bulge into the stone, as in a carved
+ * multifoil arch. Pure geometry, computed once.
  */
-export function Jharokha() {
+function cuspedArch(): string {
+  const S = 520; // springline
+  const c = (S * S + 250_000) / 1000; // left arc centre x; its radius equals c, so it passes (0, S) and the apex (500, 0)
+  const start = -Math.PI;
+  const end = Math.atan2(-S, 500 - c);
+  const lobes = 8;
+  const left: Array<[number, number]> = [];
+  for (let i = 0; i <= lobes; i += 1) {
+    const t = start + ((end - start) * i) / lobes;
+    left.push([c + c * Math.cos(t), S + c * Math.sin(t)]);
+  }
+  const lobe = (a: [number, number], b: [number, number], centre: [number, number]) => {
+    const mx = (a[0] + b[0]) / 2;
+    const my = (a[1] + b[1]) / 2;
+    const dx = mx - centre[0];
+    const dy = my - centre[1];
+    const len = Math.hypot(dx, dy) || 1;
+    return `Q${(mx + (dx / len) * 22).toFixed(1)} ${(my + (dy / len) * 22).toFixed(1)} ${b[0].toFixed(1)} ${b[1].toFixed(1)}`;
+  };
+  const right = left.map(([x, y]) => [1000 - x, y] as [number, number]).reverse();
+  let d = `M0 1000L0 ${S}`;
+  for (let i = 0; i < lobes; i += 1) d += lobe(left[i] ?? [0, S], left[i + 1] ?? [500, 0], [c, S]);
+  for (let i = 0; i < lobes; i += 1) d += lobe(right[i] ?? [500, 0], right[i + 1] ?? [1000, S], [1000 - c, S]);
+  return `${d}L1000 1000Z`;
+}
+
+const ARCH = cuspedArch();
+
+/**
+ * The landing hero: a carved arch lit from behind, like a palace doorway at sunset, with "hello" turning through
+ * seven of India's scripts above the page's own words. The greeting stops turning on hover, focus, a pick, or for
+ * people who prefer reduced motion. Each greeting carries its `lang`, so a screen reader pronounces it correctly.
+ */
+export function Jharokha({ children }: { children: ReactNode }) {
   const [index, setIndex] = useState(0);
   const [held, setHeld] = useState(false);
   const [chosen, setChosen] = useState(false);
@@ -30,7 +62,7 @@ export function Jharokha() {
   const greeting = GREETINGS[index % GREETINGS.length] as Greeting;
 
   return (
-    <figure
+    <div
       className="jharokha"
       onPointerEnter={() => {
         setHeld(true);
@@ -38,53 +70,44 @@ export function Jharokha() {
       onPointerLeave={() => {
         setHeld(false);
       }}
-      onFocus={() => {
-        setHeld(true);
-      }}
-      onBlur={() => {
-        setHeld(false);
-      }}
     >
-      <div className="jharokha__frame">
-        <div className="jharokha__window">
-          <div className="jharokha__medallion">
-            <p key={greeting.lang} className="jharokha__hello" lang={greeting.lang} style={{ fontFamily: greeting.fontFamily }}>
-              {greeting.hello}
-            </p>
-            <p className="jharokha__caption">Hello in {greeting.name}</p>
-          </div>
-          <div className="jharokha__ghat" aria-hidden="true" />
-        </div>
-        <div className="jharokha__flowers" aria-hidden="true">
-          <Rangoli id="jk-f1" dye="mehendi" petals={9} size={118} className="jharokha__f1" />
-          <Rangoli id="jk-f2" dye="kesar" kind="point" petals={8} inner={0.5} size={84} className="jharokha__f2" />
-          <Rangoli id="jk-f3" dye="neel" petals={4} inner={0.42} size={72} className="jharokha__f3" rotate={45} />
-          <Rangoli id="jk-f4" dye="rani" petals={10} inner={0.74} size={54} className="jharokha__f4" />
-          <Rangoli id="jk-f5" dye="dawn" petals={8} size={96} className="jharokha__f5" />
-          <Rangoli id="jk-f6" dye="peacock" kind="point" petals={6} inner={0.46} size={60} className="jharokha__f6" />
-          <Rangoli id="jk-f7" dye="rani" kind="point" petals={4} inner={0.4} size={40} className="jharokha__f7" rotate={45} />
+      <svg className="jharokha__arch" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+        <path className="jharokha__light" d={ARCH} />
+        <g className="jharokha__carving" fill="none" stroke="currentColor">
+          <path d={ARCH} transform="translate(500 1000) scale(1.1 1.075) translate(-500 -1000)" vectorEffect="non-scaling-stroke" strokeWidth="1" opacity="0.5" />
+          <path d={ARCH} transform="translate(500 1000) scale(1.05 1.037) translate(-500 -1000)" vectorEffect="non-scaling-stroke" strokeWidth="2" />
+        </g>
+      </svg>
+      <div className="jharokha__inside">
+        <Lotus className="jharokha__mark" />
+        <p key={greeting.lang} className="jharokha__hello" lang={greeting.lang} style={{ fontFamily: greeting.fontFamily }}>
+          {greeting.hello}
+        </p>
+        <p className="jharokha__caption">Hello in {greeting.name}</p>
+        {children}
+        <div className="jharokha__picker" role="group" aria-label="Say hello in">
+          {GREETINGS.map((g, i) => (
+            <button
+              key={g.lang}
+              type="button"
+              lang={g.lang}
+              className="jharokha__script"
+              style={{ fontFamily: g.fontFamily }}
+              aria-pressed={i === index}
+              title={g.name}
+              onFocus={() => {
+                setHeld(true);
+              }}
+              onClick={() => {
+                setIndex(i);
+                setChosen(true);
+              }}
+            >
+              {g.endonym}
+            </button>
+          ))}
         </div>
       </div>
-      <figcaption className="jharokha__picker">
-        <span className="visually-hidden">Say hello in</span>
-        {GREETINGS.map((g, i) => (
-          <button
-            key={g.lang}
-            type="button"
-            lang={g.lang}
-            className="jharokha__script"
-            style={{ fontFamily: g.fontFamily }}
-            aria-pressed={i === index}
-            title={g.name}
-            onClick={() => {
-              setIndex(i);
-              setChosen(true);
-            }}
-          >
-            {g.endonym}
-          </button>
-        ))}
-      </figcaption>
-    </figure>
+    </div>
   );
 }

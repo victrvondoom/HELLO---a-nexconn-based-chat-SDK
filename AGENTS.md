@@ -115,8 +115,21 @@ The policy is `decideVerification` in `src/domain/field/rules.ts`. AI never reac
   (blue-pottery rim: unseen story rings, medallions), `--arch` (jharokha ogee mask: the landing window), rangoli
   flowers (`Motifs.tsx`, decoration only), the ghat (`Scenery.tsx`, the event postcard). Moments backdrop keys are
   stored data and keep their names (`meadow`, `clover`...); only `BACKDROP_LABEL` changed.
-- Landing hero: `Jharokha.tsx` greets in seven scripts (`scripts.ts`, Tiro per script, not preloaded). It stops turning
-  on hover, focus, a pick, or reduced motion.
+- Surfaces are glass on pure white: `.card`/`.panel` use `--glass`, `--glass-edge` and `--glass-blur`; the body carries
+  a fixed sunset glow at its edges. `--frame` is a light edge and `--print` a soft shadow (no offset block print).
+- Landing hero: a cusped Mughal arch (`Jharokha.tsx`, computed path) lit from behind in a carved wall at sunset. It
+  greets in seven scripts (`scripts.ts`, Tiro per script, not preloaded) and stops turning on hover, focus, a pick, or
+  reduced motion.
+- Sidebar: about a dozen everyday items; every other page is under "More" (`nav-model.ts`), and all are in the
+  command palette and the phone menu.
+
+## Custom maps (`src/services/custom-maps.ts`, `src/components/map/CustomMaps.tsx`)
+
+On `/events/[eventId]/map`, anyone can make a map from a picture, a frame of a video (the video stays on the device;
+only the chosen frame is uploaded) or a sketch, then drop labelled pins. API: `/api/events/[eventId]/maps/**`.
+Collection `customMaps`. The picture must be the person's own image upload to this event. Private until shared;
+only the owner can change or delete. Export and erasure include custom maps. Test: `tests/integration/custom-maps.test.ts`.
+Limit: the map picture is served by the media route to any event member who has its id (as post media is).
 - Area files must not define the same class as another area file or as a primitive. `tests/unit/style-boundaries.test.ts`
   enforces this (a `.tile` collision once broke the Games tiles). Compose with scoped selectors instead (`.panel.inline-form`).
 - Navigation model: `src/components/layout/nav-model.ts`. `.nav-count` marks unread notifications only (an e2e test

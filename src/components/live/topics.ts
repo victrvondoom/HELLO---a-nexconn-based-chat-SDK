@@ -22,6 +22,7 @@ const API_TOPICS: Record<string, readonly string[]> = {
   messages: ['messages'],
   notifications: ['notifications'],
   chat: ['chatLinks'],
+  maps: ['customMaps'],
 };
 
 const PAGE_TOPICS: Record<string, readonly string[]> = {

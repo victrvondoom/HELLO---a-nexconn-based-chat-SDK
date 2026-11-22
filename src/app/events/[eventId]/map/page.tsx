@@ -1,5 +1,6 @@
 import { loadEventViewer } from '@/lib/viewer';
 import { VenueMap, type MapRoomInfo } from '@/components/map/VenueMap';
+import { CustomMaps } from '@/components/map/CustomMaps';
 import { DATA_SOURCE_LABEL } from '@/domain/labels';
 import { placesOf } from '@/domain/venue/types';
 import { formatUtc } from '@/components/ui/labels';
@@ -29,6 +30,7 @@ export default async function MapPage({
           <strong>No map for this event yet</strong>
           <span>An organiser has not drawn the venue. Directions are available from staff at registration.</span>
         </div>
+        <CustomMaps eventId={eventId} viewerId={viewer.userId} />
       </div>
     );
   }
@@ -70,7 +72,7 @@ export default async function MapPage({
           <p className="eyebrow">Wayfinding</p>
           <h1>Venue map</h1>
           <p>
-            Three views of one model. Directions are worked out on your device{viewer.user?.accessibilityRequired ? ', step-free by default because your profile asks for it' : ''}. No map service outside
+            Three views of one model, and maps you make yourself below. Directions are worked out on your device{viewer.user?.accessibilityRequired ? ', step-free by default because your profile asks for it' : ''}. No map service outside
             HELLO is contacted.
           </p>
         </div>
@@ -83,6 +85,7 @@ export default async function MapPage({
         initialStepFree={viewer.user?.accessibilityRequired ?? false}
         operational={operational}
       />
+      <CustomMaps eventId={eventId} viewerId={viewer.userId} />
     </div>
   );
 }

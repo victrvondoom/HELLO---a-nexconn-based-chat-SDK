@@ -5,7 +5,6 @@ import { DEMO_EVENT_ID } from '@/store/seed';
 import { slaFor } from '@/domain/incidents/sla';
 import { Wordmark } from '@/components/brand/Wordmark';
 import { Jharokha } from '@/components/brand/Jharokha';
-import { Rangoli, Weave } from '@/components/brand/Motifs';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { AGENT_ROSTER, type AgentScope } from '@/agents/types';
 
@@ -76,35 +75,30 @@ export default async function LandingPage() {
   const live = demo ? await liveFigures() : null;
   return (
     <div className="landing">
-      <Weave className="landing__weave" />
-      <header className="landing__nav">
-        <Link href="/" className="landing__brand" aria-label="HELLO home">
-          <Wordmark height={30} id="wm-top" />
-        </Link>
-        <nav className="landing__links" aria-label="Page">
-          <a href="#how">How it works</a>
-          <a href="#moments">Moments</a>
-          <a href="#agents">Agent mesh</a>
-          <a href="#features">Features</a>
-          <Link href="/guide">Guide</Link>
-          {demo ? (
-            <Link className="button button--sm" href="/demo">
-              Open the demo
-            </Link>
-          ) : null}
-        </nav>
-      </header>
-
       <section className="hero" aria-labelledby="hero-title">
-        <div className="hero__copy">
+        <header className="landing__nav">
+          <Link href="/" className="landing__brand" aria-label="HELLO home">
+            <Wordmark height={28} id="wm-top" />
+          </Link>
+          <nav className="landing__links" aria-label="Page">
+            <a href="#how">How it works</a>
+            <a href="#moments">Moments</a>
+            <a href="#agents">Agents</a>
+            <Link href="/guide">Guide</Link>
+            {demo ? (
+              <Link className="button button--sm" href="/demo">
+                Open the demo
+              </Link>
+            ) : null}
+          </nav>
+        </header>
+        <Jharokha>
           <h1 id="hero-title">
-            One conversation.
-            <br /> <em>Everyone</em> connected.
+            One conversation. <em>Everyone</em> connected.
           </h1>
           <p className="hero__lead">
-            Attendees describe a problem in their own words. A team of HELLO agents works out the room, the session and the people
-            concerned, coordinates the response, and tells the person who asked when it is fixed. In between, the event shares its
-            moments.
+            Attendees describe a problem in their own words. HELLO finds the room, the session and the right people, and tells the
+            person who asked when it is fixed.
           </p>
           <div className="hero__actions">
             {demo ? (
@@ -116,27 +110,25 @@ export default async function LandingPage() {
               Meet the agents
             </a>
           </div>
-          {live ? (
-            <p className="live-strip hero__live" aria-label="Live figures from the demo event">
-              <span className="live">
-                <span className="live__dot" aria-hidden="true" />
-                Live demo, {live.clock} UTC
-              </span>
-              <span>
-                <strong>{live.open}</strong> open
-              </span>
-              <span>
-                <strong>{live.overdue}</strong> past target
-              </span>
-              <span>
-                <strong>{live.running}</strong> sessions running
-              </span>
-            </p>
-          ) : null}
-        </div>
-        <Jharokha />
+        </Jharokha>
+        {live ? (
+          <p className="live-strip hero__live" aria-label="Live figures from the demo event">
+            <span className="live">
+              <span className="live__dot" aria-hidden="true" />
+              Live demo, {live.clock} UTC
+            </span>
+            <span>
+              <strong>{live.open}</strong> open
+            </span>
+            <span>
+              <strong>{live.overdue}</strong> past target
+            </span>
+            <span>
+              <strong>{live.running}</strong> sessions running
+            </span>
+          </p>
+        ) : null}
       </section>
-      <Weave className="landing__weave" />
 
       <section className="section" id="how" aria-labelledby="how-title">
         <div className="how">
@@ -308,16 +300,10 @@ export default async function LandingPage() {
             <Link className="button button--sun button--lg" href="/demo">
               Enter the demo
             </Link>
-            <div className="cta-band__flowers" aria-hidden="true">
-              <Rangoli id="cta-f1" dye="kesar" kind="point" petals={8} inner={0.5} size={120} />
-              <Rangoli id="cta-f2" dye="rani" petals={9} size={84} />
-              <Rangoli id="cta-f3" dye="mehendi" petals={4} inner={0.42} size={64} rotate={45} />
-            </div>
           </div>
         </section>
       ) : null}
 
-      <Weave className="landing__weave" />
       <footer className="footer-note">
         HELLO is a working prototype. Messaging is not yet connected to Nexconn, AI and web search providers are optional, and data is held in
         memory. See the project README for the full status before any real use.

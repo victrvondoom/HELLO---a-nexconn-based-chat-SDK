@@ -7,10 +7,12 @@
 .card,
 .panel {
   position: relative;
-  background: var(--surface);
-  border: 1px solid var(--line);
+  background: var(--glass);
+  border: 1px solid rgb(var(--ink-rgb) / 0.07);
   border-radius: var(--r-lg);
-  box-shadow: var(--e1);
+  box-shadow: var(--glass-edge), 0 1px 2px rgb(var(--ink-rgb) / 0.04), 0 18px 40px -26px rgb(var(--neel-rgb) / 0.35);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
   transition: box-shadow var(--t-med) var(--ease-out), transform var(--t-med) var(--ease-out), border-color var(--t-med) ease;
 }
 
@@ -160,12 +162,12 @@ a.panel:hover {
 }
 
 .button--sun:hover {
-  box-shadow: 4px 4px 0 var(--frame);
+  box-shadow: var(--e3);
   transform: translate(-1px, -1px);
 }
 
 .button--sun:active {
-  box-shadow: 1px 1px 0 var(--frame);
+  box-shadow: var(--e1);
   transform: translate(2px, 2px);
 }
 
