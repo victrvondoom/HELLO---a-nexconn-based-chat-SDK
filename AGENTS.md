@@ -125,8 +125,12 @@ The policy is `decideVerification` in `src/domain/field/rules.ts`. AI never reac
   blooming through the opening, a sunbeam and coloured edge haze. The words sit in the light: a greeting turning
   through seven scripts (`scripts.ts`, Tiro per script, not preloaded; it stops on hover or reduced motion) and the
   gold headline. The app body repeats the coloured edge haze.
-- Sidebar: about a dozen everyday items; every other page is under "More" (`nav-model.ts`), and all are in the
-  command palette and the phone menu.
+- Navigation is five destinations at most (`nav-model.ts`): Today, Explore, Live (`/now`), People, and Operations
+  for staff, plus one "Enter the Kingdom" door into the 3D world. Every other page is under "Everything else", in
+  the command palette and the phone menu. Phones: the same four tabs plus Menu. Do not add sidebar items; add to
+  `more` or surface a feature contextually on one of the five destinations.
+- `/demo` is one button ("Enter HELLO") with an optional three-way choice and a folded "Someone specific" list.
+  Browser journeys that pick a person click "Someone specific" first.
 
 ## Custom maps (`src/services/custom-maps.ts`, `src/components/map/CustomMaps.tsx`)
 
@@ -143,6 +147,37 @@ Limit: the map picture is served by the media route to any event member who has 
 - Web Workers: a worker must never import (even indirectly) the module that spawns it; Turbopack's production build
   then hangs with no error. Put the worker's pure code in a `*-core.ts` module. `tests/unit/worker-cycles.test.ts`
   enforces this.
+
+## Event companion (`src/domain/companion`, `src/services/live-room.ts`, `src/components/companion`)
+
+Pages: Today `/events/[eventId]` (also `?planb=<session>` from a room-full QR), Explore `/explore`, Live `/now`,
+live room `/now/[sessionId]`, room-full display `/now/[sessionId]/full` (staff), care `/care`.
+Collections: `plans` (`eventId:userId`), `avSignals` (`sessionId:kind:userId`), `liveQuestions`, `seatLedgers`
+(one per session), all in the generic document table. Export and erasure: `exportCompanion` / `eraseCompanion`.
+
+- AV signals: one document per person, session and kind; 3 distinct people in 60 s (`AV_THRESHOLD`, `AV_WINDOW_MS`)
+  claim their signals with conditional writes and file **one** report through `ingestReport`.
+- Seat holds: check and reserve in one conditional `docMutate` on the session's ledger; 10 minutes; never show a
+  hold the server has not confirmed. Plan B ranking is pure (`rankPlanB`), with walking times from `findRoute`.
+- Captions, audio and slides: no provider. The room must say so; never fake them.
+- `/care` is plain server HTML so `public/sw.js` can cache it. The worker caches only that page and
+  `/_next/static`. It registers in production builds only. Clone a response before handing it on.
+
+## CON-FUZZ (`src/domain/resilience`, `src/services/resilience.ts`, Operations → Resilience)
+
+- Pure and deterministic. 8 disruptions, 256 subsets. `worldFromEvent` keeps the event's own ids.
+- Ground truth lives only in `tests/resilience/groundtruth.ts`; `tests/unit/resilience-isolation.test.ts` fails if
+  `src/` imports it. Monotone pruning only with a certificate for that exact world and schedule.
+- A proposal is never applied without an organiser (`approval.decide`, signed-in session). Approval re-checks the
+  world, baseline and proposed versions and the certificate digest; a mismatch marks it `STALE`.
+- Benchmark: `npx vitest run tests/resilience/benchmark.test.ts`; numbers in `docs/HELLO_CONFUZZ.md`.
+
+## Nexconn SDKs (`src/integrations/nexconn`)
+
+`@nexconn/chat`, `@nexconn/chatui`, `@nexconn/call` (peer override in `package.json`). `NEXCONN_APP_SECRET` is
+server-only; `tests/unit/nexconn.test.ts` scans client files for it. `POST /api/nexconn/token` returns 503 until
+`NexconnTokenIssuer` is implemented from the official Platform Chat API docs. The official agent skill is vendored
+in `.claude/skills/nexconn-chat` (its doc cache is git-ignored).
 
 ## Moments (`src/domain/moments`, `src/services/moments.ts`, `src/components/moments`)
 
@@ -189,7 +224,7 @@ the licence consequence: `docs/UPSTREAM_INTEGRATION_AUDIT.md`. Page: `/events/[e
 
 - `npm run typecheck`, `npm run lint`, `npm test` (vitest), `npm run build`, `npm run check`
 - Browser journeys: start the demo server (`HELLO_DEMO_MODE=true npx next start -p 3000`), then
-  `node tests/e2e/field-atlas-flow.mjs` and `node tests/e2e/field-live-flow.mjs`. A demo reset clears every rate
+  `node tests/e2e/companion-flow.mjs`, `node tests/e2e/field-atlas-flow.mjs` and `node tests/e2e/field-live-flow.mjs`. A demo reset clears every rate
   limiter (the registry is on `globalThis`), so runs can follow each other. Run suites one at a time: each resets the demo.
   Stop the server with `pkill -f next-server` (the process name is not `next start`).
 - `npm run test:routes` crawls every page as every demo role.
@@ -225,11 +260,19 @@ persistence.
   search, time-zone seasons, opt-in leaderboard, offline outbox, two-browser call test, CI. Evidence in
   `docs/TEST_EVIDENCE.md`.
 
+- 2026-11-22: minimal one-button entry, five-destination navigation with the Kingdom door, Today/Explore/Live
+  pages, live room (questions, AV signals → one incident), personal plan, Plan B with atomic seat holds, venue
+  board, offline care, CON-FUZZ with approval gate, Create a game, Nexconn Call SDK and token boundary, and the
+  workflow canvas fix (its edge layer was 0px wide under `svg { max-width: 100% }`, so no edge was painted).
+  Evidence in `docs/TEST_EVIDENCE.md`.
+
 ## Remaining
 
 Proposed next features, interconnected with what exists, are in `docs/FEATURE_PROPOSALS.md`.
 
 - A live AI provider, browser push notifications, forward secrecy for private messages, the Nexconn bridge.
+- Nexconn token call (needs credentials and docs), a caption/audio provider, the Grace Period feed reconciler,
+  the graph store and Kairos networking, speed networking. Order: `docs/HELLO_IMPLEMENTATION_ROADMAP.md`.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

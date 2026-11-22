@@ -32,8 +32,11 @@ async function as(displayName, options = desktop) {
   const p = await context.newPage();
   if (displayName) {
     await p.goto(`${BASE}/demo`);
+    await p.getByText('Someone specific').click();
     await p.getByRole('button', { name: `Continue as ${displayName}` }).click();
-    await p.waitForURL(`**/events/${EVENT}/conversation`);
+    await p.waitForURL(`**/events/${EVENT}`);
+    // Entering the demo lands on Today; these journeys start in the conversation.
+    await p.goto(`${BASE}/events/${EVENT}/conversation`);
   }
   return { context, page: p };
 }

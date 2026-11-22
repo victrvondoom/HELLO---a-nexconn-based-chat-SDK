@@ -27,16 +27,18 @@ export interface WorkflowDefinition {
   purpose: string;
   capability: Capability;
   steps: readonly string[];
-  /** The canvas node this workflow writes to. */
-  feeds: string;
+  /** The canvas nodes this workflow reads before it acts. Drawn as edges into the workflow. */
+  reads: readonly string[];
+  /** The canvas nodes this workflow writes to. Drawn as edges out of the workflow. */
+  feeds: readonly string[];
 }
 
 export const WORKFLOWS: readonly WorkflowDefinition[] = [
-  { id: 'my-day', name: 'Plan my day', purpose: 'Sends you the next sessions and where your open requests stand.', capability: 'event.read', steps: ['Read the schedule', 'Check your open requests', 'Send you the summary'], feeds: 'notifications' },
-  { id: 'quiz-round', name: 'Start a schedule quiz', purpose: 'Writes a quiz from the live schedule and invites everyone to play.', capability: 'message.send', steps: ['Write questions from the schedule', 'Announce it in the feed'], feeds: 'games' },
-  { id: 'sla-sweep', name: 'Escalate overdue requests', purpose: 'Finds unclaimed requests past their target and escalates each one.', capability: 'incident.escalate', steps: ['Check open requests against their targets', 'Record the result'], feeds: 'incidents' },
-  { id: 'signal-refresh', name: 'Detect repeating problems', purpose: 'Groups recent reports into patterns for an organiser to review.', capability: 'signal.read', steps: ['Group recent reports', 'Queue patterns for review'], feeds: 'signals' },
-  { id: 'ops-briefing', name: 'Post an operations briefing', purpose: 'Counts open work and crowded rooms, and posts the figures to the feed.', capability: 'incident.read.operational', steps: ['Count open work', 'Check room capacity', 'Post the briefing'], feeds: 'feed' },
+  { id: 'my-day', name: 'Plan my day', purpose: 'Sends you the next sessions and where your open requests stand.', capability: 'event.read', steps: ['Read the schedule', 'Check your open requests', 'Send you the summary'], reads: ['schedule', 'incidents'], feeds: ['notifications'] },
+  { id: 'quiz-round', name: 'Start a schedule quiz', purpose: 'Writes a quiz from the live schedule and invites everyone to play.', capability: 'message.send', steps: ['Write questions from the schedule', 'Announce it in the feed'], reads: ['schedule'], feeds: ['games', 'feed'] },
+  { id: 'sla-sweep', name: 'Escalate overdue requests', purpose: 'Finds unclaimed requests past their target and escalates each one.', capability: 'incident.escalate', steps: ['Check open requests against their targets', 'Record the result'], reads: ['incidents'], feeds: ['needs'] },
+  { id: 'signal-refresh', name: 'Detect repeating problems', purpose: 'Groups recent reports into patterns for an organiser to review.', capability: 'signal.read', steps: ['Group recent reports', 'Queue patterns for review'], reads: ['incidents'], feeds: ['signals'] },
+  { id: 'ops-briefing', name: 'Post an operations briefing', purpose: 'Counts open work and crowded rooms, and posts the figures to the feed.', capability: 'incident.read.operational', steps: ['Count open work', 'Check room capacity', 'Post the briefing'], reads: ['incidents', 'schedule'], feeds: ['feed'] },
 ];
 
 export const RunSchema = z.object({ workflowId: z.string().regex(/^[a-z-]{3,30}$/) });
@@ -166,7 +168,7 @@ export async function flowSnapshot(ctx: ServiceContext, eventId: string, userId:
   const now = ctx.now();
   const operational = can('incident.read.operational');
 
-  const [messages, incidents, posts, communities, calls, games, notifications, tokens, locations, runs] = await Promise.all([
+  const [messages, incidents, posts, communities, calls, games, notifications, tokens, locations, runs, sessions, members] = await Promise.all([
     ctx.store.listMessages(eventId),
     listIncidentsForViewer(ctx, eventId, userId),
     ctx.store.docList('posts', { eventId }),
@@ -177,6 +179,8 @@ export async function flowSnapshot(ctx: ServiceContext, eventId: string, userId:
     ctx.store.docList('apiTokens', { userId }),
     ctx.store.docList('locations', { eventId }),
     ctx.store.docList('workflowRuns', { eventId }),
+    ctx.store.listSessions(eventId),
+    ctx.store.listMemberships(eventId),
   ]);
   const seen = operational ? messages : messages.filter((m) => m.senderUserId === userId);
   const open = incidents.filter((r) => OPEN_STATUSES.includes(r.incident.status));
@@ -197,6 +201,8 @@ export async function flowSnapshot(ctx: ServiceContext, eventId: string, userId:
     { id: 'feed', kind: 'source', title: 'Feed', metric: String(posts.length), caption: `posts · ${posts.filter((p) => p.mediaKind === 'VIDEO').length} videos`, href: `${base}/feed`, tone: 'plain', x: 40, y: 220 },
     { id: 'communities', kind: 'source', title: 'Communities', metric: String(communities.length), caption: `${communities.filter((c) => c.memberIds.includes(userId)).length} joined`, href: `${base}/communities`, tone: 'plain', x: 40, y: 380 },
     { id: 'mcp', kind: 'source', title: 'MCP access', metric: String(tokens.length), caption: 'of your access tokens', href: `${base}/settings#tokens`, tone: 'plain', x: 40, y: 540 },
+    { id: 'people', kind: 'source', title: 'People', metric: String(members.length), caption: 'in this event', href: `${base}/people`, tone: 'plain', x: 40, y: 700 },
+    { id: 'schedule', kind: 'source', title: 'Schedule', metric: String(sessions.filter((x) => x.endsAt > now).length), caption: 'sessions still to come', href: `${base}/sessions`, tone: 'plain', x: 370, y: 540 },
     { id: 'agents', kind: 'agent', title: 'Agent mesh', metric: String(AGENT_ROSTER.length), caption: ctx.intentProvider ? 'agents · model-assisted' : 'agents · rule-based', href: operational ? `${base}/agents` : null, tone: 'accent', x: 370, y: 60 },
     { id: 'calls', kind: 'queue', title: 'Calls', metric: String(liveCalls.length), caption: `open · ${inCalls} people talking`, href: `${base}/calls`, tone: inCalls > 0 ? 'good' : 'plain', x: 370, y: 220 },
     { id: 'games', kind: 'queue', title: 'Games', metric: String(openGames), caption: 'open to play', href: `${base}/games`, tone: 'plain', x: 370, y: 380 },
@@ -216,13 +222,19 @@ export async function flowSnapshot(ctx: ServiceContext, eventId: string, userId:
     { from: 'communities', to: 'calls', label: 'group calls' },
     { from: 'calls', to: 'notifications', label: 'invites' },
     { from: 'mcp', to: 'agents', label: 'tools' },
+    { from: 'schedule', to: 'agents', label: 'answers from' },
+    { from: 'people', to: 'map', label: 'connections see' },
+    { from: 'people', to: 'communities', label: 'join' },
+    { from: 'games', to: 'notifications', label: 'your turn' },
   ];
   if (can('signal.read')) edges.push({ from: 'incidents', to: 'signals', label: 'repeats' }, { from: 'signals', to: 'needs', label: 'review' });
 
   WORKFLOWS.filter((w) => can(w.capability)).forEach((w, i) => {
     const last = visibleRuns.find((r) => r.workflowId === w.id);
-    nodes.push({ id: `wf:${w.id}`, kind: 'workflow', title: w.name, metric: '', caption: w.purpose, href: null, tone: 'accent', x: 40 + i * 262, y: 720, workflow: { id: w.id, purpose: w.purpose, steps: w.steps, lastRun: last ? { status: last.status, at: last.startedAt } : null } });
-    if (nodes.some((n) => n.id === w.feeds)) edges.push({ from: `wf:${w.id}`, to: w.feeds });
+    nodes.push({ id: `wf:${w.id}`, kind: 'workflow', title: w.name, metric: '', caption: w.purpose, href: null, tone: 'accent', x: 40 + i * 262, y: 880, workflow: { id: w.id, purpose: w.purpose, steps: w.steps, lastRun: last ? { status: last.status, at: last.startedAt } : null } });
+    // A workflow is drawn between what it reads and what it writes, so the canvas shows the whole path.
+    for (const input of w.reads) if (nodes.some((n) => n.id === input)) edges.push({ from: input, to: `wf:${w.id}`, label: 'reads' });
+    for (const output of w.feeds) if (nodes.some((n) => n.id === output)) edges.push({ from: `wf:${w.id}`, to: output, label: 'writes' });
   });
 
   const names = new Map<string, string>();

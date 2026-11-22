@@ -11,7 +11,7 @@ const NODE_W = 230;
 const HEIGHT: Record<FlowNode['kind'], number> = { source: 118, agent: 118, queue: 118, output: 118, workflow: 190 };
 const ICON: Record<string, IconName> = {
   conversation: 'conversation', feed: 'feed', communities: 'groups', mcp: 'key', agents: 'agents', calls: 'video', games: 'game',
-  incidents: 'incidents', map: 'pin', needs: 'bell', notifications: 'bell', signals: 'sparkle',
+  incidents: 'incidents', map: 'pin', schedule: 'sessions', people: 'people', needs: 'bell', notifications: 'bell', signals: 'sparkle',
 };
 const KIND_LABEL: Record<FlowNode['kind'], string> = { source: 'Source', agent: 'Agents', queue: 'Live', output: 'For you', workflow: 'Workflow' };
 /** Edge label pill: one character of the 10px mono label font is 6px wide (see .canvas__label in social.css). */
@@ -65,12 +65,25 @@ export function FlowCanvas({ eventId, initial }: { eventId: string; initial: Flo
       if (!from || !to) return [];
       const a = place(from);
       const b = place(to);
-      if (from.kind === 'workflow') {
-        const sx = a.x + NODE_W / 2;
-        const tx = b.x + NODE_W / 2;
-        const ty = b.y + HEIGHT[to.kind];
-        const lift = Math.max(40, (a.y - ty) / 2);
-        return [{ key: `${e.from}>${e.to}`, d: `M${sx},${a.y} C${sx},${a.y - lift} ${tx},${ty + lift} ${tx},${ty}`, label: e.label, lx: 0, ly: 0, lw: 0, live: running !== null && e.from === `wf:${running}`, dashed: true }];
+      if (from.kind === 'workflow' || to.kind === 'workflow') {
+        // Workflows sit below the live system: draw a vertical curve from the lower edge of the upper node to
+        // the top edge of the lower one, so every input and output of a workflow is visibly connected.
+        const upperIsFrom = a.y + HEIGHT[from.kind] <= b.y;
+        const [top, topNode, bottom] = upperIsFrom ? [a, from, b] : [b, to, a];
+        const sx = top.x + NODE_W / 2;
+        const sy = top.y + HEIGHT[topNode.kind];
+        const tx = bottom.x + NODE_W / 2;
+        const ty = bottom.y;
+        const lift = Math.max(40, (ty - sy) / 2);
+        const at = (t: number) => {
+          const u = 1 - t;
+          return { x: u * u * u * sx + 3 * u * u * t * sx + 3 * u * t * t * tx + t * t * t * tx, y: u * u * u * sy + 3 * u * u * t * (sy + lift) + 3 * u * t * t * (ty - lift) + t * t * t * ty };
+        };
+        const lw = (e.label?.length ?? 0) * LABEL_CHAR + 10;
+        const spot = [0.8, 0.7, 0.88, 0.6].map(at).find((p) => clear(p.x, p.y, lw)) ?? at(0.8);
+        if (e.label) taken.push({ x: spot.x - lw / 2, y: spot.y - LABEL_H / 2, w: lw, h: LABEL_H });
+        const wf = from.kind === 'workflow' ? e.from : e.to;
+        return [{ key: `${e.from}>${e.to}`, d: `M${sx},${sy} C${sx},${sy + lift} ${tx},${ty - lift} ${tx},${ty}`, label: e.label, lx: Math.round(spot.x), ly: Math.round(spot.y), lw, live: running !== null && wf === `wf:${running}`, dashed: false }];
       }
       const forward = b.x >= a.x + NODE_W / 2;
       const x1 = forward ? a.x + NODE_W : a.x;
@@ -92,6 +105,11 @@ export function FlowCanvas({ eventId, initial }: { eventId: string; initial: Flo
       return [{ key: `${e.from}>${e.to}`, d: `M${x1},${y1} C${x1 + bend},${y1} ${x2 - bend},${y2} ${x2},${y2}`, label: e.label, lx: Math.round(spot.x), ly: Math.round(spot.y), lw, live: false, dashed: false }];
     });
   }, [data, place, running]);
+
+  const extent = useMemo(() => {
+    const placed = data.nodes.map((n) => ({ ...place(n), h: HEIGHT[n.kind] }));
+    return { w: Math.max(1, ...placed.map((p) => p.x + NODE_W)) + 200, h: Math.max(1, ...placed.map((p) => p.y + p.h)) + 200 };
+  }, [data.nodes, place]);
 
   function onPointerDown(event: ReactPointerEvent<HTMLDivElement>, node: FlowNode | null) {
     if ((event.target as HTMLElement).closest('a,button')) return;
@@ -146,7 +164,9 @@ export function FlowCanvas({ eventId, initial }: { eventId: string; initial: Flo
     <div className="stack" style={{ gap: 16 }}>
       <div ref={frame} className={panning ? 'canvas is-panning' : 'canvas'} onPointerDown={(e) => { onPointerDown(e, null); }} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp}>
         <div className="canvas__world" style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.k})` }}>
-          <svg className="canvas__edges" width="1" height="1" aria-hidden="true">
+          {/* Sized to cover every node (and exempt from the global svg max-width, see social.css): before, the
+              edges were in the DOM but painted into a 0px-wide layer, so the canvas looked unconnected. */}
+          <svg className="canvas__edges" width={extent.w} height={extent.h} aria-hidden="true">
             {edges.map((e) => (
               <path key={e.key} d={e.d} className={e.live ? 'is-flow' : e.dashed ? 'is-quiet' : undefined} />
             ))}

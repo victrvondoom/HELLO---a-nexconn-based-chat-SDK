@@ -168,7 +168,7 @@ export class MemoryHelloStore implements SeedableStore {
     return s ? MemoryHelloStore.copy(s) : null;
   }
 
-  async updateSession(sessionId: string, patch: Partial<Pick<Session, 'roomId'>>): Promise<void> {
+  async updateSession(sessionId: string, patch: Partial<Pick<Session, 'roomId' | 'startsAt' | 'endsAt'>>): Promise<void> {
     const existing = this.sessions.get(sessionId);
     if (!existing) {
       throw new DomainError('NOT_FOUND', 'Session not found.');

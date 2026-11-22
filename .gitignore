@@ -26,3 +26,7 @@ public/models/
 
 # typescript
 *.tsbuildinfo
+
+# Nexconn skill: downloaded docs are a local cache
+.claude/skills/nexconn-chat/references/cache/
+.claude/skills/nexconn-chat/references/llms.txt

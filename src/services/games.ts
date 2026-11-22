@@ -13,7 +13,20 @@ import { ID } from './feed';
  * keeps quiz answers to itself until a person has answered. A browser can only ask to make a move.
  */
 
-export const GameCreateSchema = z.object({ kind: z.enum(['FOUR', 'QUIZ']) });
+const CustomQuestion = z
+  .object({
+    prompt: z.string().trim().min(5).max(200),
+    options: z.array(z.string().trim().min(1).max(80)).min(2).max(4),
+    answer: z.number().int().min(0).max(3),
+  })
+  .refine((q) => q.answer < q.options.length, { message: 'The right answer must be one of the options.' })
+  .refine((q) => new Set(q.options.map((o) => o.toLowerCase())).size === q.options.length, { message: 'Options must differ.' });
+
+/** A game to start: four in a row, the schedule quiz, or a quiz the person wrote (3 to 10 questions). */
+export const GameCreateSchema = z.object({
+  kind: z.enum(['FOUR', 'QUIZ']),
+  custom: z.object({ title: z.string().trim().min(3).max(80), questions: z.array(CustomQuestion).min(3).max(10) }).optional(),
+});
 export const GameActionSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('join') }),
   z.object({ action: z.literal('move'), col: z.number().int().min(0).max(COLS - 1) }),
@@ -61,19 +74,21 @@ export async function buildQuiz(ctx: ServiceContext, eventId: string, seed: numb
   return questions.slice(0, 6);
 }
 
-export async function createGame(ctx: ServiceContext, eventId: string, userId: string, kind: Game['kind']): Promise<Game> {
+export async function createGame(ctx: ServiceContext, eventId: string, userId: string, kind: Game['kind'], custom?: z.infer<typeof GameCreateSchema>['custom']): Promise<Game> {
+  if (custom && kind !== 'QUIZ') throw new DomainError('VALIDATION_FAILED', 'Only quizzes can be written by hand.');
   await requireCapability(ctx, eventId, userId, 'message.send');
   const now = ctx.now();
   // Closed games (see src/domain/games/lifecycle.ts) no longer count, so the limit cannot lock a person out.
   const open = (await ctx.store.docList('games', { eventId, createdBy: userId })).filter((g) => isOpenGame(g, now));
   if (open.length >= 5) throw new DomainError('VALIDATION_FAILED', 'Finish one of your open games before starting another.');
   const id = ctx.newId('game');
-  const questions = kind === 'QUIZ' ? await buildQuiz(ctx, eventId, now) : [];
+  const questions = custom ? custom.questions.map((q) => ({ prompt: q.prompt, options: q.options, answer: q.answer })) : kind === 'QUIZ' ? await buildQuiz(ctx, eventId, now) : [];
   if (kind === 'QUIZ' && questions.length < 3) throw new DomainError('INELIGIBLE', 'The schedule is too short to write a quiz from.');
   const game: Game = {
     id,
     eventId,
     kind,
+    title: custom?.title ?? null,
     createdBy: userId,
     status: kind === 'QUIZ' ? 'ACTIVE' : 'WAITING',
     createdAt: now,
@@ -157,6 +172,7 @@ async function present(ctx: ServiceContext, stored: Game, userId: string) {
   return {
     id: g.id,
     kind: g.kind,
+    title: g.title ?? null,
     status: g.status,
     createdAt: g.createdAt,
     host: await name(g.createdBy),

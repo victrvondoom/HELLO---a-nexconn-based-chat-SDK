@@ -12,11 +12,23 @@ import { SlaChip } from '@/components/workplace/SlaChip';
 import { SweepButton } from '@/components/workplace/SweepButton';
 import { LiveRefresh } from '@/components/workplace/LiveRefresh';
 import { listSignalPatternsFor } from './data';
+import { ResiliencePanel } from '@/components/operations/ResiliencePanel';
+import { VenueBoard } from '@/components/operations/VenueBoard';
+import { DISRUPTION_CHOICES, listProposals } from '@/services/resilience';
+import { venueBoard } from '@/services/live-room';
 
 export const dynamic = 'force-dynamic';
 
-export default async function OperationsPage({ params }: { params: Promise<{ eventId: string }> }) {
+const TABS = [
+  { id: 'board', label: 'Board' },
+  { id: 'venue', label: 'Venue and AV' },
+  { id: 'resilience', label: 'Resilience' },
+] as const;
+
+export default async function OperationsPage({ params, searchParams }: { params: Promise<{ eventId: string }>; searchParams: Promise<{ tab?: string }> }) {
   const { eventId } = await params;
+  const requested = (await searchParams).tab;
+  const tab = TABS.find((t) => t.id === requested)?.id ?? 'board';
   const viewer = await loadEventViewer(eventId);
   if (!viewer.can('incident.read.operational')) {
     notFound();
@@ -76,6 +88,34 @@ export default async function OperationsPage({ params }: { params: Promise<{ eve
         </div>
       </div>
 
+      <nav className="segmented" aria-label="Operations sections" style={{ marginBottom: 20 }}>
+        {TABS.filter((t) => t.id !== 'resilience' || canQueue).map((t) => (
+          <Link key={t.id} href={`/events/${eventId}/operations${t.id === 'board' ? '' : `?tab=${t.id}`}`} className={tab === t.id ? 'segmented__item is-active' : 'segmented__item'} aria-current={tab === t.id ? 'page' : undefined}>
+            {t.label}
+          </Link>
+        ))}
+      </nav>
+
+      {tab === 'resilience' && canQueue ? (
+        <section aria-labelledby="resilience-heading" className="stack" style={{ gap: 12 }}>
+          <div>
+            <h2 id="resilience-heading">Resilience check</h2>
+            <p className="small muted">Reproduce an incident on the live schedule, find the combinations of disruptions that break it, and review a verified fix before anything changes.</p>
+          </div>
+          <ResiliencePanel
+            eventId={eventId}
+            canDecide={viewer.can('approval.decide')}
+            incidents={board.filter((r) => r.incident.roomId).map((r) => ({ id: r.incident.id, label: `${r.incident.title} (${CATEGORY_LABEL[r.incident.category]})` }))}
+            disruptions={DISRUPTION_CHOICES}
+            proposals={(await listProposals(viewer.ctx, eventId, viewer.userId)).slice(0, 6)}
+            rooms={Object.fromEntries(rooms.map((r) => [r.room.id, r.room.name]))}
+          />
+        </section>
+      ) : null}
+
+      {tab === 'venue' ? <VenueBoard eventId={eventId} board={await venueBoard(viewer.ctx, eventId, viewer.userId)} /> : null}
+
+      {tab === 'board' ? (
       <div className="split">
         <section className="card ops-table" aria-labelledby="board-heading" style={{ overflow: 'hidden' }}>
           <div className="card__head">
@@ -199,6 +239,7 @@ export default async function OperationsPage({ params }: { params: Promise<{ eve
           ) : null}
         </div>
       </div>
+      ) : null}
     </div>
   );
 }

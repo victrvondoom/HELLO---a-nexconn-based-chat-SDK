@@ -49,7 +49,7 @@ export interface HelloStore {
 
   listSessions(eventId: string): Promise<Session[]>;
   getSession(sessionId: string): Promise<Session | null>;
-  updateSession(sessionId: string, patch: Partial<Pick<Session, 'roomId'>>): Promise<void>;
+  updateSession(sessionId: string, patch: Partial<Pick<Session, 'roomId' | 'startsAt' | 'endsAt'>>): Promise<void>;
 
   insertMessage(message: Message): Promise<void>;
   listMessages(eventId: string): Promise<Message[]>;

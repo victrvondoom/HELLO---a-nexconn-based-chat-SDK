@@ -2,7 +2,7 @@
   "name": "hello-event-coordination",
   "version": "0.1.0",
   "private": true,
-  "description": "HELLO — One conversation. Everyone connected. AI-assisted event coordination.",
+  "description": "HELLO \u2014 One conversation. Everyone connected. AI-assisted event coordination.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -13,7 +13,7 @@
     "test:watch": "vitest",
     "test:postgres": "node -e \"if(!process.env.HELLO_TEST_DATABASE_URL){console.error('Set HELLO_TEST_DATABASE_URL to an empty Postgres database, e.g. postgres://hello:hello@localhost:5432/hello_test');process.exit(1)}\" && vitest run tests/integration",
     "check": "npm run typecheck && npm run lint && npm run test && npm run build",
-    "test:e2e": "node tests/e2e/judge-flow.mjs && node tests/e2e/features-flow.mjs && node tests/e2e/workflow-audit.mjs && node tests/e2e/private-messages.mjs && node tests/e2e/product-flow.mjs && node tests/e2e/field-atlas-flow.mjs && node tests/e2e/field-live-flow.mjs && node tests/e2e/live-flow.mjs && node tests/e2e/outbox-flow.mjs && node tests/e2e/call-flow.mjs && node tests/e2e/privacy-filter-flow.mjs && node tests/e2e/privacy-parity-flow.mjs",
+    "test:e2e": "node tests/e2e/judge-flow.mjs && node tests/e2e/companion-flow.mjs && node tests/e2e/features-flow.mjs && node tests/e2e/workflow-audit.mjs && node tests/e2e/private-messages.mjs && node tests/e2e/product-flow.mjs && node tests/e2e/field-atlas-flow.mjs && node tests/e2e/field-live-flow.mjs && node tests/e2e/live-flow.mjs && node tests/e2e/outbox-flow.mjs && node tests/e2e/call-flow.mjs && node tests/e2e/privacy-filter-flow.mjs && node tests/e2e/privacy-parity-flow.mjs",
     "test:routes": "node tests/e2e/route-crawl.mjs",
     "screenshots": "node tests/e2e/screenshots.mjs",
     "privacy:assets": "node scripts/privacy-assets.mjs",
@@ -26,6 +26,7 @@
   "dependencies": {
     "@colyseus/schema": "5.0.42",
     "@colyseus/sdk": "0.18.8",
+    "@nexconn/call": "26.2.1",
     "@nexconn/chat": "^26.5.1",
     "@nexconn/chatui": "^26.5.0",
     "@nexconn/engine": "^26.5.1",
@@ -36,6 +37,7 @@
     "next": "^16.4.6",
     "onnxruntime-web": "^1.23.2",
     "pg": "^8.23.1",
+    "qrcode-generator": "^2.0.4",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "solid-js": "1.9.18",
@@ -59,7 +61,6 @@
     "eslint": "^9.0.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "playwright": "^1.63.0",
-    "qrcode-generator": "^2.0.4",
     "typescript": "^5.8.0",
     "typescript-eslint": "^8.72.2",
     "vitest": "^5.1.0"
@@ -67,6 +68,10 @@
   "overrides": {
     "@typescript-eslint/typescript-estree": {
       "minimatch": "^11.0.5"
+    },
+    "@nexconn/call": {
+      "@nexconn/chat": "$@nexconn/chat",
+      "@nexconn/engine": "$@nexconn/engine"
     }
   }
 }

@@ -300,7 +300,7 @@ export class PostgresHelloStore implements SeedableStore {
     return this.one('select data from hello_sessions where id = $1', [sessionId]);
   }
 
-  async updateSession(sessionId: string, patch: Partial<Pick<Session, 'roomId'>>): Promise<void> {
+  async updateSession(sessionId: string, patch: Partial<Pick<Session, 'roomId' | 'startsAt' | 'endsAt'>>): Promise<void> {
     await this.patchRow<Session>('hello_sessions', sessionId, 'Session not found.', (current) => ({ ...current, ...patch }));
   }
 

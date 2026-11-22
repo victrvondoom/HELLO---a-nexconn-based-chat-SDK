@@ -42,8 +42,11 @@ const newPage = async (viewport = { width: 1280, height: 820 }) => {
 
 async function signInAs(page, displayName) {
   await page.goto(`${BASE}/demo`);
+  await page.getByText('Someone specific').click();
   await page.getByRole('button', { name: `Continue as ${displayName}` }).click();
-  await page.waitForURL(`**/events/${EVENT}/conversation`);
+  await page.waitForURL(`**/events/${EVENT}`);
+  // Entering the demo lands on Today; these journeys start in the conversation.
+  await page.goto(`${BASE}/events/${EVENT}/conversation`);
 }
 
 try {

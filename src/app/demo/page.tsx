@@ -4,66 +4,42 @@ import { demoModeEnabled } from '@/lib/session';
 import { DEMO_EVENT_ID } from '@/store/seed';
 import { ROLE_LABEL } from '@/components/ui/labels';
 import { DemoSignIn } from '@/components/demo/DemoSignIn';
-import { Medallion } from '@/components/brand/Motifs';
 import { Wordmark } from '@/components/brand/Wordmark';
 
 export const dynamic = 'force-dynamic';
-
-const ROLE_BLURB: Record<string, string> = {
-  ATTENDEE: 'Report problems, ask questions, follow your requests.',
-  SPEAKER: 'Attendee view plus presentation-related reporting.',
-  VOLUNTEER: 'Claim and progress work that matches your skills.',
-  OPERATIONS_STAFF: 'Operational queue, incident handling, room status.',
-  ORGANISER: 'Everything above, plus approvals and signal review.',
-  PLATFORM_ADMIN: 'Configuration and audit access.',
-};
+export const metadata = { title: 'Enter' };
 
 export default async function DemoPage() {
   if (!demoModeEnabled()) {
     return (
-      <div className="page" style={{ maxWidth: 640 }}>
+      <main className="auth">
         <h1>Sign-in unavailable</h1>
-        <p className="muted" style={{ marginTop: 8 }}>
+        <p className="muted">
           Demo accounts are disabled in this deployment. <Link href="/signin">Sign in or create an account</Link>.
         </p>
-      </div>
+      </main>
     );
   }
   const { store } = await getRuntime();
   const memberships = await store.listMemberships(DEMO_EVENT_ID);
   const accounts = await Promise.all(
-    memberships.map(async (m) => {
-      const user = await store.getUser(m.userId);
-      return {
-        userId: m.userId,
-        name: user?.displayName ?? m.userId,
-        role: ROLE_LABEL[m.role],
-        blurb: ROLE_BLURB[m.role] ?? '',
-      };
-    }),
+    memberships.map(async (m) => ({
+      userId: m.userId,
+      name: (await store.getUser(m.userId))?.displayName ?? m.userId,
+      role: ROLE_LABEL[m.role],
+    })),
   );
   return (
-    <div className="page" style={{ maxWidth: 880 }}>
-      <p className="eyebrow">
-        <Link href="/">HELLO</Link> / Demo
-      </p>
-      <div className="signin-hero">
-        <Medallion size={104} />
-        <Wordmark height={64} id="wm-demo" />
-      </div>
-      <div className="page-header" style={{ marginTop: 8 }}>
-        <div>
-          <h1>Choose a demo role</h1>
-          <p>
-            Each account is a seeded, fictional person in the HELLO Global Technology Summit. Switch roles to see what each one
-            can do. Access is decided on the server for every request.
-          </p>
-        </div>
-      </div>
-      <div className="notice notice--demo" role="note" style={{ marginBottom: 20 }}>
-        <strong>Demo only.</strong> These accounts are not real people. To keep your own profile, posts and games, <Link href="/signin">create an account</Link>.
-      </div>
+    <main className="auth">
+      <Link href="/" aria-label="HELLO home">
+        <Wordmark height={44} id="wm-demo" title="HELLO" />
+      </Link>
+      <h1>Welcome</h1>
+      <p className="muted">A demo event with fictional people. Nothing to fill in.</p>
       <DemoSignIn eventId={DEMO_EVENT_ID} accounts={accounts} />
-    </div>
+      <p className="small muted">
+        <Link href="/signin">Use your own account</Link>
+      </p>
+    </main>
   );
 }

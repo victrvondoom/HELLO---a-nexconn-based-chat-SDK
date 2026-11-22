@@ -15,7 +15,7 @@ export const POST = viewerRoute<{ eventId: string }>('games.create', async ({ us
   const input = await parseBody(request, GameCreateSchema, 'Choose a game.');
   const { ctx } = await getRuntime();
   limiter.consume(`game:${userId}`, ctx.now());
-  const game = await createGame(ctx, params.eventId, userId, input.kind);
+  const game = await createGame(ctx, params.eventId, userId, input.kind, input.custom);
   return jsonOk({ id: game.id }, 201);
 });
 

@@ -992,3 +992,55 @@
 .sidebar .nav-more__summary .nav-link__icon {
   color: rgb(255 236 226 / 0.88);
 }
+
+/* ---------- the calm sidebar: five destinations, one door into the Kingdom ---------- */
+
+.sidebar--calm {
+  gap: var(--s-5);
+}
+
+.sidebar--calm .nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-5);
+}
+
+.sidebar--calm .nav-section:first-child .nav-link {
+  min-height: 44px;
+  font-size: 15px;
+}
+
+/* The one invitation in the sidebar: step into your 3D Kingdom. */
+.kingdom-door {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--r-lg);
+  color: var(--ink);
+  text-decoration: none;
+  background: linear-gradient(135deg, var(--kesar-200), var(--kesar-100) 60%, rgb(255 250 244 / 0.96));
+  box-shadow: 0 12px 26px -16px rgb(40 0 8 / 0.8), inset 0 0 0 1px rgb(255 255 255 / 0.6);
+  transition: transform var(--t-fast) var(--ease-out);
+}
+
+.kingdom-door:hover {
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+
+.kingdom-door > .grow {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.kingdom-door__icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--neel-700);
+}

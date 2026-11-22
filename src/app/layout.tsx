@@ -13,6 +13,7 @@ import '@/styles/venue.css';
 import '@/styles/moments.css';
 import '@/styles/guide.css';
 import '@/styles/privacy.css';
+import '@/styles/companion.css';
 import { FeedbackProvider } from '@/components/ui/Feedback';
 
 // Self-hosted at build time by next/font: no request reaches Google from a visitor's browser.
@@ -35,6 +36,7 @@ export const metadata: Metadata = {
     template: '%s · HELLO',
   },
   description: 'Coordination for physical events: conversations that become accountable workflows, and an event that feels like home.',
+  manifest: '/manifest.webmanifest',
 };
 
 export const viewport: Viewport = {

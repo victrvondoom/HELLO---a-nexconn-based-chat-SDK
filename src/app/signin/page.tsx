@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Sign in' };
 
 export default async function SignInPage() {
-  if (await currentUserId()) redirect(`/events/${DEMO_EVENT_ID}/flow`);
+  if (await currentUserId()) redirect(`/events/${DEMO_EVENT_ID}`);
   return (
     <main className="auth">
       <Link href="/" aria-label="HELLO home">

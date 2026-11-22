@@ -10,13 +10,17 @@ import { FixedWindowRateLimiter } from './rate-limit';
  *
  * The limiters live on `globalThis` so every route bundle that imports this module shares them.
  */
-export type LimitedAction = 'message.send' | 'post.create' | 'workflow.run';
+export type LimitedAction = 'message.send' | 'post.create' | 'workflow.run' | 'live.action' | 'resilience.check';
 
 const SPEC: Record<LimitedAction, { limit: number; windowMs: number; message: string }> = {
   // 20 messages per minute per person and event: enough for a conversation, not enough to flood operations.
   'message.send': { limit: 20, windowMs: 60_000, message: 'You are sending messages too quickly. Wait a moment and try again.' },
   'post.create': { limit: 20, windowMs: 60_000, message: 'You are posting too quickly. Wait a moment and try again.' },
   'workflow.run': { limit: 10, windowMs: 60_000, message: 'You are running workflows too quickly. Wait a moment and try again.' },
+  // Live room taps (can't hear, can't see, questions, votes, seat holds): generous for a person, not for a script.
+  'live.action': { limit: 40, windowMs: 60_000, message: 'That is a lot of taps. Wait a moment and try again.' },
+  // A resilience check runs up to a few thousand simulations: a handful per minute is plenty.
+  'resilience.check': { limit: 6, windowMs: 60_000, message: 'Resilience checks are limited to six a minute. Wait a moment.' },
 };
 
 type GlobalWithActionLimits = typeof globalThis & { __helloActionLimits?: Map<LimitedAction, FixedWindowRateLimiter> };
