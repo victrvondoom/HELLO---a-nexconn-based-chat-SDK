@@ -1,6 +1,6 @@
 // @ts-nocheck -- inherited from Chatdom (see THIRD_PARTY_CHATDOM.md); not type-checked under HELLO's config
 /// <reference lib="webworker" />
-import { sampleFoundedGroundBand, type FoundedGroundRequest } from './terrain-founded';
+import { sampleFoundedGroundBand, type FoundedGroundRequest } from './terrain-founded-core';
 
 const scope = self as unknown as DedicatedWorkerGlobalScope;
 scope.onmessage = (event: MessageEvent<FoundedGroundRequest>) => {

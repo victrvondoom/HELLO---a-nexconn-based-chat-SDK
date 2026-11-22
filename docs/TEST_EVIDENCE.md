@@ -327,3 +327,25 @@ GitHub. HawkScan was not run (no `HAWK_API_KEY`).
 | `npm test` | 54 files, 623 pass, 3 skipped (new: `tests/integration/custom-maps.test.ts`, 3 tests) |
 | Browser journey (scratch script, dev server) | sketch saved, pin dropped and saved, map shared, a second attendee sees it read-only: all pass |
 | `npm run build` | not run here (Turbopack production build stalls in this container); CI builds on GitHub |
+
+## 2026-11-22: production build no longer hangs (Web Worker import cycles)
+
+`next build` stalled forever at "Creating an optimized production build" (locally, in CI and on Vercel) since the
+Kingdoms commit (`39301b7`). Root cause, established by bisection and two controlled builds:
+
+- The commit before it (`bce4233`) compiles in 6.5 s.
+- The current tree with only the Chatdom 3D scene import stubbed: builds.
+- The current tree with only the scene's `new Worker(new URL(...))` targets not followed: builds.
+- An import-graph check found three workers importing their own spawner: `picture-motion-worker` ->
+  `picture-motion`, `terrain-founded-worker` -> `terrain-founded`, `terrain-founded-solids-worker` ->
+  `terrain-founded-solids`. Turbopack recurses into a self-referencing worker chunk.
+
+Fix: the pure code each worker needs moved into `picture-motion-core.ts`, `terrain-founded-core.ts` and
+`terrain-founded-solids-core.ts`; the spawners re-export it, so other importers are unchanged.
+
+| Check | Result |
+|---|---|
+| `npm run build` (demo mode) | compiles in 19.4 s, exit 0 |
+| `tests/unit/worker-cycles.test.ts` (new guard) | passes; fails on the old code, naming the three cycles |
+| Kingdom 3D in the production build (`next start`, Chromium) | scene renders with its workers, no console errors |
+| `npm run typecheck`, `npm run lint`, `npm test` | clean; 55 files pass |

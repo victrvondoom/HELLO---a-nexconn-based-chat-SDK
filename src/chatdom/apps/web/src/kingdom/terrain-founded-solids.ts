@@ -2,7 +2,9 @@
 /* global Worker:readonly */
 import type { RealmFoundedScene } from '@chatdom/world';
 import { foundedPlacedSolidsInput } from '@chatdom/world/founded-collision';
-import { compilePlacedSolids, packCollisionBoxes, unpackCollisionBoxes, type CollisionBox, type PlacedSolidsInput } from '@chatdom/voxel/collision';
+import { compilePlacedSolids, unpackCollisionBoxes, type CollisionBox } from '@chatdom/voxel/collision';
+import type { FoundedSolidsReply } from './terrain-founded-solids-core';
+export { compileFoundedSolidsPacked, type FoundedSolidsReply } from './terrain-founded-solids-core';
 
 /**
  * The founded scene's placed solids (every home, prop and the anvil as disjoint boxes) are the heaviest part of
@@ -10,12 +12,6 @@ import { compilePlacedSolids, packCollisionBoxes, unpackCollisionBoxes, type Col
  * opening samples the ground and the land downloads; the scene then builds the world from them with
  * `compileFoundedSceneWithSolids`, which equals `compileFoundedScene`. Without workers they compile here.
  */
-export type FoundedSolidsReply = { readonly boxes: Float64Array } | { readonly error: string };
-
-export function compileFoundedSolidsPacked(input: PlacedSolidsInput): Float64Array {
-  return packCollisionBoxes(compilePlacedSolids(input));
-}
-
 export function prepareFoundedSolids(scene: RealmFoundedScene, options: { readonly signal?: AbortSignal } = {}): Promise<readonly CollisionBox[]> {
   const input = foundedPlacedSolidsInput(scene), signal = options.signal;
   if (typeof Worker === 'undefined') return Promise.resolve(compilePlacedSolids(input));
