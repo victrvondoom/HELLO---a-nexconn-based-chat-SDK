@@ -20,9 +20,15 @@
   flex-direction: column;
   gap: var(--s-3);
   padding: var(--s-5) var(--s-3) var(--s-3);
-  background: rgb(255 255 255 / 0.62);
-  -webkit-backdrop-filter: var(--glass-blur);
-  backdrop-filter: var(--glass-blur);
+  /* Deep red cloth with a knitted border down its right edge. The border is the last background layer so it
+     stays put while the list scrolls. */
+  padding-right: calc(var(--s-3) + 19px);
+  color: #fff3ea;
+  background:
+    var(--knit) right top / 19px 38px repeat-y,
+    linear-gradient(180deg, var(--sidebar-red) 0%, var(--sidebar-red-deep) 100%);
+  background-attachment: local, scroll;
+  scrollbar-color: rgb(255 255 255 / 0.3) transparent;
   border-right: 1px solid var(--line);
   box-shadow: 8px 0 30px -26px rgb(var(--ink-rgb) / 0.5);
   overflow-y: auto;
@@ -934,4 +940,55 @@
   .halo-mark__ring {
     animation: none;
   }
+}
+
+/* ---------- the red sidebar: cream text on red, saffron for the current page ---------- */
+
+.sidebar .brand {
+  align-self: flex-start;
+  padding: 6px 12px 7px;
+  border-radius: var(--r-md);
+  background: rgb(255 250 244 / 0.96);
+  box-shadow: 0 10px 22px -14px rgb(40 0 8 / 0.7);
+}
+
+.sidebar .nav-group {
+  color: rgb(255 226 214 / 0.72);
+}
+
+.sidebar .nav-link,
+.sidebar .nav-more__summary {
+  color: #fff3ea;
+}
+
+.sidebar .nav-link:hover,
+.sidebar .nav-more__summary:hover {
+  background: rgb(255 255 255 / 0.1);
+  color: #fff;
+}
+
+.sidebar .nav-link[aria-current='page'] {
+  background: rgb(255 255 255 / 0.16);
+  color: #fff;
+  box-shadow: inset 3px 0 0 var(--kesar-400), inset 0 0 0 1px rgb(255 255 255 / 0.18);
+}
+
+.sidebar .nav-link[aria-current='page'] .nav-link__icon,
+.sidebar .nav-link:hover .nav-link__icon {
+  color: #fff;
+}
+
+.sidebar .nav-more__items {
+  border-left-color: rgb(255 255 255 / 0.28);
+}
+
+/* Cards on the red cloth keep dark ink. */
+.sidebar .event-card,
+.sidebar .nav-foot {
+  color: var(--ink);
+}
+
+.sidebar .nav-link .nav-link__icon,
+.sidebar .nav-more__summary .nav-link__icon {
+  color: rgb(255 236 226 / 0.88);
 }

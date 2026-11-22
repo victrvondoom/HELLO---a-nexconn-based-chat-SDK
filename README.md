@@ -197,8 +197,8 @@ the street. It sets the materials of Indian craft on a clean lime-washed wall.
 - **Colour roles:** neel indigo (blue pottery, indigo dye) for primary actions, peacock blue for links and live state,
   a kesar saffron highlighter for the current page and selected items, rani pink for Moments, mehendi green for
   success, sindoor red only for danger. Every text colour passes WCAG AA on both the wall and cards.
-- **Type:** Tiro Devanagari Hindi for titles (a Latin serif drawn alongside Devanagari), Anek Latin for reading, and
-  the Tiro cuts for Kannada, Tamil, Telugu, Bangla and Gurmukhi on the landing page, so every script shares one voice.
+- **Type:** EB Garamond for titles, with its flowing italic for emphasis, Figtree for reading, and the Tiro cuts for
+  Devanagari, Kannada, Tamil, Telugu, Bangla and Gurmukhi, so every script has a serif of the same spirit.
   All are self-hosted at build time by `next/font`; the script fonts load only when shown.
 - **Motifs:** a woven pixel border opens every page, unseen stories wear a blue-pottery rim, rangoli flowers gather
   at the foot of the landing window, and the event card shows a ghat at dawn. The landing hero is a jharokha that says

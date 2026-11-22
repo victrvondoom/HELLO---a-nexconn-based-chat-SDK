@@ -94,8 +94,8 @@ export default async function LandingPage() {
         </header>
         <Jharokha>
           <h1 id="hero-title">
-            One conversation.
-            <br /> Everyone connected.
+            One conversation,
+            <br /> <em>everyone connected.</em>
           </h1>
           <p className="hero__lead">
             Attendees describe a problem in their own words. HELLO finds the room, the session and the right people, and tells the
