@@ -83,12 +83,11 @@ component and never send the app secret to the browser.
 `api.sg-light-api.com` / `api-b.sg-light-api.com`, NA `api.us-light-api.com` / `api-b…`, SA `api.sau-light-api.com` /
 `api-b…`; the backup is used after a 5 s timeout, a network error or a 5xx; a 401 is not retried. Sources:
 docs.nexconn.ai `/platform-chat-api/prepare-to-use-api/auth.md`, `/base-url.md`, `/platform-chat-api/user/register.md`.
-Checked live: both Singapore hosts answer `401 / 1004 Signature error` to a deliberately wrong signature. A real
-token has not been issued yet: that needs `NEXCONN_APP_SECRET`.
+Checked live: both Singapore hosts answer `401 / 1004 Signature error` to a deliberately wrong signature. With the
+real App Secret a token was issued and a browser connected (Settings → Test the Nexconn connection).
 
 ## Not verified, and why
 
-- A token issued with the real App Secret, and a browser connecting with it (needs `NEXCONN_APP_SECRET`).
 - Nexconn's webhook format.
   The bridge (Option A) or the transport (Option B) is where they go; nothing else in HELLO depends on them.
 - Delivery receipts for every Nexconn message type.

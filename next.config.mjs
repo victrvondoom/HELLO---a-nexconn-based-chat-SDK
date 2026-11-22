@@ -6,6 +6,14 @@
  * Development needs 'unsafe-eval' for hot reloading, so the strict policy applies to production builds.
  */
 const isProd = process.env.NODE_ENV === 'production';
+/**
+ * Nexconn's browser SDK connects to its data centre's edge servers (navigation, then the long connection). Allowed
+ * only when Nexconn is configured, and only for the app's own data centre (NEXCONN_AREA; hosts from @nexconn/engine).
+ */
+const NEXCONN_EDGE = { BJ: 'rong-edge.com', SG: 'sg-light-edge.com', SG_B: 'sg-b-light-edge.com', NA: 'us-light-edge.com', SA: 'sau-light-edge.com', OM: 'om-light-edge.com' };
+const nexconnDomain = process.env.NEXCONN_APP_KEY ? NEXCONN_EDGE[(process.env.NEXCONN_AREA ?? 'SG').trim().toUpperCase()] ?? NEXCONN_EDGE.SG : null;
+// rongnav.com / rongcfg.com: the SDK's backup navigation servers, tried when the edge navigation server is slow.
+const nexconnEdge = nexconnDomain ? ` https://*.${nexconnDomain} wss://*.${nexconnDomain} https://*.rongnav.com https://*.rongcfg.com` : '';
 const csp = [
   "default-src 'self'",
   // 'wasm-unsafe-eval' lets the privacy filter compile its WebAssembly (ONNX Runtime, Tesseract); it does not allow eval.
@@ -14,7 +22,7 @@ const csp = [
   "img-src 'self' data: blob:",
   "media-src 'self' blob:",
   "font-src 'self'",
-  `connect-src 'self'${isProd ? '' : ' ws: wss:'}`,
+  `connect-src 'self'${nexconnEdge}${isProd ? '' : ' ws: wss:'}`,
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",

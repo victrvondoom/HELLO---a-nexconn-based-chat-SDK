@@ -11,7 +11,8 @@ A failing run is recorded here too. Nothing is marked as passing without a run.
 | `npx vitest run` | 63 files; 667 passed, 3 skipped. `tests/unit/nexconn.test.ts` now covers the SHA-1 signature, headers and body, failover to the backup host (timeout, network error, 503), no retry on 401, Nexconn refusals, alphanumeric user ids, and the data centre. |
 | `curl` to `api.sg-light-api.com` and `api-b.sg-light-api.com` with App Key `pkfcgjstpvbo8` and a deliberately wrong signature | Both `401 {"code":1004,"errorMessage":"Signature error"}`: hosts reachable, App Key recognised, signature checked. |
 | Node `fetch` to the same host | Fails with `ENOTFOUND` in this cloud container unless `NODE_USE_ENV_PROXY=1`; with it, `401`. Container-specific. |
-| Issue a real token | Not run: `NEXCONN_APP_SECRET` is not set. |
+| Issue a real token (App Secret set in the git-ignored `.env.local`) | Nexconn returned code 0 and a 128-character access token for Ada's derived id `h7e6a731…`. Through the app: `POST /api/nexconn/token` as Ada → `{ appKey, area: "SG", nexconnUserId, token }`; the response does not contain the secret. |
+| Browser connection (Settings → "Test the Nexconn connection", production build, Chromium via the container proxy with TLS checks on) | **Connected to Nexconn as h7e6a731b…**: navigation at `dualstack-nav.sg-light-edge.com`, long connection on `ws-g.sg-light-edge.com`. First run was refused because the CSP blocked the SDK's backup navigation hosts (`*.rongnav.com`, `*.rongcfg.com`) and the container blocked the websocket hosts; the CSP now allows the app's data centre edge (`*.sg-light-edge.com`, https and wss) and those backup hosts, only when Nexconn is configured. |
 
 ## Minimal companion, Plan B, Steadfast, connected canvas (2026-11-22, branch `claude/admiring-albattani-xkgn2t`)
 

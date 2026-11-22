@@ -178,7 +178,9 @@ Collections: `plans` (`eventId:userId`), `avSignals` (`sessionId:kind:userId`), 
 server-only; `tests/unit/nexconn.test.ts` scans client files for it. `POST /api/nexconn/token` issues a user token
 with a signed Platform Chat API call (`createSignedTokenIssuer`: SHA-1 of secret + nonce + timestamp, primary then
 backup host for `NEXCONN_AREA`, default SG). Nexconn user ids are `nexconnUserId(helloId)` (letters and digits only).
-The data centre is always passed to the browser SDK (`areaCode`). In this cloud container Node's `fetch` reaches the
+The data centre is always passed to the browser SDK (`areaCode`). `next.config.mjs` adds the data centre's edge
+(`https/wss *.sg-light-edge.com` for SG) and the SDK's backup navigation hosts to `connect-src` only when
+`NEXCONN_APP_KEY` is set. Settings → "Test the Nexconn connection" proves token → SDK connect (verified live 2026-11-22). In this cloud container Node's `fetch` reaches the
 Nexconn hosts only with `NODE_USE_ENV_PROXY=1`. The official agent skill is vendored in `.claude/skills/nexconn-chat`
 (its doc cache is git-ignored).
 

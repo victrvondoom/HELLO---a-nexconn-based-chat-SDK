@@ -14,7 +14,7 @@ event, rooms, sessions, people and incidents):
 The experience is minimal; the depth is underneath.
 
 > **Status: a working, tested prototype, not a production system.** Everything marked *verified* below has
-> tests and was driven in a real browser. Captions/audio, a live Nexconn token (it needs the App Secret), the graph-based networking
+> tests and was driven in a real browser. Captions/audio, the graph-based networking
 > layer and the official-schedule reconciler are not done; the [status table](#status) says exactly what is.
 
 **Contents:** [Quick start](#quick-start) · [Five destinations](#five-destinations) · [Architecture](#architecture) ·
@@ -123,8 +123,9 @@ check once credentials exist. The official Nexconn agent skill is vendored at `.
 - The token call is written from Nexconn's Platform Chat API docs: `SHA1(AppSecret + Nonce + Timestamp)` signs a
   `POST /v4/auth/access-token/issue` to the app's data centre (`NEXCONN_AREA`, default `SG`:
   `api.sg-light-api.com`, then `api-b.sg-light-api.com` after a timeout or server error). Nexconn user ids are
-  letters and digits derived from the HELLO id, never the id itself. Verified against Nexconn: the Singapore hosts
-  answer and reject a wrong signature with `401 / 1004`; a successful issue waits for `NEXCONN_APP_SECRET`.
+  letters and digits derived from the HELLO id, never the id itself. Verified live against your Nexconn app (Singapore):
+  a real token is issued, and Settings → *Test the Nexconn connection* connects a browser to Nexconn. The site's
+  Content-Security-Policy allows only that data centre's edge servers, and only when `NEXCONN_APP_KEY` is set.
   A test fails if any browser file reads the App Secret. Messaging also works today through the tested chat gateway: [docs/nexconn-integration.md](docs/nexconn-integration.md).
 
 ## Security and privacy
@@ -179,7 +180,8 @@ Each browser suite resets the demo first. Evidence for this pass: [docs/TEST_EVI
 | | Area |
 |---|---|
 | **Verified and working** | One-button entry; five-destination navigation and phone tab bar; Today; Explore; Live hub and live room (questions, can't hear/see → one AV incident, Better now?); personal plan; Plan B with atomic seat holds and room-full QR; venue and AV board; Steadfast end to end with approval and targeted notifications; care page offline (production build); Create a game; workflow canvas fully connected and painted; all earlier features listed in [docs/FEATURE_REFERENCE.md](docs/FEATURE_REFERENCE.md) |
-| **Implemented, externally blocked** | Nexconn token issuance (signed call written and tested against Nexconn's hosts; a real token needs `NEXCONN_APP_SECRET`); Nexconn Call SDK at runtime (peer override untested without credentials); captions, listen-in audio and slides (no media provider) |
+| **Verified with Nexconn** | Token issuance and browser connection to your Singapore app (Settings → Test the Nexconn connection) |
+| **Implemented, externally blocked** | Nexconn Call SDK at runtime (peer override untested without credentials); captions, listen-in audio and slides (no media provider) |
 | **Partial** | Schedule reconciliation: approved changes reconcile plans and notify; the two-minute official-feed reconciler (Grace Period) is not built. People worth meeting: declared interests and planned speakers only |
 | **Planned** | Graph database and Kairos (ranking, relationship memory, follow-ups, cross-event recall, contact QR), speed networking, sponsor offers, jargon coach and recap, post-talk report ([docs/HELLO_IMPLEMENTATION_ROADMAP.md](docs/HELLO_IMPLEMENTATION_ROADMAP.md)) |
 | **Demo-only** | Demo sign-in; seeded people, venue, occupancy and incidents; the Steadfast v1 benchmark world and its 40 seeded variations |

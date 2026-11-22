@@ -1,5 +1,6 @@
 import { loadEventViewer } from '@/lib/viewer';
 import { nexconnStatus } from '@/integrations/nexconn/status';
+import { NexconnCheck } from '@/components/settings/NexconnCheck';
 import { DATA_SOURCE_LABEL } from '@/domain/labels';
 import { ROLE_LABEL } from '@/components/ui/labels';
 import { demoModeEnabled } from '@/lib/session';
@@ -118,7 +119,10 @@ export default async function SettingsPage({ params }: { params: Promise<{ event
               <dt className="muted">Live updates</dt>
               <dd style={{ margin: 0 }}>{runtime.fanout ? 'Pushed instantly, across every app instance.' : 'Pushed instantly within this app instance.'}</dd>
               <dt className="muted">Nexconn</dt>
-              <dd style={{ margin: 0 }}>{nexconn.message}</dd>
+              <dd style={{ margin: 0 }} className="stack">
+                <span>{nexconn.message}</span>
+                {nexconn.state === 'READY_FOR_TOKENS' ? <NexconnCheck /> : null}
+              </dd>
             </dl>
           </section>
 
