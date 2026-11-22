@@ -349,3 +349,11 @@ Fix: the pure code each worker needs moved into `picture-motion-core.ts`, `terra
 | `tests/unit/worker-cycles.test.ts` (new guard) | passes; fails on the old code, naming the three cycles |
 | Kingdom 3D in the production build (`next start`, Chromium) | scene renders with its workers, no console errors |
 | `npm run typecheck`, `npm run lint`, `npm test` | clean; 55 files pass |
+
+### Follow-up: camera refusal explained in current Chromium
+
+With the build fixed, CI ran the browser journeys again and `privacy-parity-flow.mjs` failed one check ("permissions
+denied"). Reproduced locally (16/17). Cause: with the camera permission denied, current Chromium rejects
+`getUserMedia` with `NotSupportedError`, not `NotAllowedError`, so the dock showed "Not supported" instead of the
+explanation. `permissionRefused` in `PrivacyDock.tsx` now also accepts `SecurityError` and asks the Permissions API.
+After the fix: `privacy-parity-flow.mjs` 17/17 on the production build with the models installed.
