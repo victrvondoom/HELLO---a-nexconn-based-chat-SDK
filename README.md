@@ -21,6 +21,34 @@ The experience is minimal; the depth is underneath.
 [Live sessions](#live-sessions) · [Plan B](#plan-b-and-seat-holds) · [Steadfast](#steadfast) · [Nexconn](#nexconn) ·
 [Security](#security-and-privacy) · [Setup](#setup) · [Tests](#tests) · [Status](#status)
 
+## Autonomous Event Operations Network (challenge build)
+
+> An event should not collapse because something went wrong. HELLO detects, reconstructs, verifies and coordinates what happens next.
+
+Core loop: **Incident → Evidence → Reconstruction → Recovery proposal → Verification (all 2⁸ = 256 disruption subsets) → Human approval → Execution → Confirmation.** Operations → **Network** tab.
+
+| Capability | Code | Status |
+|---|---|---|
+| Agent team (Investigator, Scheduler, Planner, Critic, Verifier) with schema-checked evidence records | `src/domain/ops/agents.ts` | Verified here (derived from real Steadfast runs; agents cannot approve or execute) |
+| Temporal engine: server time, release, catch-up, gaps, dedupe | `src/domain/ops/temporal.ts` | Verified here (engine); live feed completed in parallel session, to verify |
+| Authoritative action ledger: sequence numbers, idempotency keys, versions, replay, recovery | `src/services/ops/action-ledger.ts` | Verified here; records every Steadfast decision |
+| Incident handoff: AI triage → staff → takeover → resolve → hand-back | `src/domain/ops/handoff.ts`, `src/services/ops/handoff.ts` | Verified here (server-side permissions, audit) |
+| Reliability Lab, 12 benchmarks | `src/services/ops/reliability-lab.ts` | Verified here (below) |
+| Nexconn group channels, messaging, history, reconnect, incident channels | `IncidentConversationProvider` contract | Completed in parallel session, to verify |
+
+Failure condition: a schedule fails iff ∃ c : margin_c < 0. Minimal failure recall: Recall@B = |Found ∩ M(w)| / |M(w)|. Percentiles are nearest-rank: p_k = x₍⌈k·n/100⌉₎.
+
+```mermaid
+flowchart LR
+  I[Incident] --> E[Evidence] --> R[Investigator] --> P[Planner] --> C[Critic]
+  C -->|witness| P
+  C --> V[Verifier: 256 subsets] --> A[Human approval] --> X[Ledger execution] --> N[Notify affected]
+```
+
+Reliability Lab (seed 1, local simulation, `npx vitest run tests/reliability/lab.test.ts`): all 12 categories 0 failures. Disruption coverage: 41 worlds × 256 = 10,496 subsets simulated, 0 false positives, 0 false negatives. Resource conflicts: 50 races × 20 claimants, exactly 1 winner each. Idempotency: 50 × 10 repeats, 1 entry each. Stale approval: 288 mutated schedules, 288 rejected. Handoff: 300 random sequences, no invariant broken. External projects' numbers are not listed: none were submitted.
+
+Inspiration (patterns only, no code): evidence-producing agent teams (CrewArcade), server-time timelines (SameBall), authoritative sequenced actions (BidLive), AI-to-human handoff (HandoffDesk). Built during the challenge: everything after commit `8bcf07a`.
+
 ## Quick start
 
 ```bash

@@ -49,6 +49,8 @@ function docEvent(collection: CollectionName, doc: Record<string, unknown> | nul
   if (collection === 'liveQuestions' || collection === 'seatLedgers') return { eventId, topic: collection, audience: EVERYONE };
   if (collection === 'avSignals') return { eventId, topic: collection, audience: people([doc?.userId as string | undefined], true) };
   if (collection === 'scheduleProposals') return { eventId, topic: collection, audience: people([], true) };
+  // The action ledger and incident ownership are staff records.
+  if (collection === 'actionEntries' || collection === 'incidentOwnership') return { eventId, topic: collection, audience: people([], true) };
   if (collection === 'fieldFlags') return { eventId, topic: collection, audience: people([], true) };
   // Privacy filter: settings are the owner's alone; an alert is told only to the person it is for.
   if (collection === 'privacyFilters') return { eventId: null, topic: collection, audience: people([doc?.userId as string | undefined], false) };

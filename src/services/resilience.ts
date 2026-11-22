@@ -7,6 +7,14 @@ import { resolve } from '@/domain/resilience/repair';
 import { verifyExact } from '@/domain/resilience/verify';
 import { DISRUPTIONS, DISRUPTION_LABEL, makeSchedule, maskOf, type DisruptionId } from '@/domain/resilience/world';
 import { audit, notify, requireCapability, type ServiceContext } from './context';
+import { submitAction } from './ops/action-ledger';
+
+/** Appends a decision to the event's action ledger (idempotent per proposal and decision). */
+async function ledger(ctx: ServiceContext, eventId: string, userId: string, proposalId: string, decision: string, outcome: string): Promise<void> {
+  const head = await ctx.store.docGet('actionHeads', eventId);
+  const target = `schedule:${eventId}`;
+  await submitAction(ctx.store, eventId, { idempotencyKey: `steadfast.${proposalId}.${decision.toLowerCase()}`, kind: `STEADFAST_${decision}`, targetId: target, expectedVersion: head?.versions[target] ?? 0, actorId: userId, payload: { proposalId, outcome } }, ctx.now());
+}
 
 /**
  * Steadfast in the event: reproduce an incident on the live schedule, search for failure combinations, propose
@@ -120,6 +128,7 @@ export async function decideProposal(ctx: ServiceContext, eventId: string, userI
     const rejected = await ctx.store.docMutate('scheduleProposals', proposalId, (p) => (p.status === 'AWAITING_APPROVAL' ? { ...p, status: 'REJECTED', decidedByUserId: userId, decidedAt: ctx.now() } : null));
     if (!rejected) throw new DomainError('ALREADY_HANDLED', 'Someone decided this proposal first.');
     await audit(ctx, eventId, userId, 'resilience.reject', 'scheduleProposal', proposalId, 'Rejected.');
+    await ledger(ctx, eventId, userId, proposalId, 'REJECT', 'REJECTED');
     return rejected;
   }
 
@@ -147,6 +156,7 @@ export async function decideProposal(ctx: ServiceContext, eventId: string, userI
   for (const c of proposal.changes) {
     await ctx.store.updateSession(c.sessionId, { roomId: c.toRoomId, startsAt: c.toStartsAt, endsAt: c.toStartsAt + (ew.durations[c.sessionId] ?? 0) });
   }
+  await ledger(ctx, eventId, userId, proposalId, 'APPROVE', `${proposal.changes.length} changes`);
   await audit(ctx, eventId, userId, 'resilience.approve', 'scheduleProposal', proposalId, `Applied ${proposal.changes.length} changes; certificate ${cert.digest}.`);
 
   const audience = await affectedPeople(ctx, eventId, proposal.changes.map((c) => c.sessionId));

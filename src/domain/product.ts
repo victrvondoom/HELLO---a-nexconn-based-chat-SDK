@@ -832,6 +832,52 @@ export interface ScheduleProposal {
   notified: number;
 }
 
+
+// --- Operations network: action ledger and incident ownership ---
+
+/** One reserved idempotency key: `${eventId}:${key}`. Written once (docPutIfAbsent) before anything else happens. */
+export interface ActionKey {
+  id: string;
+  eventId: string;
+  seq: number | null;
+  outcome: 'PENDING' | 'APPLIED' | 'STALE' | 'REJECTED';
+}
+
+/** The ledger head of one event: next sequence number and per-target versions. Changed only by docMutate. */
+export interface ActionHead {
+  id: string;
+  eventId: string;
+  seq: number;
+  versions: Record<string, number>;
+}
+
+/** An append-only ledger entry: `${eventId}:${seq}`. Never edited or deleted. */
+export interface ActionEntry {
+  id: string;
+  eventId: string;
+  seq: number;
+  idempotencyKey: string;
+  kind: string;
+  targetId: string;
+  actorId: string;
+  versionBefore: number;
+  versionAfter: number;
+  outcome: 'APPLIED' | 'STALE' | 'REJECTED';
+  reason: string;
+  payload: Record<string, string | number | boolean | null>;
+  at: number;
+}
+
+/** Who owns the response to an incident. id = incident id; the conversation id is the incident id too. */
+export interface IncidentOwnership {
+  id: string;
+  eventId: string;
+  conversationId: string;
+  state: 'AI_TRIAGE' | 'STAFF_REQUESTED' | 'ASSIGNED' | 'HUMAN_OWNED' | 'RESOLVED';
+  ownerUserId: string | null;
+  transitions: Array<{ from: string; to: string; action: string; actorId: string; at: number; ownerUserId: string | null }>;
+}
+
 export interface Collections {
   accounts: AuthAccount;
   authSessions: SessionRecord;
@@ -879,6 +925,10 @@ export interface Collections {
   liveQuestions: LiveQuestion;
   seatLedgers: SeatLedger;
   scheduleProposals: ScheduleProposal;
+  actionKeys: ActionKey;
+  actionHeads: ActionHead;
+  actionEntries: ActionEntry;
+  incidentOwnership: IncidentOwnership;
 }
 
 export type CollectionName = keyof Collections;
@@ -930,4 +980,8 @@ export const COLLECTION_NAMES: readonly CollectionName[] = [
   'liveQuestions',
   'seatLedgers',
   'scheduleProposals',
+  'actionKeys',
+  'actionHeads',
+  'actionEntries',
+  'incidentOwnership',
 ];

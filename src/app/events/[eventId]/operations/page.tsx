@@ -14,6 +14,7 @@ import { LiveRefresh } from '@/components/workplace/LiveRefresh';
 import { listSignalPatternsFor } from './data';
 import { ResiliencePanel } from '@/components/operations/ResiliencePanel';
 import { VenueBoard } from '@/components/operations/VenueBoard';
+import { OpsNetwork } from '@/components/operations/OpsNetwork';
 import { DISRUPTION_CHOICES, listProposals } from '@/services/resilience';
 import { venueBoard } from '@/services/live-room';
 
@@ -23,6 +24,7 @@ const TABS = [
   { id: 'board', label: 'Board' },
   { id: 'venue', label: 'Venue and AV' },
   { id: 'resilience', label: 'Resilience' },
+  { id: 'network', label: 'Network' },
 ] as const;
 
 export default async function OperationsPage({ params, searchParams }: { params: Promise<{ eventId: string }>; searchParams: Promise<{ tab?: string }> }) {
@@ -89,7 +91,7 @@ export default async function OperationsPage({ params, searchParams }: { params:
       </div>
 
       <nav className="segmented" aria-label="Operations sections" style={{ marginBottom: 20 }}>
-        {TABS.filter((t) => t.id !== 'resilience' || canQueue).map((t) => (
+        {TABS.filter((t) => (t.id !== 'resilience' && t.id !== 'network') || canQueue).map((t) => (
           <Link key={t.id} href={`/events/${eventId}/operations${t.id === 'board' ? '' : `?tab=${t.id}`}`} className={tab === t.id ? 'segmented__item is-active' : 'segmented__item'} aria-current={tab === t.id ? 'page' : undefined}>
             {t.label}
           </Link>
@@ -112,6 +114,8 @@ export default async function OperationsPage({ params, searchParams }: { params:
           />
         </section>
       ) : null}
+
+      {tab === 'network' && canQueue ? <OpsNetwork ctx={viewer.ctx} eventId={eventId} viewerId={viewer.userId} canRun={canQueue} /> : null}
 
       {tab === 'venue' ? <VenueBoard eventId={eventId} board={await venueBoard(viewer.ctx, eventId, viewer.userId)} /> : null}
 
