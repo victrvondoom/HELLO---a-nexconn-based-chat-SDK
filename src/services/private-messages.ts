@@ -47,8 +47,11 @@ export async function publishKey(ctx: ServiceContext, userId: string, raw: unkno
   const existing = await ctx.store.listKeyBundles(userId);
   const same = existing.find((k) => k.id === id);
   if (same) return same;
-  if (existing.length >= MAX_KEYS_PER_PERSON) {
-    throw new DomainError('VALIDATION_FAILED', 'You have published keys from too many devices. Erase your data to start again.');
+  // At the limit the oldest device key is retired, so a new device can always publish. Messages already
+  // sealed to the retired key stay readable on that device, because its private key never left it.
+  for (let retire = existing.length - MAX_KEYS_PER_PERSON + 1; retire > 0; retire -= 1) {
+    const oldest = existing[retire - 1];
+    if (oldest) await ctx.store.deleteKeyBundle(oldest.id);
   }
   const bundle: KeyBundle = { id, userId, publicKey: parsed.data, fingerprint: fp, createdAt: ctx.now() };
   await ctx.store.putKeyBundle(bundle);

@@ -27,7 +27,7 @@ export default async function CallPage({ params }: { params: Promise<{ eventId: 
           <strong>This call has ended</strong>
         </div>
       ) : (
-        <CallRoom eventId={eventId} callId={call.id} title={call.title} isHost={call.isHost} myName={viewer.user?.displayName ?? 'You'} />
+        <CallRoom eventId={eventId} callId={call.id} title={call.title} isHost={call.isHost} canAlert={call.canAlert} userId={viewer.userId} myName={viewer.user?.displayName ?? 'You'} />
       )}
     </div>
   );

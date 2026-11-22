@@ -8,7 +8,8 @@
 const isProd = process.env.NODE_ENV === 'production';
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isProd ? '' : " 'unsafe-eval'"}`,
+  // 'wasm-unsafe-eval' lets the privacy filter compile its WebAssembly (ONNX Runtime, Tesseract); it does not allow eval.
+  `script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'${isProd ? '' : " 'unsafe-eval'"}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "media-src 'self' blob:",
@@ -27,6 +28,8 @@ const nextConfig = {
   // The request check in src/proxy.ts buffers bodies. Video uploads are allowed up to 24 MB
   // (enforced again, exactly, in the upload route), so the buffer must be at least that large.
   experimental: { proxyClientMaxBodySize: '25mb' },
+  // Inherited Chatdom renderer: its audio imports resolve to files in public/chatdom-audio.
+  turbopack: { rules: { '*.wav': { loaders: ['./scripts/chatdom-wav-loader.cjs'], as: '*.js' } } },
   async headers() {
     return [
       {

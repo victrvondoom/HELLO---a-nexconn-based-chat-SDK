@@ -13,3 +13,5 @@ export const POST = viewerRoute<{ eventId: string; missionId: string }>('atlas.s
   limiter.consume(`atlas:${userId}`, ctx.now());
   return jsonOk(await submitMission(ctx, params.eventId, userId, params.missionId, input));
 });
+
+export const dynamic = 'force-dynamic';

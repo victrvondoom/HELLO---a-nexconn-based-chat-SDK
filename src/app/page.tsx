@@ -46,7 +46,7 @@ const FEATURES: Array<{ title: string; body: string; icon: IconName }> = [
 
 const MOMENTS: Array<{ title: string; body: string; icon: IconName }> = [
   { icon: 'camera', title: 'Stories that leave after a day', body: 'Share a moment from a room, a talk or the coffee queue. It is deleted after 24 hours unless you keep it in a highlight.' },
-  { icon: 'reels', title: 'Reels and a feed you can scroll', body: 'Pictures, videos and colourful text posts from the people around you, with double-tap likes, comments and saves.' },
+  { icon: 'reels', title: 'MemoReels and a feed you can scroll', body: 'Pictures, videos and colourful text posts from the people around you, with double-tap likes, comments and saves.' },
   { icon: 'compass', title: 'Explore what the event is talking about', body: 'Tags trend only when at least three different people use them, so one loud account cannot fake a trend.' },
   { icon: 'info', title: 'A feed that tells you why', body: 'Six announced rules order the feed, and every post shows the rules that placed it. No hidden signals, no paid boosts.' },
 ];
@@ -84,6 +84,7 @@ export default async function LandingPage() {
           <a href="#moments">Moments</a>
           <a href="#agents">Agent mesh</a>
           <a href="#features">Features</a>
+          <Link href="/guide">Guide</Link>
           {demo ? (
             <Link className="button button--sun button--sm" href="/demo">
               Open the demo
@@ -250,7 +251,7 @@ export default async function LandingPage() {
               The event, as it <em>happens</em>.
             </h2>
             <p className="muted">
-              Stories, reels, a feed and explore, built for the people in the same building. Every moment travels as a Nexconn-shaped message:
+              Stories, memoreels, a feed and explore, built for the people in the same building. Every moment travels as a Nexconn-shaped message:
               a story is an <code>HL:Story</code> on the event’s community channel, a like is a message reaction, and seeing a story is a read
               receipt.
             </p>

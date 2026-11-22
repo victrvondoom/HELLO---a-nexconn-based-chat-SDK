@@ -10,3 +10,5 @@ export const POST = viewerRoute('me.profile', async ({ userId, request }) => {
   await updateProfileText(ctx, userId, parsed.data);
   return jsonOk({ saved: true });
 });
+
+export const dynamic = 'force-dynamic';

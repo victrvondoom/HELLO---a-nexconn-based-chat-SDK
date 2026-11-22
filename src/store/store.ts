@@ -101,6 +101,8 @@ export interface HelloStore {
   putKeyBundle(bundle: KeyBundle): Promise<void>;
   listKeyBundles(userId: string): Promise<KeyBundle[]>;
   deleteKeyBundles(userId: string): Promise<number>;
+  /** Removes one device key. Used when a person has published more devices than the limit allows. */
+  deleteKeyBundle(id: string): Promise<boolean>;
   insertSealedMessage(message: SealedMessage): Promise<void>;
   listSealedBetween(a: string, b: string): Promise<SealedMessage[]>;
   listSealedInvolving(userId: string): Promise<SealedMessage[]>;

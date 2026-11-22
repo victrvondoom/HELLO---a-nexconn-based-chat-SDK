@@ -19,3 +19,5 @@ export const POST = viewerRoute<P>('feed.act', async ({ userId, params, request 
   await actOnPost(ctx, params.eventId, userId, params.postId, input);
   return jsonOk({ done: true });
 });
+
+export const dynamic = 'force-dynamic';

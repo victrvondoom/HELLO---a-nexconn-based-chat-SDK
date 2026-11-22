@@ -14,3 +14,5 @@ export const POST = viewerRoute('me.keys', async ({ userId, request }) => {
   const bundle = await publishKey(ctx, userId, parsed.data.publicKey);
   return jsonOk(bundle, 201);
 });
+
+export const dynamic = 'force-dynamic';

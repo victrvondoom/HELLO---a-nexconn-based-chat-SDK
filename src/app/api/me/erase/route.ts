@@ -13,3 +13,5 @@ export const POST = viewerRoute('me.erase', async ({ userId, request }) => {
   const { ctx } = await getRuntime();
   return jsonOk(await eraseMe(ctx, userId));
 });
+
+export const dynamic = 'force-dynamic';

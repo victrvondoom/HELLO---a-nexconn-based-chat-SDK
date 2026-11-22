@@ -38,3 +38,5 @@ export async function POST(
     return errorResponse(error, 'incidents.action');
   }
 }
+
+export const dynamic = 'force-dynamic';

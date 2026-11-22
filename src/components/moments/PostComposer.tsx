@@ -6,12 +6,17 @@ import { useFeedback } from '@/components/ui/Feedback';
 import { Icon } from '@/components/ui/Icon';
 import { BACKDROPS, type Backdrop } from '@/domain/product';
 import { BACKDROP_LABEL } from './meta';
+import { PhotoGuardControl, usePhotoGuard, type PreparedUpload } from '@/components/privacy-filter/PhotoGuard';
+import { UPLOAD_PRIVACY_HEADER } from '@/domain/privacy-filter/upload';
 
 const POST_MAX = 1000;
 
-/** Uploads a picture or video as raw bytes; the server checks its real type and size before keeping it. */
-export async function uploadMedia(base: string, file: File): Promise<string> {
-  const response = await fetch(`${base}/media`, { method: 'POST', headers: { 'content-type': file.type }, body: file });
+/**
+ * Uploads a picture or video as raw bytes; the server checks its real type and size before keeping it, and, when the
+ * person's privacy filter is on, that the file went through it (see PhotoGuard).
+ */
+export async function uploadMedia(base: string, { file, privacy }: PreparedUpload): Promise<string> {
+  const response = await fetch(`${base}/media`, { method: 'POST', headers: { 'content-type': file.type, [UPLOAD_PRIVACY_HEADER]: privacy }, body: file });
   const body = (await response.json().catch(() => null)) as { ok: true; data: { id: string } } | { ok: false; error: { message: string } } | null;
   if (!body) throw new Error('The upload did not finish. Try again.');
   if (!body.ok) throw new Error(body.error.message);
@@ -30,9 +35,14 @@ export function PostComposer({ eventId, communityId, onPosted, autoOpen = false 
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [pollOn, setPollOn] = useState(false);
+  const [pollOptions, setPollOptions] = useState(['', '']);
+  const [pollMinutes, setPollMinutes] = useState(1440);
   const input = useRef<HTMLInputElement>(null);
   const area = useRef<HTMLTextAreaElement>(null);
   const { toast } = useFeedback();
+  // Privacy filter: pictures are protected on this device before upload.
+  const guard = usePhotoGuard(eventId);
 
   useEffect(() => {
     if (open) area.current?.focus();
@@ -54,14 +64,19 @@ export function PostComposer({ eventId, communityId, onPosted, autoOpen = false 
     setText('');
     setBackdrop(null);
     setFile(null);
+    setPollOn(false);
+    setPollOptions(['', '']);
+    setPollMinutes(1440);
+    guard.reset();
     if (input.current) input.current.value = '';
   }
 
   async function post() {
     setBusy(true);
     try {
-      const mediaId = file ? await uploadMedia(base, file) : null;
-      await api(`${base}/feed`, 'POST', { text, mediaId, communityId: communityId ?? null, repostOf: null, backdrop: mediaId ? null : backdrop });
+      const mediaId = file ? await uploadMedia(base, await guard.prepare(file)) : null;
+      const poll = pollOn ? { options: pollOptions.map((o) => o.trim()).filter((o) => o.length > 0), minutes: pollMinutes } : null;
+      await api(`${base}/feed`, 'POST', { text, mediaId, communityId: communityId ?? null, repostOf: null, backdrop: mediaId || poll ? null : backdrop, poll });
       reset();
       setOpen(false);
       toast('success', 'Posted.');
@@ -120,7 +135,52 @@ export function PostComposer({ eventId, communityId, onPosted, autoOpen = false 
           </button>
         </div>
       ) : null}
-      {file === null ? (
+      {file ? <PhotoGuardControl guard={guard} file={file} /> : null}
+      {pollOn ? (
+        <div className="poll-compose" role="group" aria-label="Poll options">
+          {pollOptions.map((option, i) => (
+            <input
+              key={i}
+              value={option}
+              maxLength={40}
+              placeholder={`Option ${i + 1}`}
+              aria-label={`Poll option ${i + 1}`}
+              onChange={(e) => {
+                setPollOptions(pollOptions.map((o, j) => (j === i ? e.target.value : o)));
+              }}
+            />
+          ))}
+          <div className="poll-compose__row">
+            {pollOptions.length < 4 ? (
+              <button
+                type="button"
+                className="button button--ghost button--sm"
+                onClick={() => {
+                  setPollOptions([...pollOptions, '']);
+                }}
+              >
+                Add option
+              </button>
+            ) : null}
+            <label className="xs faint" htmlFor="poll-length">
+              Open for
+            </label>
+            <select
+              id="poll-length"
+              value={pollMinutes}
+              onChange={(e) => {
+                setPollMinutes(Number(e.target.value));
+              }}
+            >
+              <option value={60}>1 hour</option>
+              <option value={1440}>1 day</option>
+              <option value={4320}>3 days</option>
+              <option value={10080}>7 days</option>
+            </select>
+          </div>
+        </div>
+      ) : null}
+      {file === null && !pollOn ? (
         <div className="bswatch-row" role="radiogroup" aria-label="Backdrop">
           <button type="button" role="radio" aria-checked={backdrop === null} className="bswatch bswatch--none" onClick={() => { setBackdrop(null); }}>
             <span className="visually-hidden">No backdrop</span>
@@ -146,6 +206,18 @@ export function PostComposer({ eventId, communityId, onPosted, autoOpen = false 
         <label htmlFor="post-file" className="icon-button icon-button--outline">
           <Icon name="camera" size={17} /> {file ? 'Change file' : 'Picture or video'}
         </label>
+        {file === null ? (
+          <button
+            type="button"
+            className="icon-button icon-button--outline"
+            aria-pressed={pollOn}
+            onClick={() => {
+              setPollOn(!pollOn);
+            }}
+          >
+            <Icon name="bolt" size={17} /> Poll
+          </button>
+        ) : null}
         <span className="grow" />
         <span className="xs faint">
           {text.length}/{POST_MAX}

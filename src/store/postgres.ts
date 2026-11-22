@@ -59,6 +59,20 @@ export interface PostgresOptions {
   idleTimeoutMillis?: number;
 }
 
+/**
+ * The database could not be reached or its schema could not be applied. The message is fixed and carries no
+ * connection details; `reason` is the driver's error code (for example ECONNREFUSED or 28P01) for the operator's log.
+ */
+export class StoreUnavailableError extends Error {
+  readonly reason: string;
+  constructor(cause: unknown) {
+    super('The Postgres database is unavailable.');
+    this.name = 'StoreUnavailableError';
+    const code = typeof cause === 'object' && cause !== null && 'code' in cause ? (cause as { code?: unknown }).code : undefined;
+    this.reason = typeof code === 'string' ? code : 'UNKNOWN';
+  }
+}
+
 export class PostgresHelloStore implements SeedableStore {
   private constructor(
     private readonly pool: Pool,
@@ -81,11 +95,17 @@ export class PostgresHelloStore implements SeedableStore {
     // An idle client that loses its connection must not crash the process.
     pool.on('error', () => undefined);
     const store = new PostgresHelloStore(pool, schema, config);
-    await store.tx(async (c) => {
-      await c.query('select pg_advisory_xact_lock(hashtext($1))', [`hello_store_schema:${schema}`]);
-      if (schema !== 'public') await c.query(`create schema if not exists ${schema}`);
-      await c.query(SCHEMA_SQL);
-    });
+    try {
+      await store.tx(async (c) => {
+        await c.query('select pg_advisory_xact_lock(hashtext($1))', [`hello_store_schema:${schema}`]);
+        if (schema !== 'public') await c.query(`create schema if not exists ${schema}`);
+        await c.query(SCHEMA_SQL);
+      });
+    } catch (error: unknown) {
+      // Do not leak the pool, and do not pass on the driver's message: it can name the host, user or database.
+      await pool.end().catch(() => undefined);
+      throw new StoreUnavailableError(error);
+    }
     return store;
   }
 
@@ -485,6 +505,11 @@ export class PostgresHelloStore implements SeedableStore {
 
   listKeyBundles(userId: string): Promise<KeyBundle[]> {
     return this.many(`select data from hello_key_bundles where user_id = $1 order by (data->>'createdAt')::bigint, seq`, [userId]);
+  }
+
+  async deleteKeyBundle(id: string): Promise<boolean> {
+    const { rowCount } = await this.pool.query('delete from hello_key_bundles where id = $1', [id]);
+    return (rowCount ?? 0) > 0;
   }
 
   async deleteKeyBundles(userId: string): Promise<number> {

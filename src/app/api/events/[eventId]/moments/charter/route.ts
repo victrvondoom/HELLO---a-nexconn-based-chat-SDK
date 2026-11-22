@@ -8,3 +8,5 @@ export const GET = viewerRoute<{ eventId: string }>('moments.charter', async ({ 
   const { ctx } = await getRuntime();
   return jsonOk(await momentsCharter(ctx, params.eventId, userId));
 });
+
+export const dynamic = 'force-dynamic';

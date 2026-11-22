@@ -8,3 +8,5 @@ export const POST = viewerRoute<{ eventId: string }>('atlas.recommend', async ({
   const { ctx } = await getRuntime();
   return jsonOk(await recommendFor(ctx, params.eventId, userId, input));
 });
+
+export const dynamic = 'force-dynamic';

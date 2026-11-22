@@ -28,3 +28,5 @@ export const POST = viewerRoute<{ eventId: string; attemptId: string }>('atlas.r
   const { ctx } = await getRuntime();
   return jsonOk(await reviewAttempt(ctx, params.eventId, userId, attemptIdFrom(params.attemptId), input.decision, input.note));
 });
+
+export const dynamic = 'force-dynamic';

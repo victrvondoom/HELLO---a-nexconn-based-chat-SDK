@@ -13,3 +13,5 @@ export const POST = viewerRoute<{ eventId: string; communityId: string }>('commu
   await actOnCommunity(ctx, params.eventId, userId, params.communityId, input.action);
   return jsonOk({ done: true });
 });
+
+export const dynamic = 'force-dynamic';

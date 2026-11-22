@@ -4,6 +4,10 @@ import { ownProfileText } from './social';
 import { deletePost } from './feed';
 import { deleteStory } from './moments';
 import { endAllSessions } from './auth';
+import { erasePlaces, exportPlaces } from './places';
+import { erasePrivacyFilter, exportPrivacyFilter } from './privacy-filter';
+import { disconnectTwitch } from './privacy-twitch';
+import { eraseKingdoms, exportKingdomData } from './kingdoms';
 
 /**
  * A person's rights over their data: to get a copy of it, and to have it erased.
@@ -54,6 +58,7 @@ export async function exportMyData(ctx: ServiceContext, userId: string) {
         badges: fieldBadges.map((b) => ({ name: b.name, kind: b.kind, earnedAt: new Date(b.earnedAt).toISOString() })),
         missionAttempts: fieldAttempts.map((a) => ({ missionId: a.missionId, status: a.status, submissions: a.submissions, evidenceText: a.evidenceText, startedAt: new Date(a.startedAt).toISOString() })),
       },
+      kingdom: await exportKingdomData(ctx, userId, eventId),
       messagesToHello: messages.filter((m) => m.senderUserId === userId).map((m) => ({ id: m.id, at: new Date(m.createdAt).toISOString(), text: m.text })),
       incidentReports: reports
         .filter((r) => r.reporterUserId === userId)
@@ -86,6 +91,8 @@ export async function exportMyData(ctx: ServiceContext, userId: string) {
     communities: (await ctx.store.docList('communities')).filter((c) => c.memberIds.includes(userId)).map((c) => ({ id: c.id, name: c.name, owner: c.ownerId === userId })),
     liveLocation: (await ctx.store.docList('locations', { userId })).map((l) => ({ audience: l.audience, approximate: l.approximate, until: new Date(l.expiresAt).toISOString() })),
     accessTokens: (await ctx.store.docList('apiTokens', { userId })).map((t) => ({ name: t.name, scope: t.scope, createdAt: new Date(t.createdAt).toISOString() })),
+    placeMemory: await exportPlaces(ctx, userId),
+    privacyFilter: await exportPrivacyFilter(ctx, userId),
     workflowRuns: (await ctx.store.docList('workflowRuns', { actorId: userId })).map((r) => ({ workflow: r.workflowId, status: r.status, at: new Date(r.startedAt).toISOString() })),
     linkedChatAccounts: (await ctx.store.docList('chatLinks', { userId })).map((l) => ({ transport: l.transport, account: l.externalUserId, linkedAt: new Date(l.createdAt).toISOString() })),
     notifications: notifications.map((n) => ({ at: new Date(n.createdAt).toISOString(), body: n.body, read: n.readAt !== null })),
@@ -128,6 +135,8 @@ async function exportMoments(ctx: ServiceContext, userId: string, eventIds: stri
 
 export interface ErasureReport {
   fieldAtlasRecords: number;
+  /** Personal places and collections, in every event. */
+  placeRecords: number;
   /** Own stories (with their files), highlights and saves. */
   momentsRecords: number;
   /** The person's views and reactions removed from other people's stories. */
@@ -141,6 +150,10 @@ export interface ErasureReport {
   privateMessages: number;
   messagesRedacted: number;
   reportsRedacted: number;
+  /** Privacy filter switches and the alerts the person received; alerts they sent lose their name. */
+  privacyFilterRecords: number;
+  /** Kingdom citizenship, wishes and chronicle entries; a kingdom the person founded goes with its contents. */
+  kingdomRecords: number;
 }
 
 /**
@@ -208,8 +221,14 @@ export async function eraseMe(ctx: ServiceContext, userId: string): Promise<Eras
   await ctx.store.deleteProfile(userId);
   // Before the media sweep below: a story's file is deleted with the story.
   const moments = await eraseMoments(ctx, userId, eventIds);
+  // The Twitch token lives only in server memory; erasure drops it with the connection.
+  disconnectTwitch(userId);
+  const privacy = await erasePrivacyFilter(ctx, userId);
   const report: ErasureReport = {
+    privacyFilterRecords: privacy.settings + privacy.alerts + privacy.unlinked,
+    kingdomRecords: await eraseKingdoms(ctx, userId, eventIds),
     fieldAtlasRecords: await eraseFieldAtlas(ctx, userId, eventIds),
+    placeRecords: await erasePlaces(ctx, userId),
     momentsRecords: moments.records,
     storyInteractions: moments.interactions,
     notifications: await ctx.store.deleteNotificationsFor(userId),
@@ -231,6 +250,14 @@ export async function eraseMe(ctx: ServiceContext, userId: string): Promise<Eras
   for (const eventId of eventIds) {
     for (const p of await ctx.store.docList('posts', { eventId })) {
       if (p.likes.includes(userId)) await ctx.store.docMutate('posts', p.id, (x) => ({ ...x, likes: x.likes.filter((u) => u !== userId) }));
+      // A vote on someone else's poll is removed too; the poll keeps its other votes.
+      if (p.poll && p.poll.votes[userId] !== undefined) {
+        await ctx.store.docMutate('posts', p.id, (x) => {
+          if (!x.poll) return null;
+          const votes = Object.fromEntries(Object.entries(x.poll.votes).filter(([voter]) => voter !== userId));
+          return { ...x, poll: { ...x.poll, votes } };
+        });
+      }
     }
     for (const c of await ctx.store.docList('communities', { eventId })) {
       if (c.ownerId === userId) {
@@ -261,7 +288,7 @@ export async function eraseMe(ctx: ServiceContext, userId: string): Promise<Eras
       'privacy.erase',
       'user',
       userId,
-      `Erased on request: ${report.fieldAtlasRecords} Field Atlas records, ${report.momentsRecords} Moments records (stories, highlights, saves), ${report.storyInteractions} story views and reactions, ${report.notifications} notifications, ${report.follows} follows, ${report.deviceKeys} keys, ${report.privateMessages} private messages; ${report.messagesRedacted} messages, ${report.reportsRedacted} reports and ${report.paymentNotesRedacted} payment notes redacted.`,
+      `Erased on request: ${report.fieldAtlasRecords} Field Atlas records, ${report.kingdomRecords} Kingdom records, ${report.momentsRecords} Moments records (stories, highlights, saves), ${report.storyInteractions} story views and reactions, ${report.notifications} notifications, ${report.follows} follows, ${report.deviceKeys} keys, ${report.privateMessages} private messages; ${report.messagesRedacted} messages, ${report.reportsRedacted} reports and ${report.paymentNotesRedacted} payment notes redacted.`,
     );
   }
   return report;

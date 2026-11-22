@@ -7,7 +7,9 @@
  */
 const API_TOPICS: Record<string, readonly string[]> = {
   communities: ['communities', 'posts'],
-  calls: ['calls'],
+  kingdom: ['kingdom*'],
+  calls: ['calls', 'privacyAlerts'],
+  'privacy-filter': ['privacyFilters', 'privacyAlerts', 'notifications'],
   games: ['games'],
   flow: ['*'],
   atlas: ['field*', 'incidents', 'sessions', 'conditions'],
@@ -32,6 +34,9 @@ const PAGE_TOPICS: Record<string, readonly string[]> = {
   conversation: ['messages', 'incidents', 'approvals', 'notifications'],
   announcements: ['announcements', 'approvals'],
   sessions: ['sessions'],
+  live: ['liveReports', 'safetyHolds', 'incidents'],
+  places: ['places', 'placeCollections'],
+  kingdom: ['kingdom*'],
 };
 
 export interface LiveTarget {

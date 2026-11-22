@@ -174,7 +174,7 @@ check('only the host can end a call', (await bo.call(`${E}/calls/${callRoom.data
 await ana.call(`${E}/calls/${callRoom.data.id}`, 'POST', { action: 'leave', peerId: joined.data.peerId });
 
 // --- a real two-person call in two browsers, with fake cameras ---
-const browser = await chromium.launch({ args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] });
+const browser = await chromium.launch({ ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}), args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] });
 const errors = [];
 const open = async (who) => {
   const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, permissions: ['camera', 'microphone'] });

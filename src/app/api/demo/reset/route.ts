@@ -24,3 +24,5 @@ export async function POST(): Promise<NextResponse> {
     return errorResponse(error, 'demo.reset');
   }
 }
+
+export const dynamic = 'force-dynamic';

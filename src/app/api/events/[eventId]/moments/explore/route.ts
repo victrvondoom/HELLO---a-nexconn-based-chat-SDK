@@ -9,3 +9,5 @@ export const GET = viewerRoute<{ eventId: string }>('moments.explore', async ({ 
   const { ctx } = await getRuntime();
   return jsonOk(await explore(ctx, params.eventId, userId, { tag: tag === null || tag.trim() === '' ? null : tag }));
 });
+
+export const dynamic = 'force-dynamic';

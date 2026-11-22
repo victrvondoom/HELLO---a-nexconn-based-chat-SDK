@@ -11,3 +11,5 @@ export const GET = viewerRoute<{ eventId: string }>('live.presence', async ({ us
   const online = presenceRegistry().online(params.eventId, Date.now());
   return jsonOk(await presenceFor(ctx, params.eventId, userId, online));
 });
+
+export const dynamic = 'force-dynamic';

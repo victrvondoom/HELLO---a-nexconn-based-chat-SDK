@@ -18,6 +18,11 @@ import type { Incident } from '@/domain/types';
 const DATABASE_URL = process.env.HELLO_TEST_DATABASE_URL ?? '';
 export const STORE_KIND: 'memory' | 'postgres' = DATABASE_URL ? 'postgres' : 'memory';
 
+// The suite creates and drops schemas. It must never be pointed at the database the app itself uses.
+if (DATABASE_URL && DATABASE_URL === (process.env.DATABASE_URL ?? '').trim()) {
+  throw new Error('HELLO_TEST_DATABASE_URL must not be the same database as DATABASE_URL. Use a separate, empty test database.');
+}
+
 const opened: PostgresHelloStore[] = [];
 let schemaCounter = 0;
 

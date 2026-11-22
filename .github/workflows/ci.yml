@@ -78,6 +78,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      # Privacy filter models (pinned by SHA-256); the browser journey needs the real YuNet and Tesseract data.
+      - run: npm run privacy:assets
       - run: npm run build
 
       - name: Journeys on the in-memory store

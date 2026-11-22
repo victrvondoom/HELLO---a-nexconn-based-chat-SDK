@@ -21,3 +21,5 @@ export async function POST(request: Request): Promise<NextResponse> {
     return errorResponse(error, 'auth.register');
   }
 }
+
+export const dynamic = 'force-dynamic';

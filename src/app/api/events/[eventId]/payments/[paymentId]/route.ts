@@ -15,3 +15,5 @@ export const POST = viewerRoute<{ eventId: string; paymentId: string }>('pay.dec
   const run = action === 'confirm' ? confirmPayment : cancelPayment;
   return jsonOk(await run(ctx, params.eventId, userId, params.paymentId, expectedVersion));
 });
+
+export const dynamic = 'force-dynamic';

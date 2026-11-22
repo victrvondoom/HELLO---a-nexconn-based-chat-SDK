@@ -11,3 +11,5 @@ export const POST = viewerRoute<{ eventId: string }>('announcements.request', as
   const approval = await requestAnnouncement(ctx, params.eventId, userId, parsed.data.title, parsed.data.body);
   return jsonOk(approval, 201);
 });
+
+export const dynamic = 'force-dynamic';

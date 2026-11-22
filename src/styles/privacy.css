@@ -1,0 +1,299 @@
+/* Privacy filter (integrated from Offleak): the dock page, the call controls and the composer switch. */
+
+.pf-dock {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .pf-dock {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.pf-stage {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--ink);
+}
+.pf-stage video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+.pf-stage__idle {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--paper-2);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.pf-people {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 12px;
+}
+.pf-person {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+.pf-person img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+}
+
+.pf-file {
+  position: relative;
+  overflow: hidden;
+}
+.pf-file input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.pf-switch {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.pf-switch input {
+  margin-top: 3px;
+  accent-color: var(--grass-600);
+}
+
+.pf-sub {
+  margin: 8px 0 0;
+  font-size: 15px;
+}
+
+.pf-live {
+  color: var(--sky-700);
+  font-weight: 600;
+}
+
+.pf-alert {
+  display: grid;
+  gap: 8px;
+  border-left: 4px solid var(--poppy-500);
+}
+.pf-alert__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pf-stats {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+}
+.pf-stats--compact {
+  margin-top: 10px;
+}
+.pf-stats__status {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  font-weight: 600;
+}
+.pf-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--sun-500);
+}
+.pf-stats[data-status='running'] .pf-dot {
+  background: var(--grass-500);
+}
+.pf-stats[data-status='error'] .pf-dot {
+  background: var(--poppy-500);
+}
+.pf-stats__errors {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--poppy-700);
+}
+.pf-stats__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+.pf-stats__grid dt {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-3);
+}
+.pf-stats__grid dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.pf-tile {
+  position: relative;
+}
+.pf-tile__alert {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
+.pf-guard {
+  display: grid;
+  gap: 4px;
+  margin: 8px 0;
+}
+
+/* Added with the parity work: switches nested under another, models, the picture and video tool, the studio output. */
+
+.pf-switch--sub {
+  margin-left: 24px;
+}
+
+.pf-models {
+  width: 100%;
+  border-collapse: collapse;
+}
+.pf-models th,
+.pf-models td {
+  text-align: left;
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.pf-models__installed {
+  color: var(--grass-600);
+}
+.pf-models__missing {
+  color: var(--poppy-700);
+  font-weight: 600;
+}
+.pf-models__checking {
+  color: var(--text-3);
+}
+
+.pf-canvas {
+  position: relative;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--ink);
+  line-height: 0;
+}
+.pf-canvas img,
+.pf-canvas video,
+.pf-result img,
+.pf-result video {
+  width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  display: block;
+  border-radius: var(--r-md);
+  background: var(--ink);
+}
+.pf-regions {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+  touch-action: none;
+}
+.pf-canvas video + .pf-regions {
+  /* leave the video's own controls usable */
+  height: calc(100% - 48px);
+}
+.pf-regions rect {
+  fill: transparent;
+  stroke-width: 2;
+}
+.pf-regions__face {
+  stroke: var(--poppy-500);
+}
+.pf-regions__kept {
+  stroke: var(--grass-500);
+}
+.pf-regions__qr,
+.pf-regions__phone {
+  stroke: var(--sun-500);
+}
+.pf-regions__manual {
+  stroke: var(--sky-700);
+  stroke-dasharray: 6 4;
+}
+.pf-regions__off {
+  stroke: var(--text-3);
+  stroke-dasharray: 2 4;
+}
+
+.pf-found {
+  display: grid;
+  gap: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 10px 12px;
+  max-height: 240px;
+  overflow: auto;
+}
+.pf-manual {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.pf-progress {
+  width: 100%;
+  height: 10px;
+  accent-color: var(--grass-500);
+}
+
+.pf-studio {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: #000;
+}
+.pf-studio video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+.pf-studio__bar {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--text-1, inherit);
+}

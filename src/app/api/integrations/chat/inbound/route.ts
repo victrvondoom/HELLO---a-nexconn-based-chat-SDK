@@ -42,3 +42,5 @@ export async function POST(request: Request): Promise<Response> {
     return errorResponse(error, 'chat.inbound');
   }
 }
+
+export const dynamic = 'force-dynamic';

@@ -20,3 +20,5 @@ export const POST = viewerRoute<{ eventId: string }>('moments.highlights.create'
   const highlight = await createHighlight(ctx, params.eventId, userId, input);
   return jsonOk({ id: highlight.id }, 201);
 });
+
+export const dynamic = 'force-dynamic';

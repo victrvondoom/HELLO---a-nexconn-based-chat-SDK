@@ -78,13 +78,13 @@ Status key: **Real** = implemented end to end and tested. **Partial** = implemen
 | Search | none | none | none | none | — | none | **Missing** |
 | Presence, typing, real-time push | `LiveRefresh` polls | poll only | `LiveRefresh` | — | — | none | **Missing** as push. Polling only |
 | Offline outbox, IndexedDB | none | none | none | none | — | none | **Missing** |
-| Supabase / Postgres | `supabase/migrations/0001_core_schema.sql` and `supabase/tests/0001_constraints_and_rls.sql` exist | **no code connects to Supabase**. `runtime.ts` always uses `MemoryHelloStore` | — | — | the SQL is not applied by the app | the SQL test file is not run by any npm script | **Missing** in the application |
+| Supabase / Postgres | `supabase/migrations/0001_core_schema.sql` and `supabase/tests/0001_constraints_and_rls.sql` exist | **no code connects to Supabase** (still true; the SQL is a separate design). *Superseded for the app's own store: `runtime.ts` uses `PostgresHelloStore` when `DATABASE_URL` is set, see sections 10 and 11.* | — | — | the SQL is not applied by the app | the SQL test file is not run by any npm script | **Missing** for Supabase; the app's Postgres store is **Real** |
 | E2E suites | `tests/e2e/*.mjs` (Playwright, need a running server) | — | — | — | — | not run in this audit | **Unverified** in this session |
 
 ## 4. What is still in memory or local-file
 
-- Every domain record: `src/store/memory.ts`. Durable only when `HELLO_DATA_DIR` is set, through `src/lib/persistence.ts`,
-  which writes one `state.json` and a `blobs/` directory. This is single-process only.
+- Every domain record, when `DATABASE_URL` is not set: `src/store/memory.ts`. Durable only when `HELLO_DATA_DIR` is set, through `src/lib/persistence.ts`,
+  which writes one `state.json` and a `blobs/` directory. This is single-process only. (With `DATABASE_URL` set the records are in Postgres.)
 - Rate limiting: per process, in memory.
 - Sealed messages and key bundles: same store. The server holds ciphertext and public keys only.
 
@@ -162,3 +162,32 @@ transport, Postgres store, real-time delivery and the advanced messaging feature
 
 Still missing: browser push notifications, forward secrecy for private messages, a live AI provider, malware scanning
 of uploads, the Nexconn bridge itself.
+
+## 11. Update, 2026-11-22: persistence hardening
+
+Scope: the six Living Atlas / LiveScene collections (`places`, `placeVisits`, `placeImports`, `liveReports`,
+`safetyHolds`, `placeCollections`) on the Postgres store. They need no table of their own: all use the generic
+`hello_documents (collection, id, seq, data jsonb)` table, so no schema change or migration was needed or made.
+
+| Claim | State | Evidence |
+|---|---|---|
+| All six collections store, read back unchanged (nulls, timestamps above 2^31, unicode), list in insertion order, scope by event, update, delete | **Tested against PostgreSQL 18.4** (a throwaway local cluster) and in memory | `tests/integration/persistence-collections.test.ts` |
+| One of several writers on the same version wins (places, visits, holds, approvals) | **Tested against PostgreSQL**. A deliberately removed row lock made 2 tests fail, so they can detect a lost update | same file; `store-contract.test.ts` |
+| Service rules after concurrency: stale place edit refused, visit end vs correct, hold placed twice, hold released twice | **Tested against PostgreSQL** | same file |
+| Owner and event isolation; attendee cannot place a hold; erasure covers all four place collections | **Tested against PostgreSQL**, through the service layer | same file |
+| Data survives a reconnect (a new connection to the same schema re-applies the schema and reads everything back) | **Tested against PostgreSQL** | same file, "durability across a reconnect" |
+| Two app instances on one schema serialise writes | **Tested against PostgreSQL** (two stores, one schema; not two OS processes) | same file |
+| `HELLO_DATA_DIR` disk persistence of the six collections across a restart | **Tested locally** (memory store + `state.json`) | same file |
+| Unreachable database: no fallback to memory, fixed error message, no credentials/host/database name in the error or the log, retried on the next request | **Tested locally** (no database needed) | same file, "Postgres unavailable" |
+
+Changes found by this work:
+- `getRuntime()` used to cache a failed start forever, so a database that was down at boot kept failing every request
+  until the process restarted. A failed start is now forgotten and retried on the next request.
+- A failed `PostgresHelloStore.connect()` leaked its pool and passed on the driver's message. It now closes the pool and
+  throws `StoreUnavailableError` (fixed message, reason code only).
+- `DATABASE_URL` together with `HELLO_DATA_DIR` silently ignored the directory. It now logs `data_dir_ignored`.
+- The integration harness refuses to run if `HELLO_TEST_DATABASE_URL` equals `DATABASE_URL`.
+
+Not verified: hosted Postgres or a pooler (pgbouncer), TLS, failover, backups, load, connection loss in the middle of a
+transaction, two separate OS processes sharing one database for these collections. The Postgres suite was run against a
+local cluster that was deleted afterwards; it is not evidence about any production database.

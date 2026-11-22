@@ -18,3 +18,5 @@ export const POST = viewerRoute<{ eventId: string }>('calls.create', async ({ us
   const call = await startCall(ctx, params.eventId, userId, input);
   return jsonOk({ id: call.id }, 201);
 });
+
+export const dynamic = 'force-dynamic';

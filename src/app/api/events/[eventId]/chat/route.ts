@@ -22,3 +22,5 @@ export const POST = viewerRoute<{ eventId: string }>('chat.action', async ({ use
   await unlinkChat(ctx, params.eventId, userId, input.linkId);
   return jsonOk({ unlinked: true });
 });
+
+export const dynamic = 'force-dynamic';

@@ -5,10 +5,21 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, errorText } from '@/components/live/client';
 import { useFeedback } from '@/components/ui/Feedback';
 import { Icon } from '@/components/ui/Icon';
+import { FilterStats } from '@/components/privacy-filter/FilterStats';
+import { usePrivacyFilter } from '@/components/privacy-filter/usePrivacyFilter';
+import { cameraVideo } from '@/components/privacy-filter/devices';
+import { PrivacyEngine, type EngineStats } from '@/components/privacy-filter/engine/engine';
+import { anyDetector } from '@/domain/privacy-filter/settings';
 
 type SignalData = { type: 'offer' | 'answer'; sdp: string } | { type: 'ice'; candidate: string; sdpMid: string | null; sdpMLineIndex: number | null };
+interface CallAlert {
+  id: string;
+  from: string;
+  at: number;
+}
 interface Poll {
   ended: boolean;
+  alerts?: CallAlert[];
   peers: Array<{ peerId: string; name: string; isSelf: boolean }>;
   signals: Array<{ seq: number; from: string; data: SignalData }>;
 }
@@ -42,7 +53,7 @@ function Tile({ stream, name, self, mirrored }: { stream: MediaStream | null; na
  * A call room. Each pair of people connects directly, browser to browser. The server only passes
  * the short setup messages between them (polled once a second) and never sees audio or video.
  */
-export function CallRoom({ eventId, callId, title, isHost, myName }: { eventId: string; callId: string; title: string; isHost: boolean; myName: string }) {
+export function CallRoom({ eventId, callId, title, isHost, myName, userId, canAlert }: { eventId: string; callId: string; title: string; isHost: boolean; myName: string; userId: string; canAlert: boolean }) {
   const url = `/api/events/${eventId}/calls/${callId}`;
   const { toast } = useFeedback();
   const [phase, setPhase] = useState<'lobby' | 'joining' | 'in' | 'ended'>('lobby');
@@ -52,6 +63,14 @@ export function CallRoom({ eventId, callId, title, isHost, myName }: { eventId: 
   const [cam, setCam] = useState(true);
   const [sharing, setSharing] = useState(false);
   const [direct, setDirect] = useState(false);
+  // Privacy filter (from Offleak): the camera and any shared screen go out only after this device has checked them.
+  const privacy = usePrivacyFilter(eventId, userId);
+  const [filterOn, setFilterOn] = useState<boolean | null>(null);
+  const [filterStats, setFilterStats] = useState<EngineStats | null>(null);
+  const [alerts, setAlerts] = useState<CallAlert[]>([]);
+  const cameraFilter = useRef<PrivacyEngine | null>(null);
+  const screenFilter = useRef<PrivacyEngine | null>(null);
+  const useFilter = (filterOn ?? privacy.settings.enabled) && anyDetector(privacy.settings);
 
   const me = useRef<string | null>(null);
   const ice = useRef<RTCIceServer[]>([]);
@@ -73,7 +92,9 @@ export function CallRoom({ eventId, callId, title, isHost, myName }: { eventId: 
 
   /** The track currently going out for a kind: the shared screen replaces the camera while sharing. */
   const outgoing = (kind: string): MediaStreamTrack | null => {
-    if (kind === 'video' && screen.current) return screen.current.getVideoTracks()[0] ?? null;
+    if (kind === 'video' && screen.current) return screenFilter.current?.videoTrack ?? screen.current.getVideoTracks()[0] ?? null;
+    // With the filter on, the protected picture and the equally delayed microphone go out, never the raw camera.
+    if (cameraFilter.current) return kind === 'video' ? cameraFilter.current.videoTrack : (cameraFilter.current.audioTrack ?? camera.current?.getAudioTracks()[0] ?? null);
     return camera.current?.getTracks().find((t) => t.kind === kind) ?? null;
   };
 
@@ -149,6 +170,11 @@ export function CallRoom({ eventId, callId, title, isHost, myName }: { eventId: 
     if (timer.current) window.clearInterval(timer.current);
     timer.current = null;
     for (const id of [...pcs.current.keys()]) drop(id);
+    cameraFilter.current?.stop();
+    screenFilter.current?.stop();
+    cameraFilter.current = null;
+    screenFilter.current = null;
+    setFilterStats(null);
     for (const s of [camera.current, screen.current]) s?.getTracks().forEach((t) => { t.stop(); });
     camera.current = null;
     screen.current = null;
@@ -169,6 +195,7 @@ export function CallRoom({ eventId, callId, title, isHost, myName }: { eventId: 
       const present = new Set(state.peers.map((p) => p.peerId));
       for (const p of state.peers) names.current.set(p.peerId, p.name);
       for (const id of [...pcs.current.keys()]) if (!present.has(id)) drop(id);
+      setAlerts(state.alerts ?? []);
       for (const s of state.signals) {
         since.current = Math.max(since.current, s.seq);
         await handle(s.from, s.data).catch(() => undefined);
@@ -185,7 +212,7 @@ export function CallRoom({ eventId, callId, title, isHost, myName }: { eventId: 
     setPhase('joining');
     let stream: MediaStream | null = null;
     try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: { width: 640, height: 360 } });
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: cameraVideo(640, 360) });
     } catch {
       try {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -198,6 +225,17 @@ export function CallRoom({ eventId, callId, title, isHost, myName }: { eventId: 
     }
     camera.current = stream;
     setLocal(stream);
+    if (stream && useFilter && stream.getVideoTracks().length) {
+      try {
+        cameraFilter.current = await PrivacyEngine.start(stream, { settings: privacy.settings, gallery: privacy.gallery, onStats: setFilterStats });
+        // You see what the others see.
+        setLocal(cameraFilter.current.output);
+      } catch {
+        stream.getVideoTracks().forEach((t) => { t.enabled = false; });
+        setCam(false);
+        toast('error', 'The privacy filter could not start, so your camera is off. Your microphone still works.');
+      }
+    }
     try {
       const joined = await api<Joined>(url, 'POST', { action: 'join' });
       me.current = joined.peerId;
@@ -250,29 +288,43 @@ export function CallRoom({ eventId, callId, title, isHost, myName }: { eventId: 
 
   async function toggleShare() {
     if (sharing) {
+      screenFilter.current?.stop();
+      screenFilter.current = null;
       screen.current?.getTracks().forEach((t) => { t.stop(); });
       screen.current = null;
       setSharing(false);
-      setLocal(camera.current);
+      setLocal(cameraFilter.current?.output ?? camera.current);
       await replaceVideo();
       return;
     }
     try {
       const display = await navigator.mediaDevices.getDisplayMedia({ video: true });
       screen.current = display;
+      if (useFilter) {
+        try {
+          screenFilter.current = await PrivacyEngine.start(display, { settings: privacy.settings, gallery: privacy.gallery, maxSide: 1280 });
+        } catch {
+          display.getTracks().forEach((t) => { t.stop(); });
+          screen.current = null;
+          toast('error', 'The privacy filter could not start for your screen, so it was not shared.');
+          return;
+        }
+      }
       const track = display.getVideoTracks()[0];
       if (track) track.onended = () => { if (screen.current === display) void toggleShareOff(); };
       setSharing(true);
-      setLocal(display);
+      setLocal(screenFilter.current?.output ?? display);
       await replaceVideo();
     } catch {
       /* the person closed the picker: nothing to do */
     }
   }
   async function toggleShareOff() {
+    screenFilter.current?.stop();
+    screenFilter.current = null;
     screen.current = null;
     setSharing(false);
-    setLocal(camera.current);
+    setLocal(cameraFilter.current?.output ?? camera.current);
     await replaceVideo();
   }
 
@@ -283,6 +335,24 @@ export function CallRoom({ eventId, callId, title, isHost, myName }: { eventId: 
     else setCam(next);
   };
   const has = (kind: string) => Boolean(camera.current?.getTracks().some((t) => t.kind === kind));
+
+  async function sendAlert(to: string | null) {
+    try {
+      const { alerted } = await api<{ alerted: number }>(url, 'POST', { action: 'privacy-alert', peerId: me.current, to });
+      toast('success', alerted ? `Privacy alert sent to ${alerted === 1 ? '1 person' : `${String(alerted)} people`}.` : 'Nobody else is in the call.');
+    } catch (e: unknown) {
+      toast('error', errorText(e));
+    }
+  }
+
+  async function acknowledge(alertId: string) {
+    try {
+      await api(`/api/events/${eventId}/privacy-filter`, 'POST', { action: 'ack', alertId });
+      setAlerts((list) => list.filter((a) => a.id !== alertId));
+    } catch (e: unknown) {
+      toast('error', errorText(e));
+    }
+  }
 
   if (phase === 'ended') {
     return (
@@ -301,8 +371,20 @@ export function CallRoom({ eventId, callId, title, isHost, myName }: { eventId: 
         <p className="small muted" style={{ margin: 0 }}>
           Your browser will ask for your camera and microphone. You can refuse and still join to watch and listen. Audio and video go directly between the people in the call; HELLO does not receive or record them.
         </p>
+        <label className="pf-switch">
+          <input type="checkbox" checked={useFilter} disabled={!privacy.loaded || !anyDetector(privacy.settings)} onChange={(e) => { setFilterOn(e.target.checked); }} />
+          <span>
+            Privacy filter: blur strangers, QR codes and phone numbers on this device before your camera or screen is sent.{' '}
+            <Link href={`/events/${eventId}/privacy-filter`}>Settings and people kept visible</Link>
+          </span>
+        </label>
+        {useFilter ? (
+          <p className="xs muted" style={{ margin: 0 }}>
+            Your picture and microphone reach others {privacy.settings.delay} s late, so each frame is checked first. {privacy.people.length ? `${privacy.people.length} kept visible on this device.` : 'Nobody is kept visible yet, so you are blurred too.'}
+          </p>
+        ) : null}
         <div>
-          <button type="button" className="button" disabled={phase === 'joining'} onClick={() => void join()}>
+          <button type="button" className="button" disabled={phase === 'joining' || !privacy.loaded} onClick={() => void join()}>
             <Icon name="video" /> {phase === 'joining' ? 'Joining…' : 'Join call'}
           </button>
         </div>
@@ -316,12 +398,32 @@ export function CallRoom({ eventId, callId, title, isHost, myName }: { eventId: 
           This server has no relay configured, so calls connect only between people on the same network.
         </p>
       ) : null}
+      {alerts.map((a) => (
+        <div key={a.id} className="notice pf-alert" role="alert" style={{ marginBottom: 12 }}>
+          <div className="pf-alert__row">
+            <span>
+              <strong>Privacy alert.</strong> {a.from} asks you to check what your camera or screen shows.
+            </span>
+            <button type="button" className="button button--sm" onClick={() => void acknowledge(a.id)}>
+              I have checked
+            </button>
+          </div>
+        </div>
+      ))}
       <div className="call-stage" aria-live="polite">
         <Tile stream={local} name={myName} self mirrored={!sharing} />
         {remotes.map((r) => (
-          <Tile key={r.peerId} stream={r.stream} name={r.name} self={false} mirrored={false} />
+          <div key={r.peerId} className="pf-tile">
+            <Tile stream={r.stream} name={r.name} self={false} mirrored={false} />
+            {canAlert ? (
+              <button type="button" className="button button--ghost button--sm pf-tile__alert" onClick={() => void sendAlert(r.peerId)}>
+                <Icon name="shield" /> Privacy alert
+              </button>
+            ) : null}
+          </div>
         ))}
       </div>
+      {filterStats ? <FilterStats stats={filterStats} compact /> : null}
       <div className="call-bar" role="toolbar" aria-label="Call controls">
         <button type="button" className="icon-button" aria-pressed={mic} disabled={!has('audio')} onClick={() => { toggle('audio'); }}>
           <Icon name="mic" /> {mic ? 'Mute' : 'Unmute'}
@@ -338,6 +440,11 @@ export function CallRoom({ eventId, callId, title, isHost, myName }: { eventId: 
         <button type="button" className="button button--ghost button--sm" onClick={() => { leave(false); setPhase('lobby'); }}>
           Leave
         </button>
+        {canAlert && remotes.length ? (
+          <button type="button" className="button button--ghost button--sm" onClick={() => void sendAlert(null)}>
+            <Icon name="shield" /> Alert everyone
+          </button>
+        ) : null}
         {isHost ? (
           <button type="button" className="button button--danger button--sm" onClick={() => { leave(true); setPhase('ended'); }}>
             End for everyone

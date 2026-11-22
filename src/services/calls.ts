@@ -4,6 +4,7 @@ import { DomainError } from '../domain/errors';
 import type { CallRoom } from '../domain/product';
 import { notify, requireCapability, type ServiceContext } from './context';
 import { ID } from './feed';
+import { callAlertsFor, canAlertInCall, raiseCallPrivacyAlert } from './privacy-filter';
 
 /**
  * Video calls. Audio and video travel directly between browsers (WebRTC); the server only relays
@@ -24,6 +25,8 @@ export const CallActionSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('join') }),
   z.object({ action: z.literal('leave'), peerId: peer }),
   z.object({ action: z.literal('end') }),
+  // Privacy filter: the host (or event staff) asks one person, or everyone else (to: null), to check their frame.
+  z.object({ action: z.literal('privacy-alert'), peerId: peer, to: peer.nullable() }),
   z.object({
     action: z.literal('signal'),
     peerId: peer,
@@ -82,7 +85,7 @@ export async function listCalls(ctx: ServiceContext, eventId: string, userId: st
 export async function getCall(ctx: ServiceContext, eventId: string, userId: string, callId: string) {
   await requireCapability(ctx, eventId, userId, 'event.read');
   const call = await eventCall(ctx, eventId, callId);
-  return { id: call.id, title: call.title, ended: call.endedAt !== null, isHost: call.hostId === userId };
+  return { id: call.id, title: call.title, ended: call.endedAt !== null, isHost: call.hostId === userId, canAlert: await canAlertInCall(ctx, eventId, userId, call.hostId) };
 }
 
 export async function actOnCall(ctx: ServiceContext, eventId: string, userId: string, callId: string, input: z.infer<typeof CallActionSchema>) {
@@ -95,6 +98,7 @@ export async function actOnCall(ctx: ServiceContext, eventId: string, userId: st
     return { ended: true };
   }
   if (call.endedAt !== null) throw new DomainError('INVALID_TRANSITION', 'This call has ended.');
+  if (input.action === 'privacy-alert') return raiseCallPrivacyAlert(ctx, eventId, userId, call.id, input.peerId, input.to);
   if (input.action === 'join') {
     const peerId = randomBytes(8).toString('hex');
     const updated = await ctx.store.docMutate('calls', call.id, (c) => {
@@ -123,7 +127,7 @@ export async function actOnCall(ctx: ServiceContext, eventId: string, userId: st
 export async function pollCall(ctx: ServiceContext, eventId: string, userId: string, callId: string, input: z.infer<typeof CallPollSchema>) {
   await requireCapability(ctx, eventId, userId, 'event.read');
   const call = await eventCall(ctx, eventId, callId);
-  if (call.endedAt !== null) return { ended: true, peers: [], signals: [] };
+  if (call.endedAt !== null) return { ended: true, peers: [], signals: [], alerts: [] };
   if (!call.participants.some((p) => p.peerId === input.peerId && p.userId === userId)) throw new DomainError('FORBIDDEN', 'You are not in this call.');
   const now = ctx.now();
   let mine: CallRoom['signals'] = [];
@@ -137,7 +141,13 @@ export async function pollCall(ctx: ServiceContext, eventId: string, userId: str
   const peers = await Promise.all(
     (updated?.participants ?? []).map(async (p) => ({ peerId: p.peerId, name: (await ctx.store.getUser(p.userId))?.displayName ?? 'Someone', isSelf: p.peerId === input.peerId })),
   );
-  return { ended: false, peers, signals: mine.map((s) => ({ seq: s.seq, from: s.from, data: JSON.parse(s.data) as unknown })) };
+  return {
+    ended: false,
+    peers,
+    signals: mine.map((s) => ({ seq: s.seq, from: s.from, data: JSON.parse(s.data) as unknown })),
+    // Privacy alerts addressed to the caller in this call, until acknowledged.
+    alerts: await callAlertsFor(ctx, eventId, userId, call.id),
+  };
 }
 
 const IceSchema = z.array(z.object({ urls: z.union([z.string(), z.array(z.string())]), username: z.string().optional(), credential: z.string().optional() })).max(6);

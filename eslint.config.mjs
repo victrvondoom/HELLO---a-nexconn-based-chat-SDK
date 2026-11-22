@@ -5,7 +5,7 @@ import reactHooks from 'eslint-plugin-react-hooks';
 
 export default tseslint.config(
   {
-    ignores: ['.next/**', 'node_modules/**', 'coverage/**', 'next-env.d.ts'],
+    ignores: ['src/chatdom/**', '.next/**', 'node_modules/**', 'coverage/**', 'next-env.d.ts'],
   },
   js.configs.recommended,
   ...tseslint.configs.strictTypeChecked.map((config) => ({

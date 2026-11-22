@@ -25,3 +25,5 @@ export const POST = viewerRoute<{ eventId: string }>('feed.create', async ({ use
   const post = await createPost(ctx, params.eventId, userId, input);
   return jsonOk({ id: post.id }, 201);
 });
+
+export const dynamic = 'force-dynamic';

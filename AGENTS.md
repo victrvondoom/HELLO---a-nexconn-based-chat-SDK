@@ -115,7 +115,7 @@ The policy is `decideVerification` in `src/domain/field/rules.ts`. AI never reac
 
 ## Moments (`src/domain/moments`, `src/services/moments.ts`, `src/components/moments`)
 
-Pages: `/events/[eventId]/feed` (stories + feed), `/feed/reels`, `/feed/explore`, `/feed/saved`, `/feed/charter`.
+Pages: `/events/[eventId]/feed` (stories + feed), `/feed/reels` (MemoReels), `/feed/explore`, `/feed/saved`, `/feed/charter`.
 API: `/api/events/[eventId]/moments/**` and `/feed`. Seed: `src/store/moments-seed.ts`.
 
 - Open Feed Charter (`charter.ts`): "For you" is the sum of six announced criteria; ties by time then id. The ranker
@@ -128,6 +128,31 @@ API: `/api/events/[eventId]/moments/**` and `/feed`. Seed: `src/store/moments-se
 - Nexconn mapping (`src/integrations/nexconn/moments.ts`) mirrors types verified in `@nexconn/chat@26.5.1`. It is a
   mapping only: Nexconn is still not connected.
 - Export and erasure include stories, highlights, saves, and the person's views and reactions.
+
+## Privacy filter (`src/domain/privacy-filter`, `src/components/privacy-filter`, `src/services/privacy-filter.ts`)
+
+Integrated from Offleak (AGPL-3.0; files marked `SPDX-License-Identifier: AGPL-3.0-only`). Audit, parity matrix and
+the licence consequence: `docs/UPSTREAM_INTEGRATION_AUDIT.md`. Page: `/events/[eventId]/privacy-filter`. API:
+`/api/events/[eventId]/privacy-filter/**`, `/api/twitch/finish`, and the `privacy-alert` call action.
+
+- Runs in the browser before a track is sent or a picture uploaded. The server never receives frames, faces or
+  embeddings. People kept visible live in IndexedDB per account (`engine/gallery.ts`).
+- `Redactor` is a line-by-line port: lookahead, hold windows, flow carry, and **fail closed** (a switched-on detector
+  with no result within 1 s blurs the whole frame). Keep it that way; a detector that cannot load must never make the
+  filter pass frames through.
+- Models and runtime files are self-hosted in `public/` by `npm run privacy:assets` (SHA-256 pinned, git-ignored).
+  CSP adds only `'wasm-unsafe-eval'`; keep `connect-src 'self'`.
+- Off by default (`DEFAULT_PRIVACY_FILTER.enabled = false`). Settings live in `privacyFilters` (id = user id);
+  alerts in `privacyAlerts`, nudged to the recipient only. Export and erasure cover both; erasure drops Twitch.
+- Twitch: token in server memory only (`privacy-twitch.ts` registry on `globalThis`), single-use state bound to
+  the user. Tested with fakes only.
+- Browser journeys: `tests/e2e/privacy-filter-flow.mjs` and `tests/e2e/privacy-parity-flow.mjs` (need the models;
+  real faces from the public-domain pictures in `tests/fixtures/privacy/`). Parity, licences and limits:
+  `docs/OFFLEAK_TO_HELLO_COMPLETION_REPORT.md`, `docs/THIRD_PARTY_LICENSE_AUDIT.md`.
+- Uploads: with a person's filter on, `/media` refuses uploads without `x-hello-privacy: protected|declined`
+  (`src/domain/privacy-filter/upload.ts`). Composers send it via `PhotoGuard.prepare`; keep that for any new upload path.
+- There is no separate Offleak program: no Python, no OBS plugin, no second server. Everything runs in the browser.
+- Run vitest from an upper-case D: drive path on this machine (a lower-case d: path loads two vitest instances).
 
 ## Commands
 
@@ -174,3 +199,13 @@ persistence.
 Proposed next features, interconnected with what exists, are in `docs/FEATURE_PROPOSALS.md`.
 
 - A live AI provider, browser push notifications, forward secrecy for private messages, the Nexconn bridge.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

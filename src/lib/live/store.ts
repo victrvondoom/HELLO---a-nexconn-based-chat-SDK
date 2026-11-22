@@ -27,7 +27,9 @@ import { EVERYONE, people, type LiveAudience, type LiveEvent } from './bus';
 type Draft = Omit<LiveEvent, 'at' | 'origin'>;
 
 const PERSONAL_DOCS = new Set<CollectionName>(['fieldAttempts', 'fieldLedger', 'fieldBadges', 'chatLinks']);
-const EVENT_DOCS = new Set<CollectionName>(['posts', 'comments', 'communities', 'calls', 'games', 'locations', 'fieldMissions', 'fieldSeasons', 'fieldStations', 'fieldLevels', 'questRuns']);
+// liveReports and safetyHolds are nudged to everyone: the nudge carries no content, and the page re-reads
+// through the API, which filters holds and reporter identity for each viewer.
+const EVENT_DOCS = new Set<CollectionName>(['posts', 'comments', 'communities', 'calls', 'games', 'locations', 'fieldMissions', 'fieldSeasons', 'fieldStations', 'fieldLevels', 'questRuns', 'liveReports', 'safetyHolds', 'kingdoms', 'kingdomCitizens', 'kingdomChronicle', 'kingdomForges']);
 /** Sign-in records, tokens and raw media metadata never produce events: their timing alone is sensitive. */
 
 function docEvent(collection: CollectionName, doc: Record<string, unknown> | null): Draft | null {
@@ -36,7 +38,12 @@ function docEvent(collection: CollectionName, doc: Record<string, unknown> | nul
   if (EVENT_DOCS.has(collection)) return { eventId, topic: collection, audience: EVERYONE };
   if (PERSONAL_DOCS.has(collection)) return { eventId, topic: collection, audience: people([doc?.userId as string | undefined], true) };
   if (collection === 'workflowRuns') return { eventId, topic: collection, audience: people([doc?.actorId as string | undefined], true) };
+  // Places belong to their owner: the owner's open pages refresh, and nobody else is told anything changed.
+  if (collection === 'places' || collection === 'placeCollections' || collection === 'placeVisits' || collection === 'placeImports') return { eventId, topic: collection, audience: people([doc?.ownerId as string | undefined], false) };
   if (collection === 'fieldFlags') return { eventId, topic: collection, audience: people([], true) };
+  // Privacy filter: settings are the owner's alone; an alert is told only to the person it is for.
+  if (collection === 'privacyFilters') return { eventId: null, topic: collection, audience: people([doc?.userId as string | undefined], false) };
+  if (collection === 'privacyAlerts') return { eventId, topic: collection, audience: people([doc?.recipientUserId as string | undefined], false) };
   return null;
 }
 

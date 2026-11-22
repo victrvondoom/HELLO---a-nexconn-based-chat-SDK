@@ -4,13 +4,13 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Icon, type IconName } from '@/components/ui/Icon';
 
-/** Tabs across the Moments pages: Feed, Reels, Explore, Saved and the charter that orders them. */
+/** Tabs across the Moments pages: Feed, MemoReels, Explore, Saved and the charter that orders them. */
 export function MomentsNav({ eventId }: { eventId: string }) {
   const pathname = usePathname();
   const base = `/events/${eventId}/feed`;
   const tabs: Array<{ href: string; label: string; icon: IconName }> = [
     { href: base, label: 'Feed', icon: 'home' },
-    { href: `${base}/reels`, label: 'Reels', icon: 'reels' },
+    { href: `${base}/reels`, label: 'MemoReels', icon: 'reels' },
     { href: `${base}/explore`, label: 'Explore', icon: 'compass' },
     { href: `${base}/saved`, label: 'Saved', icon: 'bookmark' },
     { href: `${base}/charter`, label: 'How it works', icon: 'info' },

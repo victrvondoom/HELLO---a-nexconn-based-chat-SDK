@@ -7,3 +7,5 @@ export const GET = viewerRoute<{ eventId: string }>('atlas.cabinet', async ({ us
   const { ctx } = await getRuntime();
   return jsonOk(await cabinetFor(ctx, params.eventId, userId));
 });
+
+export const dynamic = 'force-dynamic';

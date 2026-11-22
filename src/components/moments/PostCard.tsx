@@ -8,6 +8,7 @@ import { Icon } from '@/components/ui/Icon';
 import { Avatar } from '@/components/social/Avatar';
 import type { PostView } from '@/services/feed';
 import { becauseText, tagRuns } from './meta';
+import { PollBlock } from './PollBlock';
 import { usePostActions } from './usePostActions';
 
 interface CommentView {
@@ -142,6 +143,8 @@ export function PostCard({ eventId, post, now, onChanged }: { eventId: string; p
       ) : null}
 
       {!post.backdrop && post.text ? <TaggedText eventId={eventId} text={post.text} className="mpost__text" /> : null}
+
+      {post.poll ? <PollBlock eventId={eventId} postId={post.id} poll={post.poll} now={now} onChanged={onChanged} /> : null}
 
       <div className="mpost__actions">
         <button type="button" className={liked ? 'mbtn mbtn--liked' : 'mbtn'} aria-pressed={liked} aria-label={liked ? 'Remove your like' : 'Like'} onClick={() => void like(!liked)}>

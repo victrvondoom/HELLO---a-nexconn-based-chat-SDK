@@ -25,3 +25,5 @@ export const DELETE = viewerRoute<P>('location.stop', async ({ userId, params })
   await stopSharing(ctx, params.eventId, userId);
   return jsonOk({ sharing: false });
 });
+
+export const dynamic = 'force-dynamic';

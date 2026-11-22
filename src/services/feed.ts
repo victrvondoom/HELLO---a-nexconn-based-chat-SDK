@@ -1,7 +1,8 @@
 import { z } from 'zod';
 import { DomainError } from '../domain/errors';
 import { roleHasCapability } from '../domain/permissions';
-import { BACKDROPS, type Backdrop, type MediaKind, type MediaMeta, type Post } from '../domain/product';
+import { BACKDROPS, type Backdrop, type MediaKind, type MediaMeta, type Poll, type Post } from '../domain/product';
+import { cleanPollOptions, isPollClosed, POLL_DEFAULT_MINUTES, POLL_PROBLEM_TEXT, pollView, type PollView } from '../domain/moments/poll';
 import { compareIds, rankFeed, type CriterionId, type RankViewer } from '../domain/moments/charter';
 import { checkAttachment, isRepeat, POST_TEXT_MAX, refuse, tooLong, tooManyTags } from '../domain/moments/rules';
 import { audienceAllows, isExpired } from '../domain/moments/stories';
@@ -110,14 +111,20 @@ export const PostSchema = z
     communityId: id.nullable().default(null),
     repostOf: id.nullable().default(null),
     backdrop: z.enum(BACKDROPS).nullable().default(null),
+    /** Options and how long it stays open. The question is the post's text. */
+    poll: z
+      .object({ options: z.array(z.string().max(200)).max(8), minutes: z.number().int().default(POLL_DEFAULT_MINUTES) })
+      .nullable()
+      .default(null),
   })
   .refine((p) => p.text.length > 0 || p.mediaId !== null || p.repostOf !== null);
 
-/** The schema's output, with `backdrop` optional so callers written before Moments (workflows, MCP) keep working. */
-export type PostInput = Omit<z.infer<typeof PostSchema>, 'backdrop'> & { backdrop?: Backdrop | null };
+/** The schema's output, with `backdrop` and `poll` optional so callers written before them (workflows, MCP) keep working. */
+export type PostInput = Omit<z.infer<typeof PostSchema>, 'backdrop' | 'poll'> & { backdrop?: Backdrop | null; poll?: z.infer<typeof PostSchema>['poll'] };
 
 export const PostActionSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('like'), on: z.boolean() }),
+  z.object({ action: z.literal('vote'), optionId: z.string().regex(/^opt[0-9]$/) }),
   z.object({ action: z.literal('comment'), text: z.string().trim().min(1).max(COMMENT_MAX) }),
   z.object({ action: z.literal('delete') }),
 ]);
@@ -140,6 +147,14 @@ export async function createPost(ctx: ServiceContext, eventId: string, userId: s
     if (!community || community.eventId !== eventId) throw new DomainError('NOT_FOUND', 'That community does not exist.');
     if (!community.memberIds.includes(userId)) throw new DomainError('FORBIDDEN', 'Join the community to post in it.');
   }
+  let poll: Poll | null = null;
+  if (input.poll) {
+    if (input.text.length === 0) throw new DomainError('VALIDATION_FAILED', 'Write the question your poll asks.');
+    if (input.mediaId || input.repostOf) throw new DomainError('VALIDATION_FAILED', 'A poll cannot also carry a picture, a video or a share.');
+    const cleaned = cleanPollOptions(input.poll.options, input.poll.minutes);
+    if (!cleaned.ok) throw new DomainError('VALIDATION_FAILED', POLL_PROBLEM_TEXT[cleaned.problem]);
+    poll = { options: cleaned.labels.map((label, i) => ({ id: `opt${i}`, label })), closesAt: ctx.now() + input.poll.minutes * 60_000, votes: {} };
+  }
   let original: Post | null = null;
   if (input.repostOf) {
     original = await eventPost(ctx, eventId, input.repostOf);
@@ -158,6 +173,7 @@ export async function createPost(ctx: ServiceContext, eventId: string, userId: s
     backdrop: input.mediaId === null && input.text.length > 0 ? (input.backdrop ?? null) : null,
     repostOf: original?.id ?? null,
     likes: [],
+    ...(poll ? { poll } : {}),
     createdAt: ctx.now(),
   };
   await ctx.store.docPut('posts', post);
@@ -176,10 +192,27 @@ export async function createPost(ctx: ServiceContext, eventId: string, userId: s
 }
 
 export async function actOnPost(ctx: ServiceContext, eventId: string, userId: string, postId: string, input: z.infer<typeof PostActionSchema>): Promise<void> {
-  const membership = await requireCapability(ctx, eventId, userId, input.action === 'like' ? 'event.read' : 'message.send');
+  const membership = await requireCapability(ctx, eventId, userId, input.action === 'like' || input.action === 'vote' ? 'event.read' : 'message.send');
   const post = await eventPost(ctx, eventId, postId);
   const actor = await ctx.store.getUser(userId);
   const who = actor?.displayName ?? 'Someone';
+  if (input.action === 'vote') {
+    const optionId = input.optionId;
+    if (!post.poll) throw new DomainError('VALIDATION_FAILED', 'That post has no poll.');
+    if (!post.poll.options.some((option) => option.id === optionId)) throw new DomainError('VALIDATION_FAILED', 'Choose one of the poll options.');
+    const now = ctx.now();
+    // Atomic: the vote counts only if the poll is still open and this person has not voted. Two taps at once count once.
+    const counted = await ctx.store.docMutate('posts', post.id, (p) => {
+      if (!p.poll || isPollClosed(p.poll, now) || p.poll.votes[userId] !== undefined) return null;
+      return { ...p, poll: { ...p.poll, votes: { ...p.poll.votes, [userId]: optionId } } };
+    });
+    if (!counted) {
+      const latest = await ctx.store.docGet('posts', post.id);
+      if (latest?.poll && isPollClosed(latest.poll, now)) throw new DomainError('VALIDATION_FAILED', 'This poll has closed.');
+      throw new DomainError('DUPLICATE', 'You have already voted in this poll.');
+    }
+    return;
+  }
   if (input.action === 'like') {
     await ctx.store.docMutate('posts', post.id, (p) => {
       const likes = p.likes.filter((u) => u !== userId);
@@ -243,6 +276,8 @@ export interface PostView {
   tags: string[];
   /** Whether the viewer saved this post. Saves are private: nobody else can see them. */
   saved: boolean;
+  /** The poll, with results only when this viewer may see them (see src/domain/moments/poll.ts). Null for posts without one. */
+  poll: PollView | null;
   /** The Open Feed Charter criteria that placed this post. Empty in feeds that are newest first. */
   because: CriterionId[];
   /** The Nexconn message this post maps to. A mapping only: Nexconn is not connected in this build. */
@@ -251,7 +286,7 @@ export interface PostView {
 
 export const FEED_SCOPES = ['all', 'following', 'videos', 'latest', 'visual'] as const;
 export type FeedScope = (typeof FEED_SCOPES)[number];
-/** Feeds ordered by the Open Feed Charter. 'visual' (pictures, videos and backdrops) is the Reels feed. */
+/** Feeds ordered by the Open Feed Charter. 'visual' (pictures, videos and backdrops) is the MemoReels feed. */
 export const RANKED_SCOPES: readonly FeedScope[] = ['all', 'visual'];
 const FEED_PAGE = 60;
 
@@ -336,6 +371,7 @@ export async function postViews(ctx: ServiceContext, eventId: string, userId: st
     backdrop: p.backdrop ?? null,
     tags: extractTags(p.text),
     saved: saved.has(p.id),
+    poll: p.poll ? pollView(p.poll, userId, p.authorId, ctx.now()) : null,
     because,
     nexconn: nexconnRef(postEnvelope(p)),
   });

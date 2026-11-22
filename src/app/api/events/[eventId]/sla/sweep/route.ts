@@ -7,3 +7,5 @@ export const POST = viewerRoute<{ eventId: string }>('sla.sweep', async ({ userI
   const { ctx } = await getRuntime();
   return jsonOk(await sweepOverdueIncidents(ctx, params.eventId, userId));
 });
+
+export const dynamic = 'force-dynamic';

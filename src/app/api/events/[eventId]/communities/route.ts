@@ -18,3 +18,5 @@ export const POST = viewerRoute<{ eventId: string }>('communities.create', async
   const community = await createCommunity(ctx, params.eventId, userId, input);
   return jsonOk({ id: community.id }, 201);
 });
+
+export const dynamic = 'force-dynamic';

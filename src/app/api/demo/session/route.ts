@@ -34,3 +34,5 @@ export async function DELETE(): Promise<NextResponse> {
   await closeSession();
   return jsonOk({ signedOut: true });
 }
+
+export const dynamic = 'force-dynamic';

@@ -17,3 +17,5 @@ export const POST = viewerRoute<{ eventId: string; peerId: string }>('dm.send', 
   const message = await sendSealed(ctx, params.eventId, userId, params.peerId, await readJson(request));
   return jsonOk(message, 201);
 });
+
+export const dynamic = 'force-dynamic';

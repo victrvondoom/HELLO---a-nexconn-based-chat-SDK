@@ -32,6 +32,11 @@ export const CAPABILITIES = [
   'field.review',
   'member.manage',
   'content.moderate',
+  // LiveScene and LiveShield: reviewing live reports, placing and releasing scoped safety holds.
+  'live.review',
+  'safety.hold',
+  'safety.hold.event',
+  'safety.release',
 ] as const;
 export type Capability = (typeof CAPABILITIES)[number];
 
@@ -86,6 +91,8 @@ const ROLE_CAPABILITIES: Record<Role, readonly Capability[]> = {
     'approval.request',
     'field.review',
     'signal.read',
+    'live.review',
+    'safety.hold',
     'session.read',
     'session.discover',
     'people.discover',

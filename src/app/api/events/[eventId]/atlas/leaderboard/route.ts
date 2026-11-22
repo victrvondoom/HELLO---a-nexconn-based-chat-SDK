@@ -17,3 +17,5 @@ export const POST = viewerRoute<{ eventId: string }>('atlas.leaderboard.optin', 
   await setLeaderboardOptIn(ctx, params.eventId, userId, input.optIn);
   return jsonOk(await leaderboard(ctx, params.eventId, userId));
 });
+
+export const dynamic = 'force-dynamic';

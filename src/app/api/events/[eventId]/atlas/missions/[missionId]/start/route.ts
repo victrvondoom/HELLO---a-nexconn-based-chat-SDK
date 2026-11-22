@@ -7,3 +7,5 @@ export const POST = viewerRoute<{ eventId: string; missionId: string }>('atlas.s
   const { ctx } = await getRuntime();
   return jsonOk(await startMission(ctx, params.eventId, userId, params.missionId));
 });
+
+export const dynamic = 'force-dynamic';

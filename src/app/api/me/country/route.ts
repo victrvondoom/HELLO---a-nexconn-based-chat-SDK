@@ -9,3 +9,5 @@ export const POST = viewerRoute('me.country', async ({ userId, request }) => {
   await setCountry(ctx, userId, input.country);
   return jsonOk({ saved: true });
 });
+
+export const dynamic = 'force-dynamic';

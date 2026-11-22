@@ -46,3 +46,5 @@ export async function POST(request: Request): Promise<Response> {
 export function GET(): Response {
   return new NextResponse(null, { status: 405, headers: { Allow: 'POST' } });
 }
+
+export const dynamic = 'force-dynamic';

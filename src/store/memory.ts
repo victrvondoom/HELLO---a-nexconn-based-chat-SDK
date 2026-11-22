@@ -408,6 +408,12 @@ export class MemoryHelloStore implements SeedableStore {
     return MemoryHelloStore.copyAll(this.keyBundles.filter((k) => k.userId === userId).sort((a, b) => a.createdAt - b.createdAt));
   }
 
+  async deleteKeyBundle(id: string): Promise<boolean> {
+    const before = this.keyBundles.length;
+    this.keyBundles = this.keyBundles.filter((k) => k.id !== id);
+    return this.keyBundles.length < before;
+  }
+
   async deleteKeyBundles(userId: string): Promise<number> {
     const before = this.keyBundles.length;
     this.keyBundles = this.keyBundles.filter((k) => k.userId !== userId);

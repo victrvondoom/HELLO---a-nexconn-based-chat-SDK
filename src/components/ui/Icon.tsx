@@ -123,6 +123,12 @@ const PATHS: Record<IconName, ReactNode> = {
       <path d="M3 8h18M8 3l3 5M14 3l3 5M10.5 11.5v6l5-3z" />
     </>
   ),
+  memoreels: (
+    <>
+      <rect x="3" y="3" width="18" height="18" rx="4" />
+      <path d="M3 8h18M8 3l3 5M14 3l3 5M10.5 11.5v6l5-3z" />
+    </>
+  ),
   menu: <path d="M4 7h16M4 12h16M4 17h16" />,
   more: <path d="M5 12h.01M12 12h.01M19 12h.01" />,
   close: <path d="M6 6l12 12M18 6 6 18" />,
@@ -179,6 +185,7 @@ export type IconName =
   | 'compass'
   | 'bookmark'
   | 'reels'
+  | 'memoreels'
   | 'menu'
   | 'more'
   | 'close'

@@ -8,3 +8,5 @@ export const DELETE = viewerRoute<{ tokenId: string }>('tokens.revoke', async ({
   await revokeToken(ctx, userId, params.tokenId);
   return jsonOk({ revoked: true });
 });
+
+export const dynamic = 'force-dynamic';

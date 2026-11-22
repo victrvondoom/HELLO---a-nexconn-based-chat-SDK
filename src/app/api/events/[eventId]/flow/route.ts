@@ -7,3 +7,5 @@ export const GET = viewerRoute<{ eventId: string }>('flow.snapshot', async ({ us
   const { ctx } = await getRuntime();
   return jsonOk(await flowSnapshot(ctx, params.eventId, userId));
 });
+
+export const dynamic = 'force-dynamic';

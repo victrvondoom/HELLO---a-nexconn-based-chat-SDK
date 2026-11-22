@@ -21,3 +21,5 @@ export async function POST(
     return errorResponse(error, 'signals.refresh');
   }
 }
+
+export const dynamic = 'force-dynamic';

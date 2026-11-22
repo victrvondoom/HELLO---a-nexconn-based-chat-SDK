@@ -23,3 +23,5 @@ export async function POST(request: Request): Promise<NextResponse> {
     return errorResponse(error, 'auth.login');
   }
 }
+
+export const dynamic = 'force-dynamic';

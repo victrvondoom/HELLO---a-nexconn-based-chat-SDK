@@ -1,0 +1,286 @@
+/* The gate board: walnut with grain, brass beads and corner plates, a parchment inlay warmed for dusk.
+   Same family as the stream frame and panel; nothing here is glass or a stock icon. */
+@font-face { font-family: 'IM Fell English'; font-style: normal; font-weight: 400; font-display: block; src: url('../atlas/assets/fonts/im-fell-english-regular.woff2') format('woff2'); }
+@font-face { font-family: 'IM Fell English SC'; font-style: normal; font-weight: 400; font-display: block; src: url('../atlas/assets/fonts/im-fell-english-sc.woff2') format('woff2'); }
+@font-face { font-family: 'Alegreya'; font-style: normal; font-weight: 400 900; font-display: block; src: url('../atlas/assets/fonts/alegreya-roman-latin.woff2') format('woff2'); }
+@font-face { font-family: 'Alegreya'; font-style: italic; font-weight: 400 900; font-display: block; src: url('../atlas/assets/fonts/alegreya-italic-latin.woff2') format('woff2'); }
+
+.rg-page { margin: 0; overflow: hidden; background: #22263c; }
+.rg-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+.rg-route {
+  --ink: #3a2a1c; --ink-soft: #6b5238; --paper: #f1e2c2; --paper-warm: #ead3a6; --brass: #c69a5c; --brass-hi: #f3d69c;
+  --wood: #4a3426; --wood-deep: #2c1f18; --wax: #8e2a22; --focus: #f6d38f;
+  position: fixed; inset: 0; overflow: hidden; isolation: isolate; color: #f4e4c4;
+  font: 400 16px/1.4 Alegreya, Georgia, serif; -webkit-font-smoothing: antialiased;
+  background: radial-gradient(ellipse at 40% 30%, #3e4260, #1d2234 70%);
+}
+.rg-route *, .rg-route *::before, .rg-route *::after { box-sizing: border-box; }
+.rg-kingdom { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+/* Dusk gathers toward the board, so the kingdom stays open and lit on the other side. */
+.rg-shade { position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(90deg, transparent 45%, #12142466 78%, #10121fa6), linear-gradient(180deg, #11142450, transparent 22%); }
+.rg-veil { position: absolute; inset: 0; display: grid; place-items: center; background: radial-gradient(ellipse at 40% 35%, #43405a, #1b2232); z-index: 1; }
+.rg-veil p { font: italic 18px Alegreya, Georgia, serif; color: #dccbb0; }
+
+.rg-realm { position: absolute; top: 30px; left: 34px; display: flex; align-items: center; gap: 14px; z-index: 2; pointer-events: none; text-shadow: 0 2px 10px #141629; }
+.rg-realm p { margin: 0 0 3px; font: 11px 'IM Fell English SC', Georgia, serif; letter-spacing: .2em; color: #ecd2a6; text-transform: lowercase; }
+.rg-realm h1 { margin: 0; font: 400 36px/1 'IM Fell English', Georgia, serif; letter-spacing: -.01em; color: #fbecd0; }
+
+/* The wax seal. The shield canvas sits in the hollow pressed into the wax. */
+.rg-seal { position: relative; display: inline-grid; place-items: center; width: var(--seal); height: var(--seal); flex: none; filter: drop-shadow(0 2px 2px #1a0d0866); }
+.rg-seal svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.rg-wax { fill: #8b2a22; stroke: #5d1913; stroke-width: 1.4; }
+.rg-seal-umber .rg-wax { fill: #6f5233; stroke: #3f2c19; }
+.rg-wax-ring { fill: none; stroke: #c4554699; stroke-width: 1.6; }
+.rg-wax-ring-inner { stroke: #3d0e0a80; stroke-width: 1.1; }
+.rg-seal-umber .rg-wax-ring { stroke: #b48c5c99; }
+.rg-seal-umber .rg-wax-ring-inner { stroke: #2a1b0f80; }
+.rg-seal::before { content: ''; position: absolute; inset: 14%; border-radius: 50%; background: radial-gradient(circle at 38% 32%, #b5473a 0, #7c231c 58%, #5c1711 100%); box-shadow: inset 0 2px 3px #3a0906aa, inset 0 -1px 2px #d36a5a66; }
+.rg-seal-umber::before { background: radial-gradient(circle at 38% 32%, #9a7a52 0, #66492c 58%, #4a331d 100%); box-shadow: inset 0 2px 3px #24160baa, inset 0 -1px 2px #c8a77366; }
+.rg-seal canvas { position: relative; display: block; width: calc(var(--seal) * .46 + 4px); height: auto; filter: drop-shadow(0 1px 0 #ffe5c055) drop-shadow(0 -1px 0 #2b0a0699); }
+
+/* The board itself. */
+.rg-pane { position: absolute; z-index: 3; top: 24px; right: 24px; bottom: 24px; width: min(440px, calc(100vw - 48px)); display: flex; flex-direction: column; justify-content: center; pointer-events: none; }
+.rg-board { position: relative; pointer-events: auto; max-height: 100%; display: flex; flex-direction: column; padding: 18px 18px 14px; border-radius: 6px;
+  background:
+    repeating-linear-gradient(92deg, #ffffff06 0 1px, transparent 1px 7px, #00000018 7px 8px, transparent 8px 15px),
+    repeating-linear-gradient(88deg, transparent 0 23px, #00000012 23px 26px, transparent 26px 41px),
+    linear-gradient(180deg, #5a4030, #3f2c21 55%, #34241b);
+  box-shadow: 0 0 0 1px #20140e, inset 0 0 0 3px #3a281d, inset 0 0 0 4px #c69a5c88, inset 0 0 0 5px #20140e, inset 0 1px 0 6px #e7c48f1a, 0 18px 40px #0b0d1a99, 0 4px 0 #1d140f; }
+.rg-corner { position: absolute; width: 26px; height: 26px; z-index: 1; filter: drop-shadow(0 1px 1px #000a); }
+.rg-corner-tl { top: -3px; left: -3px; } .rg-corner-tr { top: -3px; right: -3px; transform: scaleX(-1); }
+.rg-corner-bl { bottom: -3px; left: -3px; transform: scaleY(-1); } .rg-corner-br { bottom: -3px; right: -3px; transform: scale(-1); }
+
+.rg-head { display: flex; align-items: center; gap: 14px; padding: 4px 6px 14px; }
+.rg-head-words { min-width: 0; }
+.rg-eyebrow { margin: 0 0 4px; font: 13px 'IM Fell English SC', Georgia, serif; letter-spacing: .14em; color: #e9c992; text-transform: lowercase; }
+.rg-title { margin: 0; font: 400 27px/1.08 'IM Fell English', Georgia, serif; color: #fbedd2; text-shadow: 0 1px 0 #1b110b, 0 2px 8px #120a0688; text-wrap: balance; }
+
+/* Parchment inlay with deckled edges, warmed for the hour. */
+.rg-parchment { position: relative; min-height: 0; flex: 0 1 auto; overflow-y: auto; overscroll-behavior: contain; padding: 18px 20px 18px; color: var(--ink); border-radius: 2px;
+  background:
+    radial-gradient(ellipse at 20% 10%, #fff7e366, transparent 60%),
+    radial-gradient(ellipse at 90% 100%, #c79b5f40, transparent 55%),
+    repeating-linear-gradient(17deg, #8a6a3a08 0 1px, transparent 1px 4px),
+    linear-gradient(#f3e4c4, #ead6ae);
+  box-shadow: inset 0 0 22px #a57c4566, inset 0 0 2px #6b4c2a, 0 1px 0 #f5d8a033;
+  clip-path: polygon(0 1%, 3% 0, 9% .8%, 17% .2%, 26% .9%, 38% .1%, 50% .7%, 63% 0, 74% .8%, 86% .2%, 95% .9%, 100% 0, 99.6% 12%, 100% 27%, 99.5% 45%, 100% 62%, 99.6% 81%, 100% 99%, 94% 100%, 84% 99.2%, 72% 100%, 60% 99.3%, 47% 100%, 35% 99.2%, 22% 100%, 10% 99.3%, 2% 100%, 0 98.7%, .5% 80%, 0 61%, .4% 43%, 0 24%); }
+.rg-lede { margin: 0 0 14px; font-size: 18px; line-height: 1.42; color: var(--ink); }
+.rg-quiet { margin: 10px 0 0; font-size: 14.5px; line-height: 1.42; font-style: italic; color: var(--ink-soft); }
+.rg-waiting { display: flex; align-items: center; gap: 10px; font-style: italic; }
+.rg-quill { animation: rg-write 1.6s ease-in-out infinite; transform-origin: 20% 90%; }
+@keyframes rg-write { 50% { transform: rotate(-9deg) translateX(2px); } }
+.rg-farewell { display: flex; gap: 12px; align-items: center; margin: 0 0 14px; padding: 10px 12px 10px 10px; border-left: 3px solid #8d6537;
+  background: linear-gradient(90deg, #8d653720, #8d653708); font-size: 16px; line-height: 1.42; color: var(--ink); }
+.rg-farewell > :first-child { flex: none; }
+.rg-notice { margin: 0 0 14px; padding: 9px 12px; border-left: 3px solid #9b3a2b; background: #c45a3c18; font-size: 15px; color: #5a2216; }
+
+/* Wooden buttons that press in a millimetre. */
+.rg-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 4px; }
+.rg-button { appearance: none; min-height: 46px; padding: 0 18px; display: inline-flex; align-items: center; justify-content: center; gap: 9px; cursor: pointer;
+  font: 600 16px Alegreya, Georgia, serif; color: #f6e5c5; border: 1px solid #22150e; border-radius: 4px;
+  background: repeating-linear-gradient(91deg, #ffffff08 0 1px, transparent 1px 6px, #0000001a 6px 7px, transparent 7px 12px), linear-gradient(#6a4b36, #4a3324);
+  box-shadow: inset 0 1px 0 #e9c38f40, inset 0 0 0 1px #8e6a4566, 0 3px 0 #22160f, 0 4px 8px #3b25163d; transition: transform .08s, box-shadow .08s, filter .15s; }
+.rg-button:hover { filter: brightness(1.08); }
+.rg-button:active:not(:disabled) { transform: translateY(2px); box-shadow: inset 0 1px 0 #e9c38f30, inset 0 0 0 1px #8e6a4566, 0 1px 0 #22160f; }
+.rg-button:disabled { cursor: default; filter: saturate(.6) brightness(.85); }
+.rg-button:focus-visible, .rg-finder button:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.rg-primary { color: #2d1c0e; border-color: #5b3d1c;
+  background: linear-gradient(180deg, #f4d79f, #d3a865 55%, #b48546); box-shadow: inset 0 1px 0 #fff3d2, inset 0 -2px 0 #8d6233, 0 3px 0 #4b3018, 0 5px 10px #5a3a1a44; }
+.rg-primary:active:not(:disabled) { box-shadow: inset 0 1px 0 #fff3d2aa, inset 0 -1px 0 #8d6233, 0 1px 0 #4b3018; }
+/* A quiet secondary act on the parchment: inked outline, no timber. */
+.rg-subtle { background: none; border-color: #6b4a2c99; box-shadow: none; color: var(--ink); }
+.rg-subtle:hover { background: #6b4a2c14; filter: none; }
+.rg-subtle:active:not(:disabled) { box-shadow: none; }
+.rg-button kbd { font: 12px Alegreya, Georgia, serif; padding: 1px 6px; border: 1px solid #e3c49360; border-radius: 3px; color: #e8d0a6; }
+.rg-glyph { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+/* The road between the two seals, inked. */
+.rg-journey { margin: 0 0 14px; }
+.rg-road { display: grid; grid-template-columns: auto 1fr auto; align-items: start; gap: 6px; }
+.rg-end { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; width: 104px; }
+.rg-end figcaption { font: 400 17px/1.15 'IM Fell English', Georgia, serif; color: var(--ink); text-align: center; text-wrap: balance; }
+.rg-ink-road { width: 100%; height: 40px; margin-top: 12px; overflow: visible; }
+.rg-ink-road path { fill: none; stroke: #4a3422; stroke-width: 2.2; stroke-linecap: round; stroke-dasharray: 1 6.5; vector-effect: non-scaling-stroke; }
+.rg-ink-road .rg-road-arrow { stroke-dasharray: none; stroke-width: 1.8; stroke-linejoin: round; }
+.rg-tags { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.rg-tags li { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; font-size: 14px; color: #4a3523; border: 1px solid #8a6a4466; border-radius: 999px; background: #fff6e055; }
+.rg-live-pip { width: 7px; height: 7px; border-radius: 50%; background: #c33b2a; box-shadow: 0 0 0 2px #c33b2a33; }
+
+/* Who has chosen to march: a brass counter plaque, numerals set with care. */
+.rg-party { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; align-items: center; padding: 14px 0; border-top: 1px solid #8a6a4440; border-bottom: 1px solid #8a6a4440; margin-bottom: 12px; }
+.rg-count { display: flex; align-items: center; gap: 10px; padding: 8px 14px 8px 12px; border-radius: 4px; color: #2d1c0e;
+  background: linear-gradient(170deg, #f6dca8, #cfa262 60%, #b58748); box-shadow: inset 0 1px 0 #fff4d6, inset 0 -2px 0 #8d6233, 0 2px 0 #5a3a1a55; }
+.rg-numeral { font-variant-numeric: tabular-nums lining-nums; font-feature-settings: 'tnum', 'lnum'; }
+.rg-count-number { font: 700 34px/1 Alegreya, Georgia, serif; min-width: 1.2ch; text-align: center; }
+.rg-count-label { font: 12px/1.15 'IM Fell English SC', Georgia, serif; letter-spacing: .08em; text-transform: lowercase; }
+.rg-party-words p { margin: 0; font-size: 16px; line-height: 1.35; }
+.rg-party-words .rg-quiet { margin-top: 4px; font-size: 14px; }
+.rg-party-actions { grid-column: 1 / -1; margin-top: 8px; }
+.rg-joined { margin: 0; display: inline-flex; align-items: center; gap: 7px; font-weight: 700; color: #3f5a2a; }
+.rg-facts { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 8px; }
+.rg-facts li { display: grid; grid-template-columns: 22px 1fr; gap: 10px; font-size: 15.5px; line-height: 1.38; color: #45311f; }
+.rg-facts .rg-glyph { color: #7b5a35; margin-top: 1px; }
+.rg-facts b { color: var(--ink); }
+
+/* The private bench's destination finder, on a parchment card. */
+/* The Atlas's gate mode, when the bench binds it: the whole window under the board, seen only while choosing. */
+.rg-atlas-host { position: absolute; inset: 0; z-index: 2; visibility: hidden; opacity: 0; transition: opacity .5s; }
+.rg-atlas-host.is-open { visibility: visible; opacity: 1; }
+/* The Atlas keeps its own finder at the right; the gate's board steps to the other side while the map is open. */
+.rg-route:has(.rg-atlas-host.is-open) .rg-pane { right: auto; left: 24px; }
+.rg-finder { position: absolute; z-index: 3; left: 34px; top: 108px; width: min(360px, calc(100vw - 48px)); padding: 16px 18px 18px; color: var(--ink); border-radius: 4px;
+  background: linear-gradient(#f3e4c4, #e8d2a7); box-shadow: 0 0 0 1px #6b4c2a, 0 14px 30px #0b0d1a88; }
+.rg-finder h3 { margin: 12px 0 6px; font: 400 15px 'IM Fell English SC', Georgia, serif; letter-spacing: .1em; text-transform: lowercase; color: #6b5238; }
+.rg-finder ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.rg-finder li button { width: 100%; min-height: 54px; display: flex; align-items: center; gap: 12px; padding: 6px 10px; text-align: left; cursor: pointer; color: var(--ink);
+  border: 1px solid #8a6a4455; border-radius: 4px; background: #fff7e470; font: 16px Alegreya, Georgia, serif; }
+.rg-finder li button:hover:not(:disabled) { background: #fff7e4; }
+.rg-finder li button:disabled { opacity: .55; cursor: default; }
+.rg-finder li b { display: block; font-weight: 600; }
+.rg-finder li small { display: block; font-size: 13px; color: var(--ink-soft); }
+.rg-finder > .rg-button { margin-top: 14px; }
+
+/* Phone: the board becomes a sheet at the foot of the screen, the kingdom stays visible above it. */
+@media (max-width: 720px) {
+  .rg-shade { background: linear-gradient(180deg, #11142466, transparent 20%, transparent 40%, #10121fb0 75%); }
+  .rg-realm { top: 18px; left: 18px; gap: 10px; }
+  .rg-realm .rg-seal { --seal: 36px !important; }
+  .rg-realm h1 { font-size: 27px; }
+  .rg-realm p { font-size: 10px; }
+  .rg-pane { top: auto; left: 8px; right: 8px; bottom: 8px; width: auto; }
+  .rg-board { padding: 12px 12px 10px; max-height: 72svh; }
+  .rg-head { gap: 11px; padding: 2px 4px 10px; }
+  .rg-head .rg-seal { --seal: 46px !important; }
+  .rg-eyebrow { font-size: 11.5px; margin-bottom: 2px; }
+  .rg-title { font-size: 22px; }
+  .rg-parchment { padding: 14px 14px 14px; }
+  .rg-lede { font-size: 16.5px; margin-bottom: 10px; }
+  .rg-quiet { font-size: 14px; }
+  .rg-end { width: 88px; }
+  .rg-end .rg-seal { --seal: 52px !important; }
+  .rg-end figcaption { font-size: 15.5px; }
+  .rg-ink-road { margin-top: 6px; }
+  .rg-party { gap: 6px 12px; padding: 10px 0; }
+  .rg-count-number { font-size: 28px; }
+  .rg-party-words p { font-size: 15px; }
+  /* The monarch's board already says only volunteers travel; on a phone the count and the choice come first. */
+  .rg-pane[data-viewer='monarch'] .rg-party-words .rg-quiet { display: none; }
+  .rg-journey { margin-bottom: 10px; }
+  .rg-tags { margin-top: 8px; }
+  .rg-button { min-height: 46px; padding: 0 14px; font-size: 15.5px; }
+  .rg-party-actions .rg-button { flex: 1 1 auto; }
+  .rg-facts li { font-size: 14.5px; }
+  .rg-finder { left: 8px; right: 8px; top: 92px; width: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rg-quill { animation: none; }
+  .rg-button { transition: none; }
+}
+
+/* A walker's board ends with their choice; no rule hangs under it. */
+.rg-pane[data-phase='gathering'] .rg-party { border-bottom: 0; margin-bottom: 0; padding-bottom: 2px; }
+
+/* Twitch's countdown: an ink ring that empties, the minutes set like a clock face. */
+.rg-countdown { display: flex; align-items: center; gap: 14px; margin: 0 0 12px; padding: 10px 12px; border: 1px solid #8a6a4455; border-radius: 4px; background: #fff6e04d; }
+.rg-countdown-ring { width: 52px; height: 52px; flex: none; transform: rotate(-90deg); }
+.rg-ring-track { fill: none; stroke: #8a6a4433; stroke-width: 3; }
+.rg-ring-ink { fill: none; stroke: #7b2a1f; stroke-width: 3; stroke-linecap: round; transition: stroke-dasharray 1s linear; }
+.rg-countdown-time { margin: 0; font: 700 30px/1 Alegreya, Georgia, serif; color: var(--ink); }
+.rg-countdown-words { margin: 4px 0 0; font-size: 14.5px; line-height: 1.35; color: #45311f; }
+.rg-checking { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 12px; padding: 10px 12px; border-left: 3px solid #8d6537; background: #8d653718; font-size: 16px; line-height: 1.42; }
+.rg-checking .rg-glyph { margin-top: 2px; color: #6b4a2c; }
+/* While Twitch holds the raid, the dotted road starts to move toward the destination. */
+.rg-journey[data-stage='countdown'] .rg-ink-road path:not(.rg-road-arrow) { animation: rg-march 1.4s linear infinite; }
+@keyframes rg-march { to { stroke-dashoffset: -7.5; } }
+
+/* The party set out: the road is inked solid over its pencil trace, once, from the gate to the destination. */
+.rg-departure { margin: 0; }
+.rg-ink-road-set .rg-road-trace { stroke: #4a342255; }
+.rg-ink-road-set .rg-road-inked { stroke: #3a2614; stroke-width: 3.2; stroke-dasharray: 100 100; stroke-dashoffset: 0; animation: rg-ink 2.4s cubic-bezier(.45, .05, .3, 1) both; }
+@keyframes rg-ink { from { stroke-dashoffset: 100; } }
+.rg-witnessed { display: grid; grid-template-columns: 22px 1fr; gap: 10px; margin: 14px 0 0; font-size: 15.5px; line-height: 1.38; color: #45311f; }
+.rg-witnessed .rg-glyph { color: #7b2a1f; margin-top: 1px; }
+.rg-witnessed b { color: var(--ink); }
+.rg-party-set { margin-top: 12px; }
+.rg-pane[data-phase='departed'] .rg-party { border-bottom: 0; margin-bottom: 4px; }
+.rg-watch { text-decoration: none; }
+.rg-watch:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+
+@media (max-width: 720px) {
+  .rg-countdown { gap: 10px; padding: 8px 10px; }
+  .rg-countdown-ring { width: 44px; height: 44px; }
+  .rg-countdown-time { font-size: 25px; }
+  .rg-countdown-words, .rg-witnessed, .rg-checking { font-size: 14.5px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rg-journey[data-stage='countdown'] .rg-ink-road path, .rg-ink-road-set .rg-road-inked { animation: none; }
+  .rg-ring-ink { transition: none; }
+}
+
+/* ---- One walker's journey through the gate (RG09) ----
+   The road is walked in ink as the destination answers; a lantern carries the walker's place along it. On arrival the
+   destination's seal is lit by torchlight with a few embers rising, warm enough to bloom on the stream. */
+.rg-follow { margin-top: 14px; }
+.rg-travel { margin: 0; }
+.rg-road-travel { --lantern: 0; }
+.rg-travel-way { position: relative; height: 56px; }
+.rg-ink-road-travel { position: absolute; left: 0; right: 0; top: 0; height: 40px; margin-top: 12px; }
+.rg-ink-road-travel .rg-road-trace { stroke: #4a342266; }
+.rg-ink-road-travel .rg-road-walked { stroke: #3a2614; stroke-width: 3.2; stroke-dasharray: 100 100; stroke-dashoffset: calc(100 - var(--lantern) * 100);
+  transition: stroke-dashoffset 1.2s cubic-bezier(.45, .05, .3, 1); }
+.rg-travel[data-state='cancelled'] .rg-road-walked, .rg-travel[data-state='expired'] .rg-road-walked,
+.rg-travel[data-state='denied'] .rg-road-walked, .rg-travel[data-state='refused'] .rg-road-walked { stroke-dashoffset: 100; }
+/* The lantern rides the same curve the road is drawn on; its point is computed from that curve in the board. */
+.rg-lantern { position: absolute; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%;
+  transition: left 1.2s cubic-bezier(.45, .05, .3, 1), top 1.2s cubic-bezier(.45, .05, .3, 1);
+  background: radial-gradient(circle, #fff3c4 0 18%, #f6b74e 30%, #d9772a66 55%, transparent 72%); box-shadow: 0 0 14px 4px #f0a04366; }
+.rg-lantern-flame { position: absolute; inset: 5px; border-radius: 50% 50% 45% 45%; background: #fff6d8; animation: rg-flicker 1.3s ease-in-out infinite alternate; }
+@keyframes rg-flicker { 0% { transform: scale(.85) translateY(.5px); opacity: .85; } 40% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(.92) translateY(-.5px); opacity: .9; } }
+
+.rg-steps { list-style: none; margin: 14px 0 12px; padding: 0; display: grid; gap: 7px; counter-reset: step; }
+.rg-steps li { display: grid; grid-template-columns: 24px 1fr; gap: 10px; align-items: center; font-size: 16px; line-height: 1.3; color: #8a7458; }
+.rg-step-mark { width: 20px; height: 20px; border-radius: 50%; border: 1.6px dashed #8a6a4499; display: grid; place-items: center; }
+.rg-step-mark .rg-glyph { width: 15px; height: 15px; stroke-width: 2.2; }
+.rg-steps li[data-step='done'] { color: var(--ink); }
+.rg-steps li[data-step='done'] .rg-step-mark { border: 1.6px solid #3a2614; background: #3a26140f; color: #3a2614; }
+.rg-steps li[data-step='now'] { color: var(--ink); font-weight: 700; }
+.rg-steps li[data-step='now'] .rg-step-mark { border: 2px solid #b5651f; background: radial-gradient(circle, #f6c46a 0 30%, transparent 34%); box-shadow: 0 0 0 4px #e5a14a26;
+  animation: rg-glow 1.6s ease-in-out infinite; }
+@keyframes rg-glow { 50% { box-shadow: 0 0 0 7px #e5a14a12; } }
+.rg-overrun { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 12px; padding: 10px 12px; border-left: 3px solid #b5651f; background: #e5a14a1c; font-size: 15.5px; line-height: 1.42; }
+.rg-overrun .rg-glyph { margin-top: 2px; color: #8d4f1c; }
+
+/* Arrival: torchlight at the destination's seal, and a few embers that rise and fade. */
+.rg-end-goal { position: relative; }
+.rg-torchlight { position: absolute; left: 50%; top: 32px; width: 0; height: 0; pointer-events: none; z-index: 0; }
+.rg-torchlight::before { content: ''; position: absolute; left: -64px; top: -64px; width: 128px; height: 128px; border-radius: 50%;
+  background: radial-gradient(circle, #ffd88a 0, #f5a94a88 26%, #e0782a33 48%, transparent 70%); mix-blend-mode: multiply; animation: rg-torch 2.2s ease-in-out infinite alternate; }
+.rg-torchlight i { position: absolute; left: 0; top: 0; width: 4px; height: 4px; border-radius: 50%; background: #ffcf6e; box-shadow: 0 0 6px 2px #ffb24a99;
+  opacity: 0; animation: rg-ember 3.2s ease-out infinite; }
+.rg-torchlight i:nth-child(1) { --dx: -22px; animation-delay: 0s; }
+.rg-torchlight i:nth-child(2) { --dx: 14px; animation-delay: .45s; }
+.rg-torchlight i:nth-child(3) { --dx: -6px; animation-delay: .9s; width: 3px; height: 3px; }
+.rg-torchlight i:nth-child(4) { --dx: 26px; animation-delay: 1.4s; }
+.rg-torchlight i:nth-child(5) { --dx: -30px; animation-delay: 1.9s; width: 3px; height: 3px; }
+.rg-torchlight i:nth-child(6) { --dx: 4px; animation-delay: 2.3s; }
+.rg-torchlight i:nth-child(7) { --dx: 18px; animation-delay: 2.8s; width: 3px; height: 3px; }
+@keyframes rg-torch { from { transform: scale(.94); opacity: .85; } to { transform: scale(1.06); opacity: 1; } }
+@keyframes rg-ember { 0% { opacity: 0; transform: translate(0, 10px); } 15% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--dx), -58px); } }
+.rg-end-goal .rg-seal, .rg-end-goal figcaption { position: relative; z-index: 1; }
+.rg-end-lit .rg-seal { filter: drop-shadow(0 0 10px #f2a8487a) drop-shadow(0 2px 2px #1a0d0866); }
+.rg-end-lit figcaption { color: #2a1a0c; }
+.rg-arrival-line { margin: 16px 0 6px; font: 400 21px/1.3 'IM Fell English', Georgia, serif; color: var(--ink); text-wrap: balance; }
+.rg-pane[data-phase='journey'] .rg-actions { margin-top: 12px; }
+
+@media (max-width: 720px) {
+  .rg-steps li { font-size: 15px; }
+  .rg-arrival-line { font-size: 19px; }
+  .rg-overrun { font-size: 14.5px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rg-ink-road-travel .rg-road-walked, .rg-lantern { transition: none; }
+  .rg-lantern-flame, .rg-steps li[data-step='now'] .rg-step-mark, .rg-torchlight::before { animation: none; }
+  .rg-torchlight i { display: none; }
+}

@@ -3,6 +3,107 @@
 Recorded on 2026-11-17 on branch `claude/eager-ritchie-argdtp`. Each row is a command that was run, with its result.
 A failing run is recorded here too. Nothing is marked as passing without a run.
 
+## Privacy filter integrated from Offleak (2026-11-22)
+
+Scope and parity matrix: [UPSTREAM_INTEGRATION_AUDIT.md](UPSTREAM_INTEGRATION_AUDIT.md).
+
+| Command | Result |
+|---|---|
+| `npx tsc --noEmit` | Passes. |
+| `npx eslint src tests` | Passes. |
+| `npx vitest run` (PowerShell, upper-case D: path) | 50 files; 565 passed, 3 skipped (baseline 48 files, 511 passed). New: `tests/unit/privacy-filter-core.test.ts` (43, upstream cases ported), `tests/integration/privacy-filter.test.ts` (11). |
+| `npm run build` | Passes. |
+| `node tests/e2e/privacy-filter-flow.mjs` (production build, demo mode, real models, production CSP) | 8/8. Preview ~7 face and ~13 code/number checks/s, ~12 fps out; fail-closed without YuNet; picture face area 0.18x detail when blurred, 0.88x when kept visible; filtered call connects; alert reaches only its recipient; Twitch scope. |
+| `call-flow`, `product-flow`, `features-flow`, `judge-flow`, `private-messages`, `workflow-audit`, `field-atlas-flow`, `field-live-flow`, `outbox-flow`, `live-flow` | All passed. |
+| `node tests/e2e/route-crawl.mjs` | 400 pages, 45 correctly denied, 0 problems. |
+| `npm run test:postgres`, `chat-bridge-flow` | Not run (no Postgres; no chat secret). |
+
+Twitch was exercised only against fakes. The live camera in tests is Chromium's synthetic device (no faces).
+
+## LiveScene and LiveShield, context graph (2026-11-22)
+
+Scope: the context graph foundation and the first vertical slice (live reports, promotion, expiry, clustering, scoped
+safety holds, context snapshots). See [context-graph.md](context-graph.md) and [adr/0001-context-graph.md](adr/0001-context-graph.md).
+
+| Command | Result |
+|---|---|
+| `npx tsc --noEmit` | Passes, no errors. |
+| `npx eslint src tests` | Passes, no errors (after fixing the strict rules flagged in the new code). |
+| `npx vitest run` (full suite, from PowerShell) | 40 files passed. 417 tests passed, 1 skipped. Baseline was 38 files and 383 tests. |
+| `npx vitest run tests/integration/live-scene.test.ts tests/unit/live-cluster-graph.test.ts` | 34 of 34 passed. |
+| `npm run build` | Passes. The route table includes `/events/[eventId]/live` and the five `/api/events/[eventId]/live/**` routes. |
+| HTTP smoke test (production build, `HELLO_DEMO_MODE=true`, Python `urllib`, a real session cookie per person) | 16 of 16 checks passed. |
+
+What the HTTP smoke test covered: an attendee's report; the reporter's own text, and the same report with no text or
+name for another attendee; a zone hold that hides the report from others while the reporter sees "under review";
+promotion to an incident; an idempotent second promotion; the refusal of the placer releasing their own hold; release by
+a different organiser; the refusal of whole-event holds by an attendee and by operations staff; and the refusal of a
+too-short report.
+
+Defects found by testing, and fixed:
+
+- One clustering test read the feed after its reports had expired. The test's timing was wrong; the code was right.
+- TypeScript and lint errors in the new code, including a test type that did not match the service's return type.
+
+Found in review before the tests were run:
+
+- Attendees must not see live reports when hold records cannot be read. The compiler now fails closed on unknown holds,
+  and both the integration and the unit tests check it.
+
+Not verified, and why:
+
+- **Browser UI.** The new page renders on the server (HTTP 200, "Live now"), but the client interactions were not
+  exercised in a browser. A Playwright launch against the local Chrome hung and was stopped. The forms and buttons are
+  therefore untested in a real browser.
+- **Live (SSE) refresh of the new page.** The topic mapping and the `describeWrite` nudge are unit-tested. The page's
+  reaction to a nudge was not observed in a browser.
+- **Postgres.** The new collections use the generic document table. The Postgres integration suite
+  (`npm run test:postgres`) was not run against a database in this session.
+- **Competitive benchmark.** Not started. No external repository was reviewed, and no benchmark fixture was built
+  beyond the integration and unit cases above.
+- **Nexconn.** Unchanged in this work. The live layer does not use the Nexconn transport.
+
+Environment notes, recorded so the results can be reproduced:
+
+- Vitest failed in every file when run from Git Bash with the path `/d/HELLO/...`, and passed from PowerShell with
+  `d:\HELLO\...`. The drive-letter case differs between the two shells (the banner shows `D:/`). Run the suite from
+  PowerShell with the same path form.
+- The production server must run with `HELLO_DEMO_MODE=true` for demo sign-in. Demo sign-in returns 404 otherwise.
+- The session cookie is `Secure` in production, so a client that does not treat `localhost` as secure will not send it.
+  The HTTP smoke test sent the cookie explicitly.
+
+## HELLO Living Atlas: capture, import, photos, visits, device keys (2026-11-22, second round)
+
+| Command or flow | Result |
+|---|---|
+| `npx vitest run` (full suite, from PowerShell) | 44 files passed. 470 tests passed, 1 skipped (the skip predates this work). |
+| `npx tsc --noEmit` | Passes, no errors. |
+| `npx eslint src tests` | Passes, no errors. |
+| `npm run build` | Passes. Route table includes the capture, photo, save, visits and visit-action routes. |
+| `tests/unit/place-capture.test.ts`, `tests/integration/place-capture.test.ts` | 32 of 32 passed (after two test-data fixes: a malformed CSV row and a mis-placed EXIF field in the test builder). |
+| `tests/integration/places.test.ts`, `tests/unit/places-rules.test.ts` | 21 of 21 passed. |
+| Browser: My places flow, production build, real Chrome | 14 of 14 passed. |
+| Browser: capture flow (text, link, import with a bad row, photo, check-in, end, delete, isolation) | 17 of 17 passed. No uncaught exceptions, console errors or failed API calls. |
+| HTTP smoke test, LiveScene and LiveShield | 16 of 16 passed. |
+| Site crawl, 34 routes, attendee and organiser (real browser) | No uncaught exceptions and no server errors. Remaining 404s: staff-only pages hidden from attendees, and placeholder IDs. |
+
+Defects found while testing this round, and fixed:
+
+- **Photo name leaked the file name.** A photo with no date was named after its file, which was then stored and exported.
+  The name is now "Photo spot", and the file name is never used. Covered by an integration test that checks the export.
+- **Device-key limit caused a 422 on every page** after the eighth device, because each browser context is a new device.
+  The oldest key is now retired at the limit. Covered by an integration test that publishes nine keys.
+- **Malformed test data.** A CSV row with an unquoted URL was split across columns, and the EXIF test builder placed one
+  field 12 bytes too far. Both were corrections to the tests, not to the parsers.
+- **Browser-test timing.** Some checks read the list before the refresh that follows a save. The checks now wait for the
+  state they test, instead of reading it immediately.
+
+Not verified:
+
+- Postgres. The new collections use the generic document table; `npm run test:postgres` was not run against a database.
+- Native behaviour on iOS. Not testable here.
+- Automatic visit detection, trips and ETA. Not built.
+
 ## Automated checks
 
 | Command | Result |

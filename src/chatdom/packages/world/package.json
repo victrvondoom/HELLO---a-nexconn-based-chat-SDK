@@ -1,0 +1,26 @@
+{
+  "name": "@chatdom/world",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./growth": "./src/growth/index.ts",
+    "./genesis": "./src/genesis/index.ts",
+    "./genesis/observed": "./src/genesis/observed-fixtures.ts",
+    "./movement": "./src/movement/step.ts",
+    "./realm-reference": "./src/realm/reference.ts",
+    "./realm": "./src/realm/reducer.ts",
+    "./interactions": "./src/interactions/index.ts",
+    "./founded-collision": "./src/founded-world/collision.ts",
+    "./founded-scene": "./src/founded-world/validate.ts",
+    "./founded-codec": "./src/founded-world/codec.ts",
+    "./growth-history": "./src/growth-history/index.ts",
+    "./soul": "./src/soul/index.ts"
+  },
+  "dependencies": {
+    "@chatdom/shared": "workspace:*",
+    "@chatdom/voxel": "workspace:*",
+    "zod": "4.6.7"
+  }
+}

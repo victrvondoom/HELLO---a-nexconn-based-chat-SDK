@@ -72,3 +72,25 @@ Found by running on Postgres: approval de-duplication compared JSON strings, whi
 keys. Payloads are now compared by content.
 
 The Supabase migration in `supabase/` is a separate relational design for a Supabase Auth deployment.
+
+## Storage selection and failure behaviour (2026-11-22)
+
+The adapter is chosen once, at start, from the environment (`src/lib/runtime.ts`):
+
+| Environment | Adapter | Survives a restart | If the store cannot start |
+|---|---|---|---|
+| `DATABASE_URL` set | Postgres (`HELLO_DB_SCHEMA`, default `public`) | Yes | Requests fail with a generic error; the log has `runtime_start_failed` and a reason code (for example `ECONNREFUSED`). The app does **not** fall back to memory, and retries on the next request. |
+| `HELLO_DATA_DIR` set (no `DATABASE_URL`) | Memory, saved to `state.json` and `blobs/` | Yes, one instance only. The last 400 ms of writes are flushed on exit | An unreadable `state.json` stops the start; nothing is silently replaced |
+| Neither | Memory | **No.** Everything is lost on restart | n/a |
+
+If both `DATABASE_URL` and `HELLO_DATA_DIR` are set, Postgres wins and `data_dir_ignored` is logged.
+`HELLO_DEMO_MODE` only decides whether demo sign-in is offered (and the demo event is what an empty store is seeded with).
+It does not choose the storage. Connection strings and passwords are never logged or shown in the UI.
+
+Local persistent storage: create an empty database, then `DATABASE_URL=postgres://user:pass@localhost:5432/hello`
+(set it in your shell or `.env.local`, which is not committed) and `npm run build && npm start`. The schema is created on first start.
+
+Tests: `HELLO_TEST_DATABASE_URL=postgres://user:pass@localhost:5432/hello_test npm run test:postgres`. Use a separate,
+empty database. Each test file creates its own schema (`t_<pid>_<n>_<hex>`) and drops it afterwards; the suite never
+touches `public` and refuses to run when the URL equals `DATABASE_URL`. Without the variable, `npm run test:postgres`
+exits with a message and the Postgres-only tests are skipped in `npx vitest run`.

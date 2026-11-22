@@ -33,3 +33,5 @@ export async function POST(
     return errorResponse(error, 'approvals.decide');
   }
 }
+
+export const dynamic = 'force-dynamic';

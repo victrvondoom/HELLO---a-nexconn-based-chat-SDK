@@ -20,5 +20,9 @@ npm-debug.log*
 .env.*.local
 !.env.example
 
+# privacy filter runtime files and models (npm run privacy:assets)
+public/vendor/
+public/models/
+
 # typescript
 *.tsbuildinfo

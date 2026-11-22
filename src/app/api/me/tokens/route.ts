@@ -17,3 +17,5 @@ export const POST = viewerRoute('tokens.create', async ({ userId, request }) => 
   limiter.consume(`token:${userId}`, ctx.now());
   return jsonOk({ token: await createToken(ctx, userId, input) }, 201);
 });
+
+export const dynamic = 'force-dynamic';

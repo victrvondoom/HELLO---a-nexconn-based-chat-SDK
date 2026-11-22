@@ -7,3 +7,5 @@ export const POST = viewerRoute<{ eventId: string }>('notifications.read', async
   const { ctx } = await getRuntime();
   return jsonOk({ marked: await markAllNotificationsRead(ctx, params.eventId, userId) });
 });
+
+export const dynamic = 'force-dynamic';

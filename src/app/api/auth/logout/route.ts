@@ -6,3 +6,5 @@ export async function POST(): Promise<NextResponse> {
   await closeSession();
   return jsonOk({ signedOut: true });
 }
+
+export const dynamic = 'force-dynamic';

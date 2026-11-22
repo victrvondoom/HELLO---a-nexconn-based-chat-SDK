@@ -24,3 +24,5 @@ export const POST = viewerRoute<{ eventId: string }>('moments.stories.create', a
   const story = await createStory(ctx, params.eventId, userId, input);
   return jsonOk({ id: story.id, expiresAt: story.expiresAt }, 201);
 });
+
+export const dynamic = 'force-dynamic';

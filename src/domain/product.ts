@@ -126,7 +126,16 @@ export interface Post {
   /** Set when this post shares another post. */
   repostOf: string | null;
   likes: string[];
+  /** A poll attached to the post. Posts written before polls have no field: read it as `p.poll ?? null`. */
+  poll?: Poll | null;
   createdAt: number;
+}
+
+/** A question's answers. `votes` maps a person to the option they chose; it is never shown to anyone as such. */
+export interface Poll {
+  options: Array<{ id: string; label: string }>;
+  closesAt: number;
+  votes: Record<string, string>;
 }
 
 export interface PostComment {
@@ -178,6 +187,44 @@ export interface CallSignal {
   to: string;
   from: string;
   data: string;
+}
+
+/**
+ * Privacy filter (integrated from Offleak, see docs/UPSTREAM_INTEGRATION_AUDIT.md): one person's switches, global
+ * across events. It never holds an image or face data; the people kept visible stay on the person's own device.
+ * The id is the user id.
+ */
+export interface PrivacyFilterRecord {
+  id: string;
+  userId: string;
+  enabled: boolean;
+  fps: number;
+  delay: number;
+  faceEnabled: boolean;
+  qrEnabled: boolean;
+  phoneEnabled: boolean;
+  /** Added after the first release: absent on older records, which then use the defaults. */
+  peopleEnabled?: boolean;
+  screensEnabled?: boolean;
+  effect?: 'pixelate' | 'blur' | 'blackout';
+  updatedAt: number;
+}
+
+/** Where a privacy alert came from: a call host or moderator in HELLO, or `!privacy` in the person's Twitch chat. */
+export type PrivacyAlertSource = 'CALL' | 'TWITCH';
+
+/** "Check your frame": raised for one person by someone allowed to, delivered only to that person. */
+export interface PrivacyAlert {
+  id: string;
+  eventId: string;
+  recipientUserId: string;
+  /** Null for Twitch alerts (the sender is a Twitch account) and after the sender's erasure. */
+  senderUserId: string | null;
+  senderName: string;
+  source: PrivacyAlertSource;
+  callId: string | null;
+  createdAt: number;
+  acknowledgedAt: number | null;
 }
 
 export interface CallRoom {
@@ -382,6 +429,142 @@ export interface QuestRun {
   status: 'DRAFT_CREATED' | 'REJECTED_ALL';
 }
 
+// ---------- LiveScene and LiveShield (src/domain/live, src/services/live.ts) ----------
+
+/**
+ * A report made from the venue map, about a place rather than a person's position. It is not an incident:
+ * it becomes one only when a staff member promotes it. It expires after its category's time to live.
+ */
+export interface LiveReport {
+  id: string;
+  eventId: string;
+  reporterUserId: string;
+  category: 'SAFETY' | 'TECHNICAL' | 'CROWD' | 'SOCIAL' | 'COMMUNITY' | 'ACCESSIBILITY';
+  /** A venue space chosen by the reporter. Never a device position. */
+  spaceId: string;
+  /** The zone the space belongs to, copied at report time so later renames cannot rewrite history. */
+  zone: string;
+  text: string;
+  /** Set when the Sentinel found an emergency word in the text. Routes the report to the moderation queue. */
+  safetySignal: 'MEDICAL' | 'FIRE' | 'SECURITY' | null;
+  /**
+   * OPEN: live. PROMOTING: a staff member is opening an incident (a short lock). PROMOTED: an incident exists,
+   * and `incidentId` names it. DISMISSED: a staff member reviewed it and removed it from the live view.
+   */
+  status: 'OPEN' | 'PROMOTING' | 'PROMOTED' | 'DISMISSED';
+  incidentId: string | null;
+  createdAt: number;
+  expiresAt: number;
+  decisionByUserId: string | null;
+  decidedAt: number | null;
+  decisionReason: string | null;
+  version: number;
+}
+
+export type HoldScope = { kind: 'EVENT' } | { kind: 'ZONE'; zone: string } | { kind: 'REPORT'; reportId: string };
+
+/**
+ * A safety hold suspends the public live layer for a scope. It never touches private messages or
+ * unrelated communities. It stays in force until a different organiser releases it: `decisionDueAt`
+ * only marks it overdue, so visibility is never restored by the clock alone.
+ */
+export interface SafetyHold {
+  id: string;
+  eventId: string;
+  scope: HoldScope;
+  reason: string;
+  placedByUserId: string;
+  placedAt: number;
+  decisionDueAt: number;
+  status: 'IN_FORCE' | 'RELEASED';
+  releasedByUserId: string | null;
+  releasedAt: number | null;
+  releaseReason: string | null;
+  version: number;
+}
+
+// ---------- HELLO Living Atlas: personal place memory (src/domain/places, src/services/places.ts) ----------
+
+export type PlaceStatus = 'SAVED' | 'WANT_TO_VISIT' | 'VISITED';
+export type PlaceCategory = 'FOOD' | 'COFFEE' | 'SHOP' | 'CULTURE' | 'OUTDOORS' | 'TRANSPORT' | 'SERVICE' | 'WORK' | 'OTHER';
+/** Where the place came from: typed by the person, picked from the venue, found in their text, a link, an import, or a photo's location. */
+export type PlaceSource = 'MANUAL' | 'VENUE_MAP' | 'MESSAGE' | 'LINK' | 'IMPORT' | 'PHOTO';
+
+/**
+ * A place in one person's private memory, scoped to one event. Only its owner can read or change it. The
+ * private note is sealed at rest with the server vault; it is never returned to anyone but the owner.
+ */
+export interface SavedPlace {
+  id: string;
+  eventId: string;
+  ownerId: string;
+  name: string;
+  description: string;
+  category: PlaceCategory;
+  /** A venue space on this event's map, when the place is inside the venue. */
+  spaceId: string | null;
+  /** Coordinates the owner typed in. Both null, or both set. Never read from a device. */
+  latitude: number | null;
+  longitude: number | null;
+  address: string | null;
+  status: PlaceStatus;
+  favourite: boolean;
+  /** 1 to 5, or null when not rated. */
+  rating: number | null;
+  /** Sealed with the vault. The plaintext exists only in the owner's own responses. */
+  privateNoteSealed: string;
+  collectionIds: string[];
+  tags: string[];
+  source: { type: PlaceSource; reference: string | null };
+  visibility: 'PRIVATE';
+  createdAt: number;
+  updatedAt: number;
+  /** How many times the owner has changed it. The history is the timestamps and this count, not a copy of each value. */
+  updates: number;
+  version: number;
+}
+
+export interface PlaceCollection {
+  id: string;
+  eventId: string;
+  ownerId: string;
+  name: string;
+  createdAt: number;
+  version: number;
+}
+
+/**
+ * A visit the person recorded themselves: a check-in at a venue space. There is no background detection; a visit
+ * exists only because the person chose to record it, and they can correct or delete it.
+ */
+export interface PlaceVisit {
+  id: string;
+  eventId: string;
+  ownerId: string;
+  spaceId: string;
+  placeId: string | null;
+  arrivedAt: number;
+  departedAt: number | null;
+  method: 'CHECK_IN';
+  correctedAt: number | null;
+  version: number;
+}
+
+/** One import of a file into My places: what was read, what was saved, and the rows that could not be read. */
+export interface PlaceImport {
+  id: string;
+  eventId: string;
+  ownerId: string;
+  fileName: string;
+  format: 'CSV' | 'GEOJSON';
+  total: number;
+  saved: number;
+  skipped: number;
+  failures: Array<{ line: number; reason: string }>;
+  createdAt: number;
+  version: number;
+}
+
 // ---------- chat gateway (src/services/chat-gateway.ts) ----------
 
 /**
@@ -441,6 +624,83 @@ export interface ChatDelivery {
   reference: string | null;
 }
 
+
+// --- Kingdoms: a persistent shared world an event's people live in (src/domain/kingdom, src/services/kingdoms.ts) ---
+export interface Kingdom {
+  id: string;
+  eventId: string;
+  /** The monarch. Only they, or content moderators, may govern it. */
+  ownerId: string;
+  name: string;
+  motto: string;
+  /** Seeds the terrain and the street plan. The world is derived from it, never stored tile by tile. */
+  seed: number;
+  /** When false, nobody new can become a citizen. Existing citizens are unaffected. */
+  openGates: boolean;
+  /** Next never-used lot. Lots are handed out in street-plan order. */
+  nextLot: number;
+  /** Lots given back by citizens who left, handed out again before nextLot. */
+  freeLots: number[];
+  version: number;
+  createdAt: number;
+}
+
+export interface KingdomCitizen {
+  /** `${kingdomId}:${userId}` so a person is a citizen once. */
+  id: string;
+  kingdomId: string;
+  eventId: string;
+  userId: string;
+  name: string;
+  title: string;
+  /** Index of the lot in the street plan. Fixed for life, so a home never moves. */
+  lot: number;
+  /** The citizen's own name for their home, and the roof they chose. Absent until they customise it. */
+  homeName?: string;
+  roof?: string;
+  x: number;
+  z: number;
+  joinedAt: number;
+  movedAt: number;
+  banned: boolean;
+}
+
+export type KingdomChronicleKind = 'FOUNDED' | 'CITIZEN_JOINED' | 'CITIZEN_LEFT' | 'DECREE' | 'FORGED' | 'CARAVAN' | 'CHEER' | 'BANISHED' | 'PARDONED';
+
+export interface KingdomChronicle {
+  id: string;
+  kingdomId: string;
+  eventId: string;
+  kind: KingdomChronicleKind;
+  /** Null for events with no person behind them, or after erasure. */
+  actorId: string | null;
+  text: string;
+  /** Where in the world it happened, when it did. */
+  at: number;
+  x: number | null;
+  z: number | null;
+}
+
+export type KingdomForgeStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+/** A citizen's request to add something to the world. Deterministic kit, no model: see domain/kingdom/forge.ts. */
+export interface KingdomForge {
+  id: string;
+  kingdomId: string;
+  eventId: string;
+  requesterId: string;
+  prompt: string;
+  kit: string;
+  colour: string;
+  status: KingdomForgeStatus;
+  decidedBy: string | null;
+  decisionNote: string;
+  x: number;
+  z: number;
+  createdAt: number;
+  decidedAt: number | null;
+}
+
 export interface Collections {
   accounts: AuthAccount;
   authSessions: SessionRecord;
@@ -470,6 +730,18 @@ export interface Collections {
   chatLinkCodes: ChatLinkCode;
   chatInbound: ChatInbound;
   chatDeliveries: ChatDelivery;
+  liveReports: LiveReport;
+  safetyHolds: SafetyHold;
+  places: SavedPlace;
+  placeCollections: PlaceCollection;
+  placeVisits: PlaceVisit;
+  placeImports: PlaceImport;
+  privacyFilters: PrivacyFilterRecord;
+  privacyAlerts: PrivacyAlert;
+  kingdoms: Kingdom;
+  kingdomCitizens: KingdomCitizen;
+  kingdomChronicle: KingdomChronicle;
+  kingdomForges: KingdomForge;
 }
 
 export type CollectionName = keyof Collections;
@@ -503,4 +775,16 @@ export const COLLECTION_NAMES: readonly CollectionName[] = [
   'chatLinkCodes',
   'chatInbound',
   'chatDeliveries',
+  'liveReports',
+  'safetyHolds',
+  'places',
+  'placeCollections',
+  'placeVisits',
+  'placeImports',
+  'privacyFilters',
+  'privacyAlerts',
+  'kingdoms',
+  'kingdomCitizens',
+  'kingdomChronicle',
+  'kingdomForges',
 ];

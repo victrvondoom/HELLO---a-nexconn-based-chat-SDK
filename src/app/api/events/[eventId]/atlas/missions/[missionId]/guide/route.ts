@@ -7,3 +7,5 @@ export const GET = viewerRoute<{ eventId: string; missionId: string }>('atlas.gu
   const { ctx } = await getRuntime();
   return jsonOk(await fieldGuide(ctx, params.eventId, userId, params.missionId));
 });
+
+export const dynamic = 'force-dynamic';

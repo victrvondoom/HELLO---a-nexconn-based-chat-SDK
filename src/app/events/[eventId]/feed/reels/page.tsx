@@ -4,7 +4,7 @@ import { MomentsNav } from '@/components/moments/MomentsNav';
 import { ReelsView } from '@/components/moments/ReelsView';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Reels' };
+export const metadata = { title: 'MemoReels' };
 
 export default async function ReelsPage({ params }: { params: Promise<{ eventId: string }> }) {
   const { eventId } = await params;
@@ -15,7 +15,7 @@ export default async function ReelsPage({ params }: { params: Promise<{ eventId:
       <div className="page-header page-header--moments">
         <div>
           <p className="eyebrow">Moments</p>
-          <h1>Reels</h1>
+          <h1>MemoReels</h1>
         </div>
         <MomentsNav eventId={eventId} />
       </div>

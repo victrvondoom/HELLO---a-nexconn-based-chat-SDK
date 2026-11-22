@@ -12,3 +12,5 @@ export const GET = viewerRoute<{ eventId: string }>('search', async ({ userId, p
   limiter.consume(`search:${userId}`, ctx.now());
   return jsonOk(await searchEvent(ctx, params.eventId, userId, new URL(request.url).searchParams.get('q') ?? ''));
 });
+
+export const dynamic = 'force-dynamic';

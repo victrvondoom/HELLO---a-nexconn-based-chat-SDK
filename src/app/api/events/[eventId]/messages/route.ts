@@ -36,3 +36,5 @@ export async function POST(
     return errorResponse(error, 'messages.create');
   }
 }
+
+export const dynamic = 'force-dynamic';

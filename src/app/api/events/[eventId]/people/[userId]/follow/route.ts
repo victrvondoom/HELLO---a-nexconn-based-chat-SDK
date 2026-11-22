@@ -19,3 +19,5 @@ export const POST = viewerRoute<{ eventId: string; userId: string }>('people.fol
     : await unfollow(ctx, params.eventId, userId, params.userId);
   return jsonOk(rel);
 });
+
+export const dynamic = 'force-dynamic';

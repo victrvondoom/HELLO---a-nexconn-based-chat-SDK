@@ -5,6 +5,8 @@ import { FixedWindowRateLimiter } from '@/lib/rate-limit';
 import { DomainError } from '@/domain/errors';
 import { MEDIA_MAX_BYTES, uploadMedia } from '@/services/feed';
 import { requireCapability } from '@/services/context';
+import { assertUploadPrivacy } from '@/services/privacy-filter';
+import { parseUploadPrivacy, UPLOAD_PRIVACY_HEADER } from '@/domain/privacy-filter/upload';
 
 const limiter = new FixedWindowRateLimiter(12, 60_000);
 const TOO_LARGE = 'That file is too large. Pictures can be up to 4 MB and videos up to 24 MB.';
@@ -43,7 +45,11 @@ export const POST = viewerRoute<{ eventId: string }>('media.upload', async ({ us
   // Permission and rate are checked before a single byte of the file is read.
   await requireCapability(ctx, params.eventId, userId, 'message.send');
   limiter.consume(`media:${userId}`, ctx.now());
+  // With the privacy filter on, only uploads that went through it (or that the person declined it for) are accepted.
+  await assertUploadPrivacy(ctx, userId, parseUploadPrivacy(request.headers.get(UPLOAD_PRIVACY_HEADER)));
   const bytes = await readCapped(request, MEDIA_MAX_BYTES);
   const meta = await uploadMedia(ctx, params.eventId, userId, request.headers.get('content-type') ?? '', bytes);
   return jsonOk({ id: meta.id, kind: meta.kind }, 201);
 });
+
+export const dynamic = 'force-dynamic';

@@ -15,3 +15,5 @@ export const GET = viewerRoute('me.export', async ({ userId }) => {
     },
   });
 });
+
+export const dynamic = 'force-dynamic';

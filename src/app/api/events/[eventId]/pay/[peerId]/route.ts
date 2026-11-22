@@ -16,3 +16,5 @@ export const POST = viewerRoute<{ eventId: string; peerId: string }>('pay.draft'
   limiter.consume(`pay:${userId}`, ctx.now());
   return jsonOk(await draftPayment(ctx, params.eventId, userId, params.peerId, await readJson(request)), 201);
 });
+
+export const dynamic = 'force-dynamic';

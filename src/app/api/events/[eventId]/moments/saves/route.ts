@@ -18,3 +18,5 @@ export const POST = viewerRoute<{ eventId: string }>('moments.saves.set', async 
   limiter.consume(`save:${userId}`, ctx.now());
   return jsonOk(await setSaved(ctx, params.eventId, userId, input.postId, input.on));
 });
+
+export const dynamic = 'force-dynamic';

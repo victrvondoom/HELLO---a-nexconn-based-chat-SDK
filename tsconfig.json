@@ -29,6 +29,174 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@chatdom/audio": [
+        "./src/chatdom/packages/audio/src/index.ts"
+      ],
+      "@chatdom/content": [
+        "./src/chatdom/packages/content/src/index.ts"
+      ],
+      "@chatdom/content/trees": [
+        "./src/chatdom/packages/content/src/trees/index.ts"
+      ],
+      "@chatdom/content/materials": [
+        "./src/chatdom/packages/content/src/materials.ts"
+      ],
+      "@chatdom/content/avatar-style": [
+        "./src/chatdom/packages/content/src/avatar-style/character/index.ts"
+      ],
+      "@chatdom/content/avatars": [
+        "./src/chatdom/packages/content/src/avatars/index.ts"
+      ],
+      "@chatdom/content/forge-motifs": [
+        "./src/chatdom/packages/content/src/forge-motifs/index.ts"
+      ],
+      "@chatdom/content/forge-ornaments": [
+        "./src/chatdom/packages/content/src/forge-ornaments/index.ts"
+      ],
+      "@chatdom/content/forge-library": [
+        "./src/chatdom/packages/content/src/forge-library/index.ts"
+      ],
+      "@chatdom/content/forge-slots": [
+        "./src/chatdom/packages/content/src/forge-slots/index.ts"
+      ],
+      "@chatdom/content/anvil-hero": [
+        "./src/chatdom/packages/content/src/anvil-hero/index.ts"
+      ],
+      "@chatdom/content/genesis-landmarks": [
+        "./src/chatdom/packages/content/src/genesis-landmarks/index.ts"
+      ],
+      "@chatdom/content/growth-civic": [
+        "./src/chatdom/packages/content/src/growth-civic/index.ts"
+      ],
+      "@chatdom/content/growth-homes": [
+        "./src/chatdom/packages/content/src/growth-homes/index.ts"
+      ],
+      "@chatdom/content/campfire": [
+        "./src/chatdom/packages/content/src/campfire/index.ts"
+      ],
+      "@chatdom/emotes": [
+        "./src/chatdom/packages/emotes/src/index.ts"
+      ],
+      "@chatdom/emotes/server": [
+        "./src/chatdom/packages/emotes/src/server/index.ts"
+      ],
+      "@chatdom/forge": [
+        "./src/chatdom/packages/forge/src/index.ts"
+      ],
+      "@chatdom/render": [
+        "./src/chatdom/packages/render/src/index.ts"
+      ],
+      "@chatdom/render/effects": [
+        "./src/chatdom/packages/render/src/effects/index.ts"
+      ],
+      "@chatdom/shared": [
+        "./src/chatdom/packages/shared/src/index.ts"
+      ],
+      "@chatdom/shared/fixtures": [
+        "./src/chatdom/packages/shared/src/fixtures.ts"
+      ],
+      "@chatdom/shared/world-fixtures": [
+        "./src/chatdom/packages/shared/src/world-fixtures.ts"
+      ],
+      "@chatdom/shared/realm": [
+        "./src/chatdom/packages/shared/src/realm/index.ts"
+      ],
+      "@chatdom/shared/passport": [
+        "./src/chatdom/packages/shared/src/passport.ts"
+      ],
+      "@chatdom/shared/twitch-moments": [
+        "./src/chatdom/packages/shared/src/twitch-moments.ts"
+      ],
+      "@chatdom/shared/passport/live": [
+        "./src/chatdom/packages/shared/src/passport-live.ts"
+      ],
+      "@chatdom/twitch": [
+        "./src/chatdom/packages/twitch/src/index.ts"
+      ],
+      "@chatdom/twitch/testing": [
+        "./src/chatdom/packages/twitch/src/testing/fake-twitch.ts"
+      ],
+      "@chatdom/twitch/growth-crier": [
+        "./src/chatdom/packages/twitch/src/growth-crier/index.ts"
+      ],
+      "@chatdom/ui": [
+        "./src/chatdom/packages/ui/src/index.ts"
+      ],
+      "@chatdom/ui/kit.css": [
+        "./src/chatdom/packages/ui/src/kit.css"
+      ],
+      "@chatdom/ui/passport": [
+        "./src/chatdom/packages/ui/src/passport/index.ts"
+      ],
+      "@chatdom/ui/growth-card": [
+        "./src/chatdom/packages/ui/src/growth-card/index.ts"
+      ],
+      "@chatdom/ui/site": [
+        "./src/chatdom/packages/ui/src/site/index.ts"
+      ],
+      "@chatdom/ui/site.css": [
+        "./src/chatdom/packages/ui/src/site/site.css"
+      ],
+      "@chatdom/ui/fonts.css": [
+        "./src/chatdom/packages/ui/src/fonts.css"
+      ],
+      "@chatdom/ui/names": [
+        "./src/chatdom/packages/ui/src/names.ts"
+      ],
+      "@chatdom/ui/passport/live": [
+        "./src/chatdom/packages/ui/src/passport/live.ts"
+      ],
+      "@chatdom/vox-import": [
+        "./src/chatdom/packages/vox-import/src/index.ts"
+      ],
+      "@chatdom/voxel": [
+        "./src/chatdom/packages/voxel/src/index.ts"
+      ],
+      "@chatdom/voxel/worker": [
+        "./src/chatdom/packages/voxel/src/worker.ts"
+      ],
+      "@chatdom/voxel/collision": [
+        "./src/chatdom/packages/voxel/src/collision/index.ts"
+      ],
+      "@chatdom/world": [
+        "./src/chatdom/packages/world/src/index.ts"
+      ],
+      "@chatdom/world/growth": [
+        "./src/chatdom/packages/world/src/growth/index.ts"
+      ],
+      "@chatdom/world/genesis": [
+        "./src/chatdom/packages/world/src/genesis/index.ts"
+      ],
+      "@chatdom/world/genesis/observed": [
+        "./src/chatdom/packages/world/src/genesis/observed-fixtures.ts"
+      ],
+      "@chatdom/world/movement": [
+        "./src/chatdom/packages/world/src/movement/step.ts"
+      ],
+      "@chatdom/world/realm-reference": [
+        "./src/chatdom/packages/world/src/realm/reference.ts"
+      ],
+      "@chatdom/world/realm": [
+        "./src/chatdom/packages/world/src/realm/reducer.ts"
+      ],
+      "@chatdom/world/interactions": [
+        "./src/chatdom/packages/world/src/interactions/index.ts"
+      ],
+      "@chatdom/world/founded-collision": [
+        "./src/chatdom/packages/world/src/founded-world/collision.ts"
+      ],
+      "@chatdom/world/founded-scene": [
+        "./src/chatdom/packages/world/src/founded-world/validate.ts"
+      ],
+      "@chatdom/world/founded-codec": [
+        "./src/chatdom/packages/world/src/founded-world/codec.ts"
+      ],
+      "@chatdom/world/growth-history": [
+        "./src/chatdom/packages/world/src/growth-history/index.ts"
+      ],
+      "@chatdom/world/soul": [
+        "./src/chatdom/packages/world/src/soul/index.ts"
       ]
     }
   },

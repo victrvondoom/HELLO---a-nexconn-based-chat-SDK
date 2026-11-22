@@ -6,7 +6,7 @@ import { useFeedback } from '@/components/ui/Feedback';
 import type { PostView } from '@/services/feed';
 
 /**
- * Like, save, share and double-tap for one post, shared by feed cards and reels. Likes and saves answer
+ * Like, save, share and double-tap for one post, shared by feed cards and memoreels. Likes and saves answer
  * at once (optimistic) and roll back if the server refuses; a fresh copy of the post from the server
  * always wins.
  */

@@ -21,3 +21,5 @@ export const POST = viewerRoute<P>('moments.story.act', async ({ userId, params,
   limiter.consume(`story-act:${userId}`, ctx.now());
   return jsonOk({ story: await actOnStory(ctx, params.eventId, userId, params.storyId, input) });
 });
+
+export const dynamic = 'force-dynamic';

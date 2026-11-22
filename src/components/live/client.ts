@@ -9,7 +9,7 @@ type Envelope<T> = { ok: true; data: T } | { ok: false; error: { code: string; m
 export class ApiError extends Error {}
 
 /** Calls the HELLO API and returns the data, or throws an ApiError carrying the server's own message. */
-export async function api<T>(url: string, method: 'GET' | 'POST' | 'DELETE' = 'GET', body?: unknown): Promise<T> {
+export async function api<T>(url: string, method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET', body?: unknown): Promise<T> {
   let response: Response;
   try {
     response = await fetch(url, {

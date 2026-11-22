@@ -16,7 +16,7 @@ interface FeedData {
 }
 
 /**
- * Reels: one visual moment per screen, snapping as you scroll. Videos play (muted) only while on screen
+ * MemoReels: one visual moment per screen, snapping as you scroll. Videos play (muted) only while on screen
  * and pause as soon as they leave it. The order is fixed when the page opens, so nothing reshuffles while
  * you watch; counts refresh after each of your own actions.
  */
@@ -38,19 +38,19 @@ export function ReelsView({ eventId, initial }: { eventId: string; initial: Feed
   if (data.posts.length === 0) {
     return (
       <div className="empty">
-        <strong>No reels yet</strong>
+        <strong>No memoreels yet</strong>
         <p>Pictures, videos and posts on a backdrop appear here. Share one from the feed.</p>
       </div>
     );
   }
   return (
-    <div className="reels" aria-label="Reels">
+    <div className="reels" aria-label="MemoReels">
       {data.posts.map((post) => (
         <Reel key={post.id} eventId={eventId} post={post} now={data.now} onChanged={refresh} />
       ))}
       <div className="reels__end">
         <span className="caught-up__mark" aria-hidden="true" />
-        <strong>That is every reel for now</strong>
+        <strong>That is every memoreel for now</strong>
         <Link href={`/events/${eventId}/feed/explore`}>Explore tags</Link>
       </div>
     </div>
@@ -81,7 +81,7 @@ function Reel({ eventId, post, now, onChanged }: { eventId: string; post: PostVi
   }, []);
 
   return (
-    <section ref={root} className="reel" aria-label={`Reel by ${post.author.name}`}>
+    <section ref={root} className="reel" aria-label={`MemoReel by ${post.author.name}`}>
       <div className="reel__frame" onPointerUp={tap}>
         {post.media ? (
           post.media.kind === 'VIDEO' ? (

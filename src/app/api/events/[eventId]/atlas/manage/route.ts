@@ -59,3 +59,5 @@ export const POST = viewerRoute<{ eventId: string }>('atlas.manage.post', async 
   }
   throw new DomainError('VALIDATION_FAILED', 'Unknown action.');
 });
+
+export const dynamic = 'force-dynamic';

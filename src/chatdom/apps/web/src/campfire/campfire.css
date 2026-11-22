@@ -1,0 +1,133 @@
+/* The campfire: the carved kit's walnut, brass, parchment and ink, lit by the fire. Every rule is scoped under `.campfire`. */
+
+.campfire {
+  position: fixed; inset: 0; overflow: hidden; isolation: isolate; color: var(--cd-cream);
+  font: var(--cd-type-lead)/1.4 var(--cd-face-body); -webkit-font-smoothing: antialiased; background: #121427;
+}
+.campfire *, .campfire *::before, .campfire *::after { box-sizing: border-box; }
+.campfire-stage { position: absolute; inset: 0; }
+.campfire-stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.campfire-shade { position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(120% 90% at 50% 55%, transparent 58%, #0a0b1a66 100%), linear-gradient(180deg, #0c0e2238 0, transparent 20%, transparent 70%, #0b0a1880 100%); }
+.campfire-glyph { width: 1em; height: 1em; flex: none; }
+
+/* Words in the night: names over heads, and chat beside its lantern. */
+.campfire-labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.campfire-name { position: absolute; left: 0; top: 0; padding: 1px 8px 2px; white-space: nowrap; border-radius: 2px;
+  font: 600 var(--cd-type-small)/16px var(--cd-face-body); color: var(--cd-ink);
+  background: linear-gradient(var(--cd-parch), var(--cd-parch-lo)); box-shadow: 0 0 0 1px #8a6a3f, 0 3px 8px #0a0b1a80; }
+.campfire-name.is-self { box-shadow: 0 0 0 1px var(--cd-brass-lo), 0 0 0 3px #f4dc9d55, 0 3px 8px #0a0b1a80; }
+.campfire-chat { position: absolute; left: 0; top: 0; max-width: 240px; padding: 0 2px; white-space: normal;
+  font: italic 400 var(--cd-type-body)/1.25 var(--cd-face-body); color: #fde8bd; letter-spacing: .01em;
+  text-shadow: 0 0 6px #ff9a3a66, 0 1px 2px #0a0812, 0 0 12px #0a0812; }
+
+/* In a kingdom walk: layers in play's feature overlay, under its HUD pieces. */
+.campfire-words, .campfire-walk-hud { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.campfire-walk-hud .campfire-hud { box-sizing: border-box; }
+.campfire-walk-hud .campfire-hud *, .campfire-walk-hud .campfire-hud *::before, .campfire-walk-hud .campfire-hud *::after { box-sizing: border-box; }
+
+/* Notices the page itself owns (an empty fire, a door that would not open). */
+.campfire-quiet { position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%); width: min(460px, calc(100% - 32px)); padding: 16px 20px 17px; text-align: center; }
+.campfire-quiet h1 { margin: 0 0 4px; font: 400 var(--cd-type-title)/1.15 var(--cd-face-story); color: #fbecd0; }
+.campfire-quiet p { margin: 0; color: var(--cd-cream-soft); font-size: var(--cd-type-body); }
+
+/* The HUD */
+.campfire-hud { position: absolute; inset: 0; pointer-events: none; padding: 24px 28px; display: flex; flex-direction: column; justify-content: space-between; gap: 14px; }
+.campfire-hud button, .campfire-hud .campfire-card, .campfire-hud .campfire-rules, .campfire-hud .campfire-plate { pointer-events: auto; }
+.campfire-hud-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.campfire-hud-bottom { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+
+.campfire-plate { position: relative; width: min(480px, 100%); padding: 14px 20px 15px; }
+.campfire-plate.is-compact { width: min(520px, 100%); padding: 12px 18px 13px; }
+.campfire-plate-eyebrow { margin: 0 0 4px; color: #e6c48c; font-size: var(--cd-type-small); }
+.campfire-plate-title { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; }
+.campfire-plate h2 { margin: 0; font: 400 28px/1.08 var(--cd-face-story); color: #fbecd0; }
+.campfire-clock { flex: none; padding: 2px 10px 1px; font: 700 18px/1.15 var(--cd-face-body); font-variant-numeric: tabular-nums lining-nums; }
+.campfire-plate-line { margin: 6px 0 0; font-size: var(--cd-type-lead); line-height: 1.38; color: #ead7b4; }
+.campfire-plate-note { display: flex; gap: 7px; align-items: flex-start; margin: 8px 0 0; padding-top: 8px; border-top: 1px solid #c99f5b33; font-size: var(--cd-type-body); color: var(--cd-cream-soft); }
+.campfire-plate-note .campfire-glyph { margin-top: 2px; color: var(--cd-brass-hi); }
+
+.campfire-card { display: flex; gap: 12px; width: min(330px, 100%); padding: 12px 16px 13px 12px; }
+.campfire-card-mark { width: 34px; height: 34px; margin-top: 2px; color: var(--cd-ink); }
+.campfire-card-eyebrow { margin: 0 0 3px; color: var(--cd-ink-soft); }
+.campfire-card h3 { margin: 0 0 3px; font: 400 21px/1.1 var(--cd-face-story); color: var(--cd-ink); }
+.campfire-card p { margin: 0; font-size: var(--cd-type-body); line-height: 1.32; }
+.campfire-card .campfire-card-note { margin-top: 6px; padding-top: 5px; border-top: 1px dashed #654a3155; font-weight: 700; color: var(--cd-ink); }
+
+.campfire-rules { position: absolute; right: 28px; top: 50%; transform: translateY(-50%); width: min(390px, calc(100% - 32px)); padding: 16px 20px 16px; }
+.campfire-rules-head { position: relative; margin-bottom: 8px; }
+.campfire-rules-head p { margin: 0; color: #e6c48c; }
+.campfire-rules h2 { margin: 2px 0 0; font: 400 26px/1.1 var(--cd-face-story); color: #fbecd0; }
+.campfire-rules ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+.campfire-rules li { display: flex; gap: 10px; align-items: flex-start; font-size: var(--cd-type-body); line-height: 1.35; color: #ead7b4; }
+.campfire-rules li b { color: #fbecd0; }
+.campfire-rules-mark { width: 22px; height: 22px; color: var(--cd-brass-hi); margin-top: 1px; }
+.campfire-rules-win { margin: 10px 0 0; padding-top: 9px; border-top: 1px solid #c99f5b44; font-size: var(--cd-type-body); color: #fbecd0; }
+.campfire-rules-small { margin: 6px 0 0; font-size: var(--cd-type-small); color: var(--cd-cream-soft); }
+.campfire-close { position: absolute; right: -6px; top: -4px; width: 32px; height: 32px; border: 0; border-radius: 50%; background: transparent; color: var(--cd-cream); font: 400 22px/1 var(--cd-face-body); cursor: pointer; }
+
+.campfire-choice-title { margin: 0; padding: 5px 14px 6px; border-radius: 999px; background: #120d18b3; text-align: center; font-size: var(--cd-type-body); color: var(--cd-cream-soft); }
+.campfire-choice-title b { font: 400 var(--cd-type-lead)/1.2 var(--cd-face-story); color: #fbecd0; margin-right: 6px; }
+
+.campfire-circle { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; max-width: min(980px, 100%); }
+.campfire-chip { display: flex; align-items: center; gap: 6px; padding: 4px 10px 4px 7px; font: 600 var(--cd-type-body)/1.2 var(--cd-face-body); pointer-events: auto; }
+.campfire-chip-button { all: unset; display: flex; align-items: center; gap: 6px; cursor: pointer; margin: -4px -10px -4px -7px; padding: 4px 10px 4px 7px; border-radius: 3px; }
+.campfire-chip-seat { min-width: 1.2em; text-align: center; color: var(--cd-ink-soft); }
+.campfire-chip-lantern { width: 18px; height: 18px; color: #b0631f; }
+.campfire-chip.is-dark { background: linear-gradient(172deg, #c9c3bd, #a6a0a3); color: #2b2833; }
+.campfire-chip.is-dark .campfire-chip-lantern { color: #4d4856; }
+.campfire-chip.is-away { opacity: .75; }
+.campfire-chip.is-you { box-shadow: 0 0 0 1px var(--cd-brass-lo), 0 0 0 3px #f4dc9d66, 0 2px 0 #0000004d; }
+.campfire-chip.is-focus { box-shadow: 0 0 0 2px var(--cd-brass-hi), 0 0 14px #ffb85c88, 0 2px 0 #0000004d; transform: translateY(-2px); }
+.campfire-chip-role { display: inline-flex; align-items: center; gap: 3px; padding-left: 6px; border-left: 1px solid #654a3166; color: var(--cd-ink-soft); }
+.campfire-chip-embers { display: inline-flex; color: #c4501f; }
+.campfire-chip-embers .campfire-glyph { width: 14px; height: 14px; margin-right: -3px; }
+.campfire-chip-voted { color: var(--cd-ink-soft); }
+
+.campfire-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.campfire-button { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px; cursor: pointer;
+  font: 700 var(--cd-type-lead)/1 var(--cd-face-body); color: var(--cd-ink); border: 1px solid #6d4c22; border-radius: 6px;
+  background: linear-gradient(#f7e0a6, #d9b46b); box-shadow: inset 0 1px #fff3cf, 0 2px 0 #3d2718, 0 6px 16px #0a0b1a80; }
+.campfire-button .campfire-glyph { width: 20px; height: 20px; }
+.campfire-button:hover:not(:disabled) { background: linear-gradient(#fbe9b9, #e2bf79); }
+.campfire-button:active:not(:disabled) { transform: translateY(1px); box-shadow: inset 0 1px #fff3cf, 0 1px 0 #3d2718, 0 4px 10px #0a0b1a80; }
+.campfire-button:disabled { opacity: .6; cursor: default; }
+.campfire-button.is-quiet { color: var(--cd-cream); border-color: var(--cd-wood-edge); background: linear-gradient(176deg, var(--cd-wood-hi), var(--cd-wood) 45%, var(--cd-wood-lo)); box-shadow: inset 0 1px #ffe1b440, 0 2px 0 #160e0b, 0 6px 16px #0a0b1a80; font-weight: 600; }
+.campfire-button.is-quiet.is-focus { box-shadow: 0 0 0 2px var(--cd-brass-hi), 0 0 14px #ffb85c88; }
+.campfire-keys { margin: 0; color: #e8d6b6; text-shadow: 0 1px 3px #0a0812; }
+.campfire-notice { margin: 0; padding: 6px 14px; font-size: var(--cd-type-body); }
+
+/* Inside the kingdom walk: play owns the corners, so the fire keeps to the top centre and the bottom. */
+.campfire-hud.is-walk { padding: 72px 20px 88px; }
+.campfire-hud.is-walk .campfire-hud-top { justify-content: center; }
+/* Keep the fire's plate below a notice owned by the kingdom entry. */
+body:has(.kingdom-entry-notice) .campfire-hud.is-walk { padding-top: 164px; }
+
+@media (max-width: 720px) {
+  .campfire-hud { padding: 14px 12px 18px; }
+  .campfire-hud-top { flex-direction: column; align-items: stretch; gap: 8px; }
+  .campfire-plate, .campfire-card { width: 100%; }
+  .campfire-plate { padding: 11px 14px 12px; }
+  .campfire-plate h2 { font-size: 23px; }
+  .campfire-plate-line { font-size: var(--cd-type-body); }
+  .campfire-card { padding: 9px 12px 10px 9px; }
+  .campfire-card-mark { width: 26px; height: 26px; }
+  .campfire-card h3 { font-size: 18px; }
+  .campfire-rules { right: 50%; transform: translate(50%, -50%); }
+  .campfire-chip { font-size: var(--cd-type-small); padding: 3px 8px 3px 6px; }
+  .campfire-keys { display: none; }
+  .campfire-hud.is-walk { padding: 64px 12px 96px; }
+  body:has(.kingdom-entry-notice) .campfire-hud.is-walk { padding-top: 196px; }
+}
+
+/* The stream: small and quiet at the bottom left, the fire framed above it. */
+.campfire-stream { position: absolute; left: 40px; bottom: 36px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; pointer-events: none; }
+.campfire-stream .campfire-plate h2 { font-size: 30px; }
+.campfire-stream-circle { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; max-width: 900px; }
+.campfire-stream-circle li { display: flex; align-items: center; gap: 5px; padding: 3px 9px 3px 6px; border-radius: 3px; background: #120d18c0; box-shadow: inset 0 0 0 1px #c99f5b44;
+  font: 600 var(--cd-type-lead)/1.2 var(--cd-face-body); color: var(--cd-cream); }
+.campfire-stream-circle li .campfire-glyph { width: 20px; height: 20px; color: #ffb85c; }
+.campfire-stream-circle li.is-dark { color: #a9a3b0; }
+.campfire-stream-circle li.is-dark .campfire-glyph { color: #6b6676; }
+.campfire-stream-circle .cd-label { color: var(--cd-brass-hi); font-size: var(--cd-type-small); }
+.campfire-stream-gallery { margin: 0; padding: 5px 12px; font-size: var(--cd-type-body); }

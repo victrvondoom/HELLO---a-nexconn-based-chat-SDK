@@ -35,3 +35,5 @@ export async function GET(request: Request, context: { params: Promise<{ eventId
     return errorResponse(error, 'media.read');
   }
 }
+
+export const dynamic = 'force-dynamic';

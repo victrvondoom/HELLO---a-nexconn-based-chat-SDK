@@ -1,13 +1,13 @@
 import { createContext, type ServiceContext } from '@/services/context';
 import { MemoryHelloStore } from '@/store/memory';
-import { PostgresHelloStore } from '@/store/postgres';
+import { PostgresHelloStore, StoreUnavailableError } from '@/store/postgres';
 import type { HelloStore } from '@/store/store';
 import { DEMO_NOW, loadDemoEvent } from '@/store/seed';
 import { webSearchFromEnv } from '@/agents/web';
 import { vaultFromEnv } from '@/lib/vault';
 import { persistenceFromEnv, type Persistence } from '@/lib/persistence';
 import { resetAllRateLimiters } from '@/lib/rate-limit';
-import { logError } from '@/lib/logger';
+import { log, logError } from '@/lib/logger';
 import { liveBus } from '@/lib/live/bus';
 import { withLiveEvents } from '@/lib/live/store';
 import { presenceRegistry } from '@/lib/live/presence';
@@ -145,7 +145,11 @@ async function createPostgresRuntime(connectionString: string, vault: ReturnType
 async function createRuntime(): Promise<Runtime> {
   const vault = vaultFromEnv(process.env);
   const databaseUrl = (process.env.DATABASE_URL ?? '').trim();
-  if (databaseUrl) return createPostgresRuntime(databaseUrl, vault);
+  if (databaseUrl) {
+    // DATABASE_URL wins. A data directory beside it would be ignored, so say so rather than let it look in use.
+    if ((process.env.HELLO_DATA_DIR ?? '').trim()) log('warn', 'data_dir_ignored', { reason: 'DATABASE_URL is set; HELLO_DATA_DIR is not used' });
+    return createPostgresRuntime(databaseUrl, vault);
+  }
 
   const memory = new MemoryHelloStore();
   const disk = persistenceFromEnv(process.env);
@@ -164,7 +168,17 @@ async function createRuntime(): Promise<Runtime> {
 
 /** Returns the same runtime for the life of the process, including across dev hot-reloads. */
 export function getRuntime(): Promise<Runtime> {
-  g.__helloRuntime ??= createRuntime();
+  if (!g.__helloRuntime) {
+    const starting = createRuntime();
+    g.__helloRuntime = starting;
+    // A failed start (database down, unreadable data file) is not remembered: the next request tries again, so
+    // the app recovers when the database does. It never falls back to the in-memory store.
+    starting.catch((error: unknown) => {
+      if (g.__helloRuntime === starting) g.__helloRuntime = undefined;
+      const reason = error instanceof StoreUnavailableError ? error.reason : error instanceof Error ? error.name : 'unknown';
+      logError('runtime_start_failed', { reason });
+    });
+  }
   return g.__helloRuntime;
 }
 

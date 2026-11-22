@@ -1,0 +1,193 @@
+/* The carved kit: the same wood, brass, parchment and wax as the kingdom. Fonts are SIL OFL (see fonts/OFL-*.txt). */
+@font-face { font-family: 'IM Fell English'; font-style: normal; font-weight: 400; font-display: swap; src: url('./fonts/im-fell-english-regular.woff2') format('woff2'); }
+@font-face { font-family: 'IM Fell English'; font-style: italic; font-weight: 400; font-display: swap; src: url('./fonts/im-fell-english-italic.woff2') format('woff2'); }
+@font-face { font-family: 'IM Fell English SC'; font-style: normal; font-weight: 400; font-display: swap; src: url('./fonts/im-fell-english-sc.woff2') format('woff2'); }
+@font-face { font-family: 'Alegreya'; font-style: normal; font-weight: 400 900; font-display: swap; src: url('./fonts/alegreya-roman-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Alegreya'; font-style: italic; font-weight: 400 900; font-display: swap; src: url('./fonts/alegreya-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+
+:root {
+  /* Wood: the rack's walnut, lit from above. */
+  --cd-wood-hi: #7d5538; --cd-wood: #5b3b27; --cd-wood-lo: #3d2718; --cd-wood-edge: #24160d; --cd-wood-well: #2b1b10;
+  /* Brass fittings and the focus wire. */
+  --cd-brass-hi: #f4dc9d; --cd-brass: #c99f5b; --cd-brass-lo: #7c5a2a;
+  /* Parchment and its inks. Ink on parchment is above 10:1; soft ink stays above 4.5:1 on the darkest parchment. */
+  --cd-parch-hi: #fbf1d8; --cd-parch: #f3e6c6; --cd-parch-lo: #e3cfa3; --cd-ink: #38261a; --cd-ink-soft: #654a31; --cd-ink-alarm: #7c2617;
+  /* Cream text on wood. Soft cream stays above 4.5:1 on the darkest wood. */
+  --cd-cream: #f4e3bf; --cd-cream-soft: #d6bf98;
+  /* Pressed wax, one colour per fact; the word always says the fact too. */
+  --cd-wax-simulated: #a1402a; --cd-wax-connecting: #a07a3c; --cd-wax-live: #c4862c; --cd-wax-resting: #404c78; --cd-wax-lost: #5c6370;
+  /* Type: storybook headings, readable bodies, small caps for labels. Product text never drops below 12 px. */
+  --cd-face-story: 'IM Fell English', Alegreya, var(--cd-face-world), Georgia, 'Times New Roman', serif;
+  --cd-face-label: 'IM Fell English SC', Alegreya, var(--cd-face-world), Georgia, 'Times New Roman', serif;
+  --cd-face-body: Alegreya, var(--cd-face-world), Georgia, 'Times New Roman', serif;
+  /* Every other script, from the self-hosted faces in fonts.css (`@chatdom/ui/fonts.css`). Without that sheet these
+     names match nothing and the stacks fall through to the system, exactly as before. */
+  --cd-face-world: 'Chatdom Arabic', 'Chatdom Hebrew', 'Chatdom Devanagari', 'Chatdom Thai', 'Chatdom JP', 'Chatdom KR', 'Chatdom TC', 'Chatdom SC';
+  --cd-type-min: 12px; --cd-type-small: 13px; --cd-type-body: 14px; --cd-type-lead: 16px; --cd-type-title: 22px; --cd-type-display: 38px;
+  /* One type scale for the door, the Atlas, the card and the panel. Fixed steps for fittings and small surfaces
+     (a 318 px panel uses label to title); fluid steps for pages, which settle at their floor on a phone. */
+  --cd-size-label: 12px; --cd-size-note: 13.5px; --cd-size-small: 15px; --cd-size-body: clamp(16px, 1.05vw + 10px, 19px);
+  --cd-size-lead: clamp(18px, 1.2vw + 8px, 21px); --cd-size-title: clamp(21px, 1vw + 12px, 25px);
+  --cd-size-heading: clamp(30px, 3.5vw, 48px); --cd-size-display: clamp(44px, 5.6vw, 76px);
+  --cd-leading-tight: 1.05; --cd-leading-body: 1.5;
+  --cd-label-tracking: .08em;
+  /* Focus: a drawn brass wire just outside the fitting. */
+  --cd-focus-width: 2px; --cd-focus-offset: 3px; --cd-focus: var(--cd-brass-hi);
+}
+
+/* Any kit fitting: keyboard focus is a brass wire. A real outline survives forced colours, where shadows vanish. */
+.cd-focus:focus { outline: none; }
+.cd-focus:focus-visible, .cd-kit :focus-visible { outline: var(--cd-focus-width) solid var(--cd-focus); outline-offset: var(--cd-focus-offset); }
+@media (forced-colors: active) { .cd-focus:focus-visible, .cd-kit :focus-visible { outline-color: Highlight; } }
+
+/* Carved plate: walnut with grain, four brass pins, an inner bevel. */
+.cd-plate {
+  color: var(--cd-cream); font: var(--cd-type-body)/1.35 var(--cd-face-body); font-synthesis: none;
+  background:
+    radial-gradient(circle at 9px 9px, var(--cd-brass-hi) 0 1px, var(--cd-brass) 1.5px 2.6px, var(--cd-brass-lo) 3.2px, transparent 3.8px),
+    radial-gradient(circle at calc(100% - 9px) 9px, var(--cd-brass-hi) 0 1px, var(--cd-brass) 1.5px 2.6px, var(--cd-brass-lo) 3.2px, transparent 3.8px),
+    radial-gradient(circle at 9px calc(100% - 9px), var(--cd-brass-hi) 0 1px, var(--cd-brass) 1.5px 2.6px, var(--cd-brass-lo) 3.2px, transparent 3.8px),
+    radial-gradient(circle at calc(100% - 9px) calc(100% - 9px), var(--cd-brass-hi) 0 1px, var(--cd-brass) 1.5px 2.6px, var(--cd-brass-lo) 3.2px, transparent 3.8px),
+    repeating-linear-gradient(93deg, #ffdcae08 0 2px, transparent 2px 9px, #1a0c0410 9px 10px, transparent 10px 17px, #ffdcae06 17px 18px, transparent 18px 26px),
+    linear-gradient(176deg, var(--cd-wood-hi), var(--cd-wood) 38%, var(--cd-wood-lo));
+  border: 1px solid var(--cd-wood-edge); border-radius: 12px;
+  box-shadow: inset 0 1px 0 #ffe1b440, inset 0 -2px 0 #0000004d, inset 0 0 0 4px #00000014, 0 0 0 1px #c99f5b33, 0 18px 40px #0c0a1c80, 0 4px 10px #0c0a1c55;
+}
+
+/* Parchment slip: cut paper, a little warmer where the light lands, pinned with a short drop to the wood. */
+.cd-slip {
+  color: var(--cd-ink); font: var(--cd-type-small)/1.3 var(--cd-face-body); font-synthesis: none; border-radius: 3px;
+  background: radial-gradient(ellipse at 28% 18%, var(--cd-parch-hi), transparent 72%), linear-gradient(172deg, var(--cd-parch), var(--cd-parch-lo));
+  box-shadow: inset 0 0 0 1px #ffffff4d, inset 0 -5px 12px #a0784022, 0 1px 0 #ffe7b826, 0 2px 0 #0000004d, 0 3px 8px #0000003d;
+}
+.cd-label { font: var(--cd-type-min)/1.1 var(--cd-face-label); letter-spacing: var(--cd-label-tracking); }
+
+/* Wax seal: an uneven pressed disc, a rim from the matrix, an embossed glyph. Colour by fact. */
+.cd-seal { --cd-wax: var(--cd-wax-simulated); display: block; flex: none; width: 24px; height: 24px; overflow: visible;
+  filter: drop-shadow(0 1px 0 #00000059) drop-shadow(0 1.5px 1.5px #2a140a40); }
+.cd-seal-wax { fill: var(--cd-wax); stroke: color-mix(in srgb, var(--cd-wax) 62%, #120800); stroke-width: .7; }
+.cd-seal-rim { fill: none; stroke: color-mix(in srgb, var(--cd-wax) 70%, #160a02); stroke-width: 1; }
+.cd-seal-glyph { fill: none; stroke: color-mix(in srgb, var(--cd-wax) 38%, #fff3dc); stroke-width: 1.25; stroke-linecap: round; stroke-linejoin: round; }
+.cd-seal[data-seal='live'] .cd-seal-glyph, .cd-seal[data-seal='resting'] .cd-seal-glyph { fill: color-mix(in srgb, var(--cd-wax) 30%, #fff1d2); stroke-width: .6; }
+.cd-seal[data-seal='connecting'] { --cd-wax: var(--cd-wax-connecting); }
+.cd-seal[data-seal='live'] { --cd-wax: var(--cd-wax-live); }
+.cd-seal[data-seal='resting'] { --cd-wax: var(--cd-wax-resting); }
+.cd-seal[data-seal='lost'] { --cd-wax: var(--cd-wax-lost); }
+.cd-seal-small { width: 18px; height: 18px; }
+
+/* The provenance seal: one quiet slip per surface, the wax pressed over its left edge. Every fact is a line. */
+.cd-provenance { position: relative; display: flex; flex-direction: column; gap: 4px; width: max-content; max-width: min(260px, 100%); margin: 0;
+  padding: 5px 11px 5px 6px; color: var(--cd-ink); font: var(--cd-type-min)/1.15 var(--cd-face-body); font-synthesis: none; pointer-events: none;
+  border-radius: 2px 3px 3px 2px;
+  background:
+    linear-gradient(90deg, #8a5a3014 0 18px, transparent 26px),
+    radial-gradient(ellipse at 30% 15%, var(--cd-parch-hi), transparent 75%),
+    linear-gradient(172deg, var(--cd-parch), var(--cd-parch-lo));
+  box-shadow: inset 0 0 0 1px #ffffff52, inset 0 0 0 3px #f9eed5, inset 0 0 0 3.6px #9c7a4c2e, inset 0 -4px 9px #a0784020, 0 1px 0 #00000052, 0 3px 9px #1008184d; }
+.cd-provenance-line { display: flex; align-items: center; gap: 7px; margin: 0; }
+.cd-provenance-line .cd-seal { margin: -2px 0 -2px -14px; }
+.cd-provenance-line .cd-seal-small { margin: 0 2px 0 -11px; }
+.cd-provenance-words { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.cd-provenance-word { font: var(--cd-type-small)/1.1 var(--cd-face-label); font-weight: 400; letter-spacing: var(--cd-label-tracking); color: var(--cd-ink); white-space: nowrap; }
+.cd-provenance-note { display: block; font: italic var(--cd-type-min)/1.15 var(--cd-face-body); color: var(--cd-ink-soft); }
+.cd-provenance-line + .cd-provenance-line { padding-top: 4px; border-top: 1px solid #9c7a4c40; }
+.cd-provenance-line[data-seal='lost'] .cd-provenance-word { color: var(--cd-ink-alarm); }
+/* An owner's own words on a staged surface may be a short sentence: they wrap inside the slip. */
+.cd-provenance-line[data-seal='simulated'] .cd-provenance-word { white-space: normal; font: italic var(--cd-type-small)/1.2 var(--cd-face-body); letter-spacing: 0; }
+.cd-provenance[data-provenance='lost'] { background:
+    linear-gradient(90deg, #5c637018 0 18px, transparent 26px),
+    radial-gradient(ellipse at 30% 15%, #f6eedc, transparent 75%),
+    linear-gradient(172deg, #ece1c8, #d9c8a4); }
+@media (forced-colors: active) {
+  .cd-provenance { border: 1px solid CanvasText; }
+  .cd-seal-wax { fill: Canvas; stroke: CanvasText; }
+  .cd-seal-rim, .cd-seal-glyph { stroke: CanvasText; }
+}
+
+/* Crest seals on a wood rail (CrestChoice). Chosen: lit parchment plate, raised, a brass pin above, a doubled
+   ring. Focus: the brass wire. Resting: flat dark wood, an unpainted device and the reason in words, never opacity. */
+.cd-crests { display: grid; gap: 6px; min-width: 0; }
+.cd-crests-label { margin: 0; font: var(--cd-type-small)/1.15 var(--cd-face-label); letter-spacing: var(--cd-label-tracking); color: var(--cd-cream-soft); }
+.cd-crest-rail { display: flex; flex-wrap: wrap; gap: 6px; padding: 5px; border-radius: 9px; min-width: 0;
+  background: linear-gradient(180deg, #00000047, #0000001f 40%, #ffdcae0a), var(--cd-wood-well);
+  box-shadow: inset 0 2px 4px #00000073, inset 0 -1px 0 #ffe1b41f, 0 1px 0 #ffe1b414; }
+.cd-crest { --cd-crest-field: #8e3b22; position: relative; flex: 1 1 88px; min-width: 84px; min-height: 44px; margin: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; padding: 9px 6px 8px;
+  color: var(--cd-cream); font: var(--cd-type-body)/1.1 var(--cd-face-body); font-synthesis: none; text-align: center;
+  cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; appearance: none;
+  border: 1px solid var(--cd-wood-edge); border-radius: 7px;
+  background: repeating-linear-gradient(92deg, #ffdcae07 0 2px, transparent 2px 8px, #1a0c0412 8px 9px, transparent 9px 15px), linear-gradient(176deg, var(--cd-wood-hi), var(--cd-wood) 45%, var(--cd-wood-lo));
+  box-shadow: inset 0 1px 0 #ffe1b438, inset 0 -2px 0 #00000040, 0 2px 0 #0000006b;
+  transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease; }
+.cd-crest[data-crest='tide'] { --cd-crest-field: #2c5b6c; }
+.cd-crest[data-crest='grove'] { --cd-crest-field: #476a31; }
+.cd-crest:hover:not([aria-disabled='true']):not([aria-checked='true']) { transform: translateY(-1px); box-shadow: inset 0 1px 0 #ffe1b44d, inset 0 -2px 0 #00000040, 0 3px 0 #0000006b; }
+.cd-crest:active:not([aria-disabled='true']) { transform: translateY(1px); box-shadow: inset 0 1px 0 #ffe1b42e, inset 0 -1px 0 #00000040, 0 1px 0 #0000006b; }
+.cd-crest-mark { display: block; width: 38px; height: 38px; flex: none; overflow: visible; filter: drop-shadow(0 1.5px 0 #0000006b); }
+.cd-crest-ring { fill: var(--cd-brass-lo); stroke: var(--cd-wood-edge); stroke-width: .8; }
+.cd-crest-field { fill: var(--cd-crest-field); stroke: color-mix(in srgb, var(--cd-crest-field) 55%, #0e0702); stroke-width: 1.4; }
+.cd-crest-shine { fill: none; stroke: #ffe9be59; stroke-width: 1.3; stroke-linecap: round; }
+.cd-crest-line { fill: none; stroke: #fbecd0; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.cd-crest-fill { fill: #fbecd0; }
+.cd-crest-words { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
+.cd-crest-name { font: var(--cd-type-body)/1.1 var(--cd-face-story); color: var(--cd-cream); white-space: nowrap; }
+.cd-crest-note { font: var(--cd-type-min)/1.1 var(--cd-face-label); letter-spacing: var(--cd-label-tracking); color: var(--cd-cream-soft); }
+.cd-crest[aria-checked='true'] { cursor: default; color: var(--cd-ink); border-color: var(--cd-brass-lo); transform: translateY(-2px);
+  background: radial-gradient(ellipse at 30% 15%, var(--cd-parch-hi), transparent 72%), linear-gradient(172deg, var(--cd-parch), var(--cd-parch-lo));
+  box-shadow: inset 0 0 0 1px #ffffff5c, inset 0 0 0 3px #f9eed5, inset 0 0 0 3.8px #9c7a4c66, 0 3px 0 #000000a3, 0 6px 12px #0000004d; }
+.cd-crest[aria-checked='true']::before { content: ''; position: absolute; top: -6px; left: 50%; width: 9px; height: 9px; translate: -50% 0; rotate: 45deg;
+  background: linear-gradient(135deg, var(--cd-brass-hi), var(--cd-brass) 55%, var(--cd-brass-lo)); border: 1px solid var(--cd-wood-edge); box-shadow: 0 1px 0 #00000080; }
+.cd-crest[aria-checked='true'] .cd-crest-ring { fill: var(--cd-brass); stroke: var(--cd-brass-lo); stroke-width: 2.4; }
+.cd-crest[aria-checked='true'] .cd-crest-name { color: var(--cd-ink); }
+.cd-crest[aria-checked='true'] .cd-crest-note { color: var(--cd-ink-soft); }
+.cd-crest[aria-disabled='true'] { cursor: not-allowed; transform: none; background: linear-gradient(176deg, #4a3526, #33241a); box-shadow: inset 0 1px 0 #ffe1b41a, inset 0 2px 5px #0000004d; }
+.cd-crest[aria-disabled='true']:not([aria-checked='true']) .cd-crest-field { fill: #4b3f36; }
+.cd-crest[aria-disabled='true']:not([aria-checked='true']) .cd-crest-name { color: var(--cd-cream-soft); }
+.cd-crest[aria-disabled='true'][aria-checked='true'] { background: linear-gradient(172deg, var(--cd-parch-lo), #cdb68a); }
+.cd-crests-hint { margin: 0; font: italic var(--cd-type-min)/1.3 var(--cd-face-body); color: var(--cd-cream-soft); }
+.cd-crests[data-disabled='true'] .cd-crests-hint { font-style: normal; color: var(--cd-cream); }
+.cd-crest:focus { outline: none; }
+.cd-crest:focus-visible { outline: var(--cd-focus-width) solid var(--cd-focus); outline-offset: var(--cd-focus-offset); z-index: 1; }
+
+/* Parchment field (ParchmentField): a ruled slip with a real textarea; the brass wire rings the whole slip. */
+.cd-field { position: relative; display: grid; gap: 4px; padding: 8px 11px 9px; color: var(--cd-ink); border-radius: 4px;
+  font: var(--cd-type-small)/1.3 var(--cd-face-body); font-synthesis: none;
+  background: radial-gradient(ellipse at 26% 12%, var(--cd-parch-hi), transparent 70%), linear-gradient(172deg, var(--cd-parch), var(--cd-parch-lo));
+  box-shadow: inset 0 0 0 1px #ffffff57, inset 0 0 0 3px #f9eed5, inset 0 0 0 3.8px #9c7a4c38, inset 0 -6px 12px #a0784026, 0 1px 0 #00000059, 0 3px 8px #0000004d; }
+.cd-field-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.cd-field-label { font: var(--cd-type-small)/1.1 var(--cd-face-label); letter-spacing: var(--cd-label-tracking); color: var(--cd-ink-soft); cursor: text; }
+.cd-field-allowance { font: italic var(--cd-type-min)/1.1 var(--cd-face-body); color: var(--cd-ink-soft); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cd-field-allowance[data-near='true'] { color: var(--cd-ink-alarm); font-style: normal; }
+.cd-field-input { box-sizing: border-box; display: block; width: 100%; margin: 0; padding: 0 2px; resize: none; border: 0; border-radius: 0;
+  color: var(--cd-ink); caret-color: var(--cd-wax-simulated); font: 16px/24px var(--cd-face-body); font-synthesis: none;
+  background: repeating-linear-gradient(180deg, transparent 0 23px, #9c7a4c47 23px 24px) 0 0 / 100% 24px local; }
+.cd-field-input::placeholder { color: var(--cd-ink-soft); opacity: 1; font-style: italic; }
+.cd-field-input::selection { background: #c99f5b80; color: var(--cd-ink); }
+.cd-field-input:focus, .cd-field-input:focus-visible { outline: none; }
+.cd-field:focus-within { outline: var(--cd-focus-width) solid var(--cd-focus); outline-offset: var(--cd-focus-offset); }
+.cd-field-announce { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.cd-field-hint { margin: 0; font: italic var(--cd-type-min)/1.3 var(--cd-face-body); color: var(--cd-ink-soft); }
+.cd-field-error { display: flex; gap: 6px; align-items: flex-start; margin: 2px 0 0; padding-top: 5px; border-top: 1px solid #7c261733;
+  font: var(--cd-type-small)/1.3 var(--cd-face-body); color: var(--cd-ink-alarm); }
+.cd-field-error-mark { flex: none; width: 13px; height: 13px; margin-top: 2px; }
+.cd-field-error-mark path:first-child { fill: var(--cd-ink-alarm); }
+.cd-field-error-mark path:last-child { fill: none; stroke: var(--cd-parch-hi); stroke-width: 1.4; stroke-linecap: round; }
+.cd-field-tag { font: var(--cd-type-min)/1 var(--cd-face-label); letter-spacing: var(--cd-label-tracking); font-weight: 400; }
+.cd-field[data-invalid='true'] { box-shadow: inset 3px 0 0 var(--cd-ink-alarm), inset 0 0 0 1px #ffffff57, inset 0 0 0 3.8px #7c261740, inset 0 -6px 12px #a0784026, 0 1px 0 #00000059, 0 3px 8px #0000004d; }
+.cd-field[data-disabled='true'] { background: linear-gradient(172deg, var(--cd-parch-lo), #d6c08f); }
+.cd-field[data-disabled='true'] .cd-field-input { cursor: not-allowed; color: var(--cd-ink-soft); -webkit-text-fill-color: var(--cd-ink-soft); }
+.cd-field[data-disabled='true'] .cd-field-label { cursor: not-allowed; }
+
+@media (prefers-reduced-motion: reduce) { .cd-crest { transition: none; } .cd-crest:hover:not([aria-disabled='true']):not([aria-checked='true']), .cd-crest:active:not([aria-disabled='true']) { transform: none; } }
+@media (forced-colors: active) {
+  .cd-crest { border: 1px solid ButtonText; forced-color-adjust: auto; }
+  .cd-crest[aria-checked='true'] { border: 3px double Highlight; }
+  .cd-crest[aria-checked='true']::before { background: Highlight; border-color: Highlight; }
+  .cd-crest[aria-disabled='true'] { border-style: dashed; color: GrayText; }
+  .cd-crest-ring, .cd-crest-field { fill: Canvas; stroke: CanvasText; }
+  .cd-crest-line { stroke: CanvasText; } .cd-crest-fill { fill: CanvasText; }
+  .cd-crest:focus-visible, .cd-field:focus-within { outline-color: Highlight; }
+  .cd-field { border: 1px solid CanvasText; } .cd-field[data-invalid='true'] { border: 2px solid CanvasText; }
+}

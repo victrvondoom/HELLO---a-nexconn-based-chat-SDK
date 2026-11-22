@@ -13,3 +13,5 @@ export const POST = viewerRoute<{ eventId: string; highlightId: string }>('momen
   await deleteHighlight(ctx, params.eventId, userId, params.highlightId);
   return jsonOk({ done: true });
 });
+
+export const dynamic = 'force-dynamic';

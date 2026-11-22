@@ -19,3 +19,5 @@ export const POST = viewerRoute<{ eventId: string; peerId: string }>('dm.typing'
   liveBus().publish({ eventId: null, topic: 'typing', audience: people([params.peerId], false), at: ctx.now(), data: { from: userId } });
   return jsonOk({ sent: true });
 });
+
+export const dynamic = 'force-dynamic';

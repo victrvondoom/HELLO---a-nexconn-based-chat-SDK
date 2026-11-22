@@ -7,6 +7,7 @@ import { Icon } from '@/components/ui/Icon';
 import { BACKDROPS, type Backdrop } from '@/domain/product';
 import { BACKDROP_LABEL } from './meta';
 import { uploadMedia } from './PostComposer';
+import { PhotoGuardControl, usePhotoGuard } from '@/components/privacy-filter/PhotoGuard';
 
 const STORY_MAX = 200;
 
@@ -30,6 +31,8 @@ export function StoryComposer({ eventId, places, onClose, onShared }: { eventId:
   const [spaceId, setSpaceId] = useState('');
   const [audience, setAudience] = useState<'EVENT' | 'FOLLOWERS'>('EVENT');
   const [busy, setBusy] = useState(false);
+  // Privacy filter: pictures are protected on this device before upload.
+  const guard = usePhotoGuard(eventId);
   const first = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -63,7 +66,7 @@ export function StoryComposer({ eventId, places, onClose, onShared }: { eventId:
   async function share() {
     setBusy(true);
     try {
-      const mediaId = mode === 'MEDIA' && file ? await uploadMedia(base, file) : null;
+      const mediaId = mode === 'MEDIA' && file ? await uploadMedia(base, await guard.prepare(file)) : null;
       const kind = mode === 'TEXT' ? 'TEXT' : file?.type.startsWith('video/') ? 'VIDEO' : 'IMAGE';
       await api(`${base}/moments/stories`, 'POST', { kind, text, backdrop, mediaId, spaceId: spaceId || null, audience });
       toast('success', 'Shared. Your story disappears in 24 hours.');
@@ -145,6 +148,7 @@ export function StoryComposer({ eventId, places, onClose, onShared }: { eventId:
               <Icon name="camera" size={16} /> Change file
             </label>
           ) : null}
+          {mode === 'MEDIA' && file ? <PhotoGuardControl guard={guard} file={file} /> : null}
           <div className="story-compose__row">
             <label className="story-field">
               <span>

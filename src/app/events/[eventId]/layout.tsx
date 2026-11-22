@@ -47,3 +47,5 @@ export default async function EventLayout({
     </div>
   );
 }
+
+export const dynamic = 'force-dynamic';

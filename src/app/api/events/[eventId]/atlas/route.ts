@@ -11,3 +11,5 @@ export const GET = viewerRoute<{ eventId: string }>('atlas.home', async ({ userI
   const { ctx } = await getRuntime();
   return jsonOk(await atlasHome(ctx, params.eventId, userId));
 });
+
+export const dynamic = 'force-dynamic';

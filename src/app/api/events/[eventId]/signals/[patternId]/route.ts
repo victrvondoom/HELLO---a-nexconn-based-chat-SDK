@@ -26,3 +26,5 @@ export async function POST(
     return errorResponse(error, 'signals.review');
   }
 }
+
+export const dynamic = 'force-dynamic';

@@ -10,3 +10,5 @@ export const POST = viewerRoute<{ eventId: string }>('availability.set', async (
   const { ctx } = await getRuntime();
   return jsonOk(await setAvailability(ctx, params.eventId, userId, parsed.data.availability));
 });
+
+export const dynamic = 'force-dynamic';

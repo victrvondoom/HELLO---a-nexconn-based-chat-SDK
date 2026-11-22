@@ -19,3 +19,5 @@ export const POST = viewerRoute<P>('games.play', async ({ userId, params, reques
   await playGame(ctx, params.eventId, userId, params.gameId, input);
   return jsonOk({ game: await viewGame(ctx, params.eventId, userId, params.gameId) });
 });
+
+export const dynamic = 'force-dynamic';

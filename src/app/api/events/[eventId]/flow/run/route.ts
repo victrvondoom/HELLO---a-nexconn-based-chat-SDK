@@ -10,3 +10,5 @@ export const POST = viewerRoute<{ eventId: string }>('flow.run', async ({ userId
   consumeAction('workflow.run', userId, params.eventId, ctx.now());
   return jsonOk({ run: await runWorkflow(ctx, params.eventId, userId, input.workflowId, 'CANVAS') });
 });
+
+export const dynamic = 'force-dynamic';

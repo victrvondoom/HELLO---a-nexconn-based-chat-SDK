@@ -6,7 +6,7 @@ HELLO is an AI-assisted coordination layer for physical events. An attendee desc
 ordinary words ("The microphone in Room 3 has stopped working."). HELLO works out the room, session and
 team concerned, checks whether someone already reported it, routes it to staff with the right skill,
 keeps a record of every step, and asks the reporter to confirm when it is fixed. Between the problems, the event
-shares its **Moments**: stories, reels, a feed and explore, ordered by six published rules instead of a secret algorithm.
+shares its **Moments**: stories, memoreels, a feed and explore, ordered by six published rules instead of a secret algorithm.
 
 > **Status: working prototype, not a production system.** The domain logic, workflows and UI are
 > implemented and tested. Storage is Postgres (set `DATABASE_URL`) or an in-memory store, updates are pushed live,
@@ -34,7 +34,7 @@ in the demo is seeded, illustrative data. Full instructions are under [Installat
 | Accounts | Register and sign in with a handle and password; server-side sessions | `/signin`, `src/services/auth.ts` |
 | Durable storage | Everything saved to disk when `HELLO_DATA_DIR` is set | `src/lib/persistence.ts` |
 | Workflow canvas | Live graph of the event; one-click workflows that run with your own permissions | `/events/:id/flow` |
-| Moments | Stories (24 h), reels, explore, saves, highlights and a feed ordered by the Open Feed Charter | `/events/:id/feed` |
+| Moments | Stories (24 h), memoreels, explore, saves, highlights and a feed ordered by the Open Feed Charter | `/events/:id/feed` |
 | Communities | Open groups with their own feed and group calls | `/events/:id/communities` |
 | Calls | Video, voice and screen sharing for up to 8, browser to browser (WebRTC) | `/events/:id/calls` |
 | Games | Four in a row (two players, live) and a quiz written from the schedule | `/events/:id/games` |
@@ -53,8 +53,8 @@ the real interface, not mock-ups.
 |---|---|
 | ![Home for an attendee: open requests, upcoming sessions and the latest announcement, with the grouped sidebar and the Create button](docs/screenshots/home.jpg) | ![Moments: a row of story rings, the feed with a "Why this" chip on each post, and the Open Feed Charter beside it](docs/screenshots/moments.jpg) |
 | **Home.** What matters to you right now. The sidebar is grouped (home, the event, people, team), with rarely used tools under More; search, notifications and your profile sit in the top bar. | **Moments.** Story rings at the top, then a feed ordered by six announced rules. Every post has a "Why this" chip naming the rules that placed it. |
-| ![A story by Dr Ines on an open-sky backdrop, pinned to Room 3 with a directions link, quick reactions and a private reply](docs/screenshots/story.jpg) | ![Reels: one full-height visual post with like, comment, save and share on the right](docs/screenshots/reels.jpg) |
-| **Stories.** Gone after 24 hours unless kept in a highlight. A story can be pinned to a room, with one-tap directions on the venue map. Reactions, private replies, and a "Seen by" list for the author only. | **Reels.** One visual moment per screen. Videos play only while on screen, and the order is fixed while you watch. |
+| ![A story by Dr Ines on an open-sky backdrop, pinned to Room 3 with a directions link, quick reactions and a private reply](docs/screenshots/story.jpg) | ![MemoReels: one full-height visual post with like, comment, save and share on the right](docs/screenshots/reels.jpg) |
+| **Stories.** Gone after 24 hours unless kept in a highlight. A story can be pinned to a room, with one-tap directions on the venue map. Reactions, private replies, and a "Seen by" list for the author only. | **MemoReels.** One visual moment per screen. Videos play only while on screen, and the order is fixed while you watch. |
 | ![Explore: tag search, trending tags with how many people used them, and a grid of painted backdrop posts](docs/screenshots/explore.jpg) | ![The Open Feed Charter page listing the six ranking rules with their points, what is never used, the story order and the posting rules](docs/screenshots/charter.jpg) |
 | **Explore.** A tag trends only when at least three different people used it in the last day, so one account cannot fake a trend. | **Open Feed Charter.** Rendered from the same constants the ranking code uses: the six rules and their points, what is never used, the story order, the posting rules R1–R5, and the Nexconn message types. |
 | ![A speaker's profile with a meadow header, follow state, counts, a story highlight and their posts](docs/screenshots/profile.jpg) | ![Conversation: one message about Room 3 becomes two incident cards with match confidence and directions](docs/screenshots/conversation.jpg) |
@@ -63,8 +63,8 @@ the real interface, not mock-ups.
 | **Incident (staff view).** The workflow rail, the acknowledgement timer, every person's report kept separately, and staff ranked by skill, load, availability and location, with reasons. | **Operations (organiser view).** Live counts, the acknowledgement board (most overdue first), rooms with occupancy and where each figure comes from, approvals and signal review. |
 | ![Venue map in plan view printed on paper, with a route to Room 3](docs/screenshots/venue-map.jpg) | ![Field Atlas: level medallion, XP, the monthly challenge and missions on the venue plan](docs/screenshots/field-atlas.jpg) |
 | **Venue map.** Plan, 3D and live-heat views of one venue model. Directions are computed on the device, with a step-free option. | **Field Atlas.** Missions on the venue plan, XP and levels, and a monthly challenge. Rewards are awarded by the server only after verification. |
-| ![Demo sign-in grouped by role, with an avatar for each seeded person](docs/screenshots/demo-sign-in.jpg) | ![Command palette searching "reels" and finding Moments by keyword](docs/screenshots/command-palette.jpg) |
-| **Demo sign-in.** Seeded people grouped by role. Each role sees a different HELLO, and access is decided on the server for every request. | **Search or jump (⌘K).** Matches page names and keywords, so "reels" finds Moments. It lists only pages your role can open. |
+| ![Demo sign-in grouped by role, with an avatar for each seeded person](docs/screenshots/demo-sign-in.jpg) | ![Command palette searching "memoreels" and finding Moments by keyword](docs/screenshots/command-palette.jpg) |
+| **Demo sign-in.** Seeded people grouped by role. Each role sees a different HELLO, and access is decided on the server for every request. | **Search or jump (⌘K).** Matches page names and keywords, so "memoreels" finds Moments. It lists only pages your role can open. |
 | ![Moments on a phone, with story rings and the bottom tab bar with a raised Create button](docs/screenshots/moments-mobile.jpg) | ![Ask HELLO on a phone, with the composer above the tab bar](docs/screenshots/conversation-mobile.jpg) |
 | **Phone: Moments.** A bottom tab bar (Home, Moments, Create, Messages, Menu); Create offers a story, a post or a problem report. | **Phone: Ask HELLO.** The same conversation at 390 px, with the composer kept above the tab bar. |
 
@@ -75,7 +75,7 @@ Instagram-style social features for the people in the same building, built so th
 - **Stories** (`/feed`): text on six painted backdrops, or a picture or video. Optional place (a room you choose,
   never your location) and audience (everyone at the event, or your followers). Deleted after 24 hours unless kept in
   a highlight; views are recorded once and visible only to the author. Six quick reactions and a private reply.
-- **Feed, reels, explore, saved** (`/feed`, `/feed/reels`, `/feed/explore`, `/feed/saved`): double-tap to like,
+- **Feed, memoreels, explore, saved** (`/feed`, `/feed/reels`, `/feed/explore`, `/feed/saved`): double-tap to like,
   comments, shares and private saves. The feed ends with "You are all caught up" instead of scrolling forever.
 - **Open Feed Charter** (`/feed/charter`, `src/domain/moments/charter.ts`): "For you" is the sum of six announced
   criteria (your fresh post, people you follow, your communities, freshness, distinct commenters, likes by people you
@@ -406,7 +406,7 @@ instance has its own copy, and demo sign-in is not authentication. See [docs/dep
 | Offline outbox, opt-in leaderboard, time-zone seasons | Implemented and tested |
 | End-to-end encrypted private messages | Implemented; tested in Node and between two real browser profiles. **No forward secrecy**, one key per device |
 | Venue map (plan, 3D, heat) and step-free routing | Implemented and tested; the venue is hand-drawn demo data |
-| Moments: stories, highlights, reels, explore, saves, Open Feed Charter, posting rules | Implemented and tested (unit, integration, browser route crawl); memory store only |
+| Moments: stories, highlights, memoreels, explore, saves, Open Feed Charter, posting rules | Implemented and tested (unit, integration, browser route crawl); memory store only |
 | Meadow redesign: every page, shell with phone tab bar, landing scene | Implemented; checked by seven Playwright journeys and a crawl of 390 pages as every role |
 | Content-Security-Policy and cross-site Origin check | Implemented (production builds) |
 | Browser end-to-end test of the judge flow (13 checks, Playwright) | Implemented; run against a demo server |

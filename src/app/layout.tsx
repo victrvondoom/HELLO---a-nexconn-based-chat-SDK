@@ -11,6 +11,8 @@ import '@/styles/ops.css';
 import '@/styles/social.css';
 import '@/styles/venue.css';
 import '@/styles/moments.css';
+import '@/styles/guide.css';
+import '@/styles/privacy.css';
 import { FeedbackProvider } from '@/components/ui/Feedback';
 
 // Self-hosted at build time by next/font: no request reaches Google from a visitor's browser.
@@ -41,3 +43,5 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     </html>
   );
 }
+
+export const dynamic = 'force-dynamic';
