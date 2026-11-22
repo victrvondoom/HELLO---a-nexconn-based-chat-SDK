@@ -140,6 +140,9 @@ Limit: the map picture is served by the media route to any event member who has 
 - Navigation model: `src/components/layout/nav-model.ts`. `.nav-count` marks unread notifications only (an e2e test
   counts it). Phones get `MobileTabBar`; the sidebar hides below 900px.
 - `next dev` appends a Next.js block to this file; do not commit it.
+- Web Workers: a worker must never import (even indirectly) the module that spawns it; Turbopack's production build
+  then hangs with no error. Put the worker's pure code in a `*-core.ts` module. `tests/unit/worker-cycles.test.ts`
+  enforces this.
 
 ## Moments (`src/domain/moments`, `src/services/moments.ts`, `src/components/moments`)
 
