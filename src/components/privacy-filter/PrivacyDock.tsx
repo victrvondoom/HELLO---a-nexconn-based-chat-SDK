@@ -64,6 +64,22 @@ const stopAll = (stream: MediaStream | null) => {
  * The privacy filter's own page, HELLO's version of Offleak's OBS dock: people kept visible, detection switches,
  * frame rate and lookahead, a preview, Twitch, and privacy alerts.
  */
+/**
+ * Whether a failed capture was the person (or the browser on their behalf) refusing access. Browsers do not agree on
+ * the error: a refusal can arrive as NotAllowedError, as SecurityError, or, in current Chromium with the camera
+ * permission denied, as NotSupportedError. So for the camera the Permissions API is asked as well.
+ */
+async function permissionRefused(error: unknown, kind: 'camera' | 'screen'): Promise<boolean> {
+  if (error instanceof DOMException && (error.name === 'NotAllowedError' || error.name === 'SecurityError')) return true;
+  if (kind !== 'camera') return false;
+  try {
+    const status = await navigator.permissions.query({ name: 'camera' });
+    return status.state === 'denied';
+  } catch {
+    return false;
+  }
+}
+
 export function PrivacyDock({ eventId, userId }: { eventId: string; userId: string }) {
   const { toast } = useFeedback();
   const pf = usePrivacyFilter(eventId, userId);
@@ -157,7 +173,7 @@ export function PrivacyDock({ eventId, userId }: { eventId: string; userId: stri
       setPreviewing(kind);
     } catch (e: unknown) {
       stopPreview();
-      const denied = e instanceof DOMException && e.name === 'NotAllowedError';
+      const denied = await permissionRefused(e, kind);
       toast('error', denied ? `Permission to use your ${kind === 'camera' ? 'camera' : 'screen'} was not given, so nothing was captured.` : e instanceof Error ? e.message : 'Could not start the preview.');
     } finally {
       setBusy(null);
