@@ -94,7 +94,8 @@ export default async function LandingPage() {
         </header>
         <Jharokha>
           <h1 id="hero-title">
-            One conversation. <em>Everyone</em> connected.
+            One conversation.
+            <br /> Everyone connected.
           </h1>
           <p className="hero__lead">
             Attendees describe a problem in their own words. HELLO finds the room, the session and the right people, and tells the
@@ -110,24 +111,24 @@ export default async function LandingPage() {
               Meet the agents
             </a>
           </div>
+          {live ? (
+            <p className="live-strip hero__live" aria-label="Live figures from the demo event">
+              <span className="live">
+                <span className="live__dot" aria-hidden="true" />
+                Live demo, {live.clock} UTC
+              </span>
+              <span>
+                <strong>{live.open}</strong> open
+              </span>
+              <span>
+                <strong>{live.overdue}</strong> past target
+              </span>
+              <span>
+                <strong>{live.running}</strong> sessions running
+              </span>
+            </p>
+          ) : null}
         </Jharokha>
-        {live ? (
-          <p className="live-strip hero__live" aria-label="Live figures from the demo event">
-            <span className="live">
-              <span className="live__dot" aria-hidden="true" />
-              Live demo, {live.clock} UTC
-            </span>
-            <span>
-              <strong>{live.open}</strong> open
-            </span>
-            <span>
-              <strong>{live.overdue}</strong> past target
-            </span>
-            <span>
-              <strong>{live.running}</strong> sessions running
-            </span>
-          </p>
-        ) : null}
       </section>
 
       <section className="section" id="how" aria-labelledby="how-title">
