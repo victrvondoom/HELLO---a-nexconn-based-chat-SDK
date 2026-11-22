@@ -252,6 +252,8 @@ export interface Game {
   id: string;
   eventId: string;
   kind: 'FOUR' | 'QUIZ';
+  /** A quiz someone wrote themselves carries its title. Absent: the schedule quiz or four in a row. */
+  title?: string | null;
   createdBy: string;
   status: GameStatus;
   createdAt: number;
@@ -727,6 +729,109 @@ export interface CustomMap {
   updatedAt: number;
 }
 
+
+// --- Event companion: personal plan, live room, Plan B seat holds, CON-FUZZ proposals ---
+
+/** A person's declared plan for one event (Grace Period's "personal intent"). Private to its owner. */
+export interface PersonalPlan {
+  /** `${eventId}:${userId}`. */
+  id: string;
+  eventId: string;
+  userId: string;
+  sessionIds: string[];
+  /** Asked for step-free routes and rooms. Chosen by the person, never inferred. */
+  stepFree: boolean;
+  updatedAt: number;
+}
+
+export type AvSignalKind = 'CANT_HEAR' | 'CANT_SEE';
+
+/** One person's latest "can't hear" or "can't see" in one session. Repeated taps overwrite it, never add. */
+export interface AvSignal {
+  /** `${sessionId}:${kind}:${userId}`. */
+  id: string;
+  eventId: string;
+  sessionId: string;
+  roomId: string;
+  kind: AvSignalKind;
+  userId: string;
+  at: number;
+  /** Set when this signal was counted into an AV incident. */
+  incidentId: string | null;
+  /** The person's answer to "Better now?" after a repair. */
+  better: boolean | null;
+}
+
+export interface LiveQuestion {
+  id: string;
+  eventId: string;
+  sessionId: string;
+  authorId: string;
+  text: string;
+  /** Similar questions share a key (normalised keywords), so they are shown as one group. */
+  groupKey: string;
+  votes: string[];
+  createdAt: number;
+  answered: boolean;
+}
+
+/** Plan B seat holds for one session: one document per session, changed only by a conditional docMutate. */
+export interface SeatLedger {
+  /** The session id. */
+  id: string;
+  eventId: string;
+  sessionId: string;
+  /** userId -> hold expiry (ms). An expired hold no longer counts and is pruned on the next change. */
+  holds: Record<string, number>;
+  /** Staff marked the room full: no new holds. */
+  closed: boolean;
+}
+
+export type ProposalStatus = 'AWAITING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'STALE' | 'NO_CERTIFIED_FIX';
+
+export interface ScheduleChange {
+  sessionId: string;
+  title: string;
+  fromRoomId: string;
+  toRoomId: string;
+  fromStartsAt: number;
+  toStartsAt: number;
+}
+
+/** A CON-FUZZ proposal, bound to the exact schedule version it was verified against. Staff only. */
+export interface ScheduleProposal {
+  id: string;
+  eventId: string;
+  incidentId: string | null;
+  createdByUserId: string;
+  createdAt: number;
+  worldId: string;
+  worldVersion: string;
+  baselineVersion: string;
+  proposedVersion: string | null;
+  incident: string[];
+  changes: ScheduleChange[];
+  cost: number | null;
+  certificate: { digest: string; subsetsChecked: number; allPass: boolean } | null;
+  /** A summary of the analysis for the approval card: everything shown is evidence from the simulator. */
+  evidence: {
+    baselineViolations: string[];
+    affectedSessions: string[];
+    minimalFailingSets: string[][];
+    monotone: boolean;
+    searchQueries: number;
+    criticRounds: number;
+    strongestAttack: string;
+    rejected: Array<{ cost: number; moves: number; failsUnder: string[]; constraints: string[]; by: string }>;
+  };
+  /** Who would be told after approval: counts only, so the card names no attendee. */
+  wouldNotify: { speakers: number; attendees: number; staff: number };
+  status: ProposalStatus;
+  decidedByUserId: string | null;
+  decidedAt: number | null;
+  notified: number;
+}
+
 export interface Collections {
   accounts: AuthAccount;
   authSessions: SessionRecord;
@@ -769,6 +874,11 @@ export interface Collections {
   kingdomChronicle: KingdomChronicle;
   kingdomForges: KingdomForge;
   customMaps: CustomMap;
+  plans: PersonalPlan;
+  avSignals: AvSignal;
+  liveQuestions: LiveQuestion;
+  seatLedgers: SeatLedger;
+  scheduleProposals: ScheduleProposal;
 }
 
 export type CollectionName = keyof Collections;
@@ -815,4 +925,9 @@ export const COLLECTION_NAMES: readonly CollectionName[] = [
   'kingdomChronicle',
   'kingdomForges',
   'customMaps',
+  'plans',
+  'avSignals',
+  'liveQuestions',
+  'seatLedgers',
+  'scheduleProposals',
 ];

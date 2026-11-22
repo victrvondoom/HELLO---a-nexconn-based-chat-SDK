@@ -45,14 +45,14 @@ export function NavLinks({ items, onNavigate }: { items: NavLinkItem[]; onNaviga
 }
 
 /** "More": a fold for tools people open rarely. It starts open when the current page is inside it. */
-export function NavMore({ items, children }: { items: NavLinkItem[]; children?: ReactNode }) {
+export function NavMore({ items, children, label = 'More' }: { items: NavLinkItem[]; children?: ReactNode; label?: string }) {
   const pathname = usePathname();
   const inside = items.some((item) => isCurrent(pathname, item));
   return (
     <details className="nav-more" open={inside || undefined}>
       <summary className="nav-more__summary">
         <Icon name="more" size={18} />
-        <span className="grow">More</span>
+        <span className="grow">{label}</span>
         <Icon name="chevron" size={14} />
       </summary>
       <div className="nav-more__items">

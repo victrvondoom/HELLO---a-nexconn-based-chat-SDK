@@ -42,8 +42,9 @@ async function session(displayName, viewport = { width: 1280, height: 860 }) {
   context.setDefaultTimeout(15000);
   const page = await context.newPage();
   await page.goto(`${BASE}/demo`);
+  await page.getByText('Someone specific').click();
   await page.getByRole('button', { name: `Continue as ${displayName}` }).click();
-  await page.waitForURL(`**/events/${EVENT}/**`);
+  await page.waitForURL(`**/events/${EVENT}**`);
   return { context, page };
 }
 const xpText = (page) => page.getByRole('progressbar', { name: 'XP toward the next level' }).getAttribute('aria-valuetext');

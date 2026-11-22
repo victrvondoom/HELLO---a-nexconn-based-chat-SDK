@@ -1,14 +1,17 @@
 import Link from 'next/link';
 import { loadEventViewer } from '@/lib/viewer';
-import { listIncidentsForViewer } from '@/services/incidents';
-import { listSlaBoard, listAnnouncementsFor, notificationFeed } from '@/services/workplace';
-import { STATUS_LABEL } from '@/domain/labels';
-import { formatUtc, minutesAgo } from '@/components/ui/labels';
-import { IncidentBadge } from '@/components/incidents/IncidentBadge';
-import { SlaChip } from '@/components/workplace/SlaChip';
+import { listSlaBoard } from '@/services/workplace';
+import { planB, todaySummary } from '@/services/live-room';
+import { Icon } from '@/components/ui/Icon';
 import { LiveRefresh } from '@/components/workplace/LiveRefresh';
+import { PlanToggle } from '@/components/companion/PlanToggle';
+import { HoldSeat } from '@/components/companion/HoldSeat';
+import { Medallion } from '@/components/brand/Motifs';
 
 export const dynamic = 'force-dynamic';
+export const metadata = { title: 'Today' };
+
+const clock = (ms: number) => `${new Date(ms).toISOString().slice(11, 16)} UTC`;
 
 function greeting(hour: number): string {
   if (hour < 12) return 'Good morning';
@@ -16,164 +19,189 @@ function greeting(hour: number): string {
   return 'Good evening';
 }
 
-/** "Today": what matters to this person right now. Every figure is computed on request. */
-export default async function TodayPage({ params }: { params: Promise<{ eventId: string }> }) {
+function until(now: number, at: number): string {
+  const m = Math.round((at - now) / 60000);
+  if (m <= 0) return 'happening now';
+  if (m < 60) return `starts in ${m} min`;
+  return `starts in ${Math.floor(m / 60)} h ${m % 60} min`;
+}
+
+/**
+ * Today: what matters now, in priority order. The next session, changes to your plan, a Plan B if your
+ * session is full, someone worth meeting, and one-tap help. Everything else is one tap away elsewhere.
+ */
+export default async function TodayPage({ params, searchParams }: { params: Promise<{ eventId: string }>; searchParams: Promise<{ planb?: string }> }) {
   const { eventId } = await params;
+  const { planb: replacing } = await searchParams;
   const viewer = await loadEventViewer(eventId);
-  const now = viewer.ctx.now();
-  const operational = viewer.can('incident.read.operational');
+  const base = `/events/${eventId}`;
+  const today = await todaySummary(viewer.ctx, eventId, viewer.userId);
+  const now = today.now;
   const firstName = (viewer.user?.displayName ?? 'there').replace(/\s*\(.*\)$/, '').split(' ')[0];
-
-  const [mine, feed, announcements, sessions, rooms] = await Promise.all([
-    listIncidentsForViewer(viewer.ctx, eventId, viewer.userId),
-    notificationFeed(viewer.ctx, eventId, viewer.userId),
-    listAnnouncementsFor(viewer.ctx, eventId, viewer.userId),
-    viewer.store.listSessions(eventId),
-    viewer.store.listRooms(eventId),
-  ]);
-  const roomName = new Map(rooms.map((r) => [r.id, r.name] as const));
-  const upcoming = sessions
-    .filter((s) => s.endsAt > now)
-    .sort((a, b) => a.startsAt - b.startsAt)
-    .slice(0, 3);
-  const openMine = mine.filter((r) => !['CLOSED', 'CANCELLED', 'CONFIRMED'].includes(r.incident.status));
-  const hour = new Date(now).getUTCHours();
-
-  const assigned = operational
-    ? (await viewer.store.listIncidents(eventId)).filter((i) => i.assigneeUserId === viewer.userId && !['CLOSED', 'CANCELLED', 'CONFIRMED'].includes(i.status))
-    : [];
+  const operational = viewer.can('incident.read.operational');
   const board = operational ? await listSlaBoard(viewer.ctx, eventId, viewer.userId) : [];
-  const overdue = board.filter((r) => r.sla.state === 'BREACHED');
+  const overdue = board.filter((r) => r.sla.state === 'BREACHED').length;
+  // A room-full QR lands here with ?planb=<session>: show that person's own best alternatives.
+  const rescue = replacing ? await planB(viewer.ctx, eventId, viewer.userId, replacing) : null;
+  const holdFor = (sessionId: string) => rescue?.holds.find((h) => h.sessionId === sessionId)?.expiresAt ?? null;
 
   return (
-    <div className="page">
-      <div className="page-header">
-        <div>
-          <h1>
-            {greeting(hour)}, {firstName}
-          </h1>
-          <p>
-            {operational
-              ? `${board.length} open incidents${overdue.length > 0 ? `, ${overdue.length} past their target` : ''}.`
-              : openMine.length > 0
-                ? `${openMine.length} of your requests ${openMine.length === 1 ? 'is' : 'are'} still open.`
-                : 'Nothing open for you right now.'}
-          </p>
-        </div>
-        <LiveRefresh seconds={10} />
-      </div>
-
-      <div className="kpi-grid" style={{ marginBottom: 20 }}>
+    <div className="page today">
+      <LiveRefresh seconds={20} />
+      <header className="today__head">
+        <h1>
+          {greeting(new Date(now).getUTCHours())}, {firstName}
+        </h1>
         {operational ? (
-          <>
-            <Kpi value={board.length} label="Open incidents" href={`/events/${eventId}/operations`} />
-            <Kpi value={overdue.length} label="Past target" href={`/events/${eventId}/operations`} tone={overdue.length > 0 ? 'danger' : undefined} />
-            <Kpi value={assigned.length} label="Assigned to you" href={`/events/${eventId}/incidents`} />
-          </>
-        ) : (
-          <>
-            <Kpi value={openMine.length} label="Open requests" href={`/events/${eventId}/incidents`} />
-            <Kpi value={upcoming.length} label="Upcoming sessions" href={`/events/${eventId}/sessions`} />
-          </>
-        )}
-        <Kpi value={feed.unread} label="Unread updates" href={`/events/${eventId}/notifications`} tone={feed.unread > 0 ? 'accent' : undefined} />
-      </div>
+          <Link href={`${base}/operations`} className="today__ops">
+            {board.length} open {board.length === 1 ? 'incident' : 'incidents'}
+            {overdue > 0 ? `, ${overdue} past target` : ''} <Icon name="arrow" size={14} />
+          </Link>
+        ) : null}
+      </header>
 
-      <div className="split">
-        <div className="stack" style={{ gap: 20 }}>
-          <section className="card card__body stack" aria-labelledby="today-requests">
-            <div className="split-meta">
-              <h2 id="today-requests">{operational ? 'Needs you' : 'Your requests'}</h2>
-              <Link className="small" href={`/events/${eventId}/incidents`}>See all</Link>
+      {rescue ? (
+        <section className="card card__body today__card today__card--alert" aria-labelledby="planb-heading">
+          <p className="eyebrow">Plan B</p>
+          <h2 id="planb-heading">{rescue.replacing ? `${rescue.replacing.title} is full` : 'Alternatives'}</h2>
+          {rescue.options.length === 0 ? (
+            <p className="small muted">Nothing suitable starts in the next 90 minutes. The quiet room and the help desk are always open.</p>
+          ) : (
+            <ul className="list-reset today__options">
+              {rescue.options.map((o) => (
+                <li key={o.sessionId}>
+                  <div>
+                    <strong>{o.title}</strong>
+                    <div className="xs faint">{o.roomName} · {o.reasons.join(' · ')}</div>
+                  </div>
+                  <HoldSeat eventId={eventId} sessionId={o.sessionId} heldUntil={holdFor(o.sessionId)} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ) : null}
+
+      <div className="today__grid">
+        {today.next ? (
+          <section className="card card__body today__card today__card--next" aria-labelledby="next-heading">
+            <p className="eyebrow">Your next session</p>
+            <h2 id="next-heading">{today.next.title}</h2>
+            <p className="today__meta">
+              {today.next.room} · {clock(today.next.startsAt)} · {until(now, today.next.startsAt)}
+            </p>
+            <div className="row" style={{ gap: 8 }}>
+              <Link className="button button--sm" href={`${base}/now/${today.next.id}`}>
+                <Icon name="mic" size={14} /> Open the room
+              </Link>
+              {today.next.full ? (
+                <Link className="button button--sm button--ghost" href={`${base}?planb=${today.next.id}`}>
+                  It is full: show Plan B
+                </Link>
+              ) : null}
             </div>
-            {operational ? (
-              board.slice(0, 4).length === 0 ? (
-                <p className="small muted">Nothing is waiting on the team.</p>
-              ) : (
-                <ul className="list-reset list-divided">
-                  {board.slice(0, 4).map(({ incident, sla }) => (
-                    <li key={incident.id} className="split-meta" style={{ padding: '10px 0' }}>
-                      <div>
-                        <Link href={`/events/${eventId}/incidents/${incident.id}`}>{incident.title}</Link>
-                        <div className="xs faint">{STATUS_LABEL[incident.status]}</div>
-                      </div>
-                      <SlaChip sla={sla} />
-                    </li>
-                  ))}
-                </ul>
-              )
-            ) : openMine.length === 0 ? (
-              <p className="small muted">You have nothing open. Report a problem in the conversation whenever you need one.</p>
+            {today.alternative && !rescue ? (
+              <p className="small today__planb">
+                <strong>Suggested Plan B:</strong> {today.alternative.title} — {today.alternative.reasons.join(', ')}.
+              </p>
+            ) : null}
+          </section>
+        ) : (
+          <section className="card card__body today__card today__card--next" aria-labelledby="plan-heading">
+            <p className="eyebrow">Your plan</p>
+            <h2 id="plan-heading">Pick what you want to see</h2>
+            {today.suggestions.length === 0 ? (
+              <p className="small muted">No more sessions today.</p>
             ) : (
-              <ul className="list-reset list-divided">
-                {openMine.slice(0, 4).map(({ incident }) => (
-                  <li key={incident.id} className="split-meta" style={{ padding: '10px 0' }}>
+              <ul className="list-reset today__options">
+                {today.suggestions.map((s) => (
+                  <li key={s.id}>
                     <div>
-                      <Link href={`/events/${eventId}/incidents/${incident.id}`}>{incident.title}</Link>
-                      <div className="xs faint">{STATUS_LABEL[incident.status]} · {minutesAgo(now, incident.updatedAt)}</div>
+                      <strong>{s.title}</strong>
+                      <div className="xs faint">{s.room} · {clock(s.startsAt)}</div>
                     </div>
-                    <IncidentBadge status={incident.status} />
+                    <PlanToggle eventId={eventId} sessionId={s.id} planned={false} compact />
                   </li>
                 ))}
               </ul>
             )}
           </section>
+        )}
 
-          <section className="card card__body stack" aria-labelledby="today-latest">
-            <div className="split-meta">
-              <h2 id="today-latest">Latest announcement</h2>
-              <Link className="small" href={`/events/${eventId}/announcements`}>All announcements</Link>
-            </div>
-            {announcements[0] ? (
-              <div className="stack" style={{ gap: 4 }}>
-                <strong>{announcements[0].title}</strong>
-                <p className="small muted">{announcements[0].body}</p>
-                <span className="xs faint">Published {minutesAgo(now, announcements[0].publishedAt)}</span>
-              </div>
-            ) : (
-              <p className="small muted">No announcements have been published yet.</p>
-            )}
+        <Link href={`${base}/kingdom/world`} className="kingdom-hero" aria-label="Enter your Kingdom in 3D">
+          <Medallion size={72} />
+          <span>
+            <span className="eyebrow">Your Kingdom</span>
+            <strong>Step inside, in 3D</strong>
+            <span className="small">Walk your world, meet its citizens, build.</span>
+          </span>
+          <Icon name="arrow" size={20} />
+        </Link>
+
+        {today.changes.length > 0 ? (
+          <section className="card card__body today__card" aria-labelledby="changes-heading">
+            <p className="eyebrow">Schedule changed</p>
+            <h2 id="changes-heading" className="visually-hidden">Schedule changes</h2>
+            <ul className="list-reset stack" style={{ gap: 8 }}>
+              {today.changes.map((c) => (
+                <li key={c.id} className="small">{c.body}</li>
+              ))}
+            </ul>
           </section>
-        </div>
+        ) : null}
 
-        <section className="card card__body stack" aria-labelledby="today-next">
-          <div className="split-meta">
-            <h2 id="today-next">Next up</h2>
-            <Link className="small" href={`/events/${eventId}/sessions`}>Schedule</Link>
-          </div>
-          {upcoming.length === 0 ? (
-            <p className="small muted">No more sessions today.</p>
-          ) : (
-            <ol className="list-reset list-divided">
-              {upcoming.map((s) => {
-                const startsIn = Math.round((s.startsAt - now) / 60000);
-                return (
-                  <li key={s.id} style={{ padding: '10px 0' }}>
-                    <strong>{s.title}</strong>
-                    <div className="xs faint">
-                      {roomName.get(s.roomId)} · {formatUtc(s.startsAt).slice(11)}
-                      {startsIn > 0 ? ` · in ${startsIn} min` : ' · starting now'}
-                    </div>
-                    <div className="xs faint">
-                      {s.enrolled}/{s.capacity} enrolled
-                    </div>
-                  </li>
-                );
-              })}
+        {today.agenda.length > 1 ? (
+          <section className="card card__body today__card" aria-labelledby="agenda-heading">
+            <p className="eyebrow">Later today</p>
+            <h2 id="agenda-heading" className="visually-hidden">Your agenda</h2>
+            <ol className="list-reset today__agenda">
+              {today.agenda.slice(1).map((s) => (
+                <li key={s.id}>
+                  <span className="today__time">{clock(s.startsAt).slice(0, 5)}</span>
+                  <Link href={`${base}/now/${s.id}`}>{s.title}</Link>
+                  <span className="xs faint">{s.room}</span>
+                </li>
+              ))}
             </ol>
-          )}
-        </section>
-      </div>
-    </div>
-  );
-}
+          </section>
+        ) : null}
 
-function Kpi({ value, label, href, tone }: { value: number; label: string; href: string; tone?: 'danger' | 'accent' }) {
-  const color = tone === 'danger' ? 'var(--danger)' : tone === 'accent' ? 'var(--accent)' : undefined;
-  return (
-    <Link href={href} className="card card--interactive kpi" style={{ textDecoration: 'none', color: 'inherit' }}>
-      <span className="kpi__value" style={{ color }}>{value}</span>
-      <span className="kpi__label">{label}</span>
-    </Link>
+        {today.people.length > 0 ? (
+          <section className="card card__body today__card" aria-labelledby="people-heading">
+            <p className="eyebrow">Worth meeting</p>
+            <h2 id="people-heading" className="visually-hidden">People worth meeting</h2>
+            <ul className="list-reset stack" style={{ gap: 10 }}>
+              {today.people.map((p) => (
+                <li key={p.userId}>
+                  <Link href={`${base}/people/${p.userId}`}>
+                    <strong>{p.name}</strong>
+                  </Link>
+                  <div className="xs faint">{p.why}</div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+      </div>
+
+      <nav className="today__quick" aria-label="Quick help">
+        <Link href={`${base}/conversation`}>
+          <Icon name="incidents" size={20} />
+          Report a problem
+        </Link>
+        {/* A plain link, not client navigation, so the cached care page also opens offline. */}
+        <a href={`${base}/care`}>
+          <Icon name="heart" size={20} />I need a break
+        </a>
+        <Link href={`${base}/conversation`}>
+          <Icon name="conversation" size={20} />
+          Ask for help
+        </Link>
+        <Link href={`${base}/people`}>
+          <Icon name="people" size={20} />
+          My connections
+        </Link>
+      </nav>
+    </div>
   );
 }

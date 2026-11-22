@@ -1,427 +1,193 @@
-# HELLO — One conversation. Everyone connected.
+# HELLO — your event, in one place
 
-![HELLO landing page: "One conversation. Everyone connected." over a deep blue sky and layered green hills with a lone tree, and glass cards for the agent steps](docs/screenshots/landing.jpg)
+![HELLO Today: a greeting, your plan, a door into your 3D Kingdom, people worth meeting, and one-tap help, beside a calm red sidebar with Today, Explore, Live and People](docs/screenshots/today.jpg)
 
-HELLO is an AI-assisted coordination layer for physical events. An attendee describes a problem in
-ordinary words ("The microphone in Room 3 has stopped working."). HELLO works out the room, session and
-team concerned, checks whether someone already reported it, routes it to staff with the right skill,
-keeps a record of every step, and asks the reporter to confirm when it is fixed. Between the problems, the event
-shares its **Moments**: stories, memoreels, a feed and explore, ordered by six published rules instead of a secret algorithm.
+HELLO is an event companion and operations system for technology conferences, hackathons and multi-track
+gatherings, built on the Nexconn chat SDKs. It has two connected sides that share **one event model** (the same
+event, rooms, sessions, people and incidents):
 
-> **Status: working prototype, not a production system.** The domain logic, workflows and UI are
-> implemented and tested. Storage is Postgres (set `DATABASE_URL`) or an in-memory store, updates are pushed live,
-> Nexconn connects through a tested chat gateway once its bridge is written, and demo sign-in is a shortcut. See [Status](#status) before using this for a real event.
+- **For attendees**: what is on, what to see, who to meet, the live session room, a Plan B with a held seat
+  when a room is full, and a one-tap "I need a break" that works offline.
+- **For the team**: incidents and AV signals, rooms and seats, approvals, and **CON-FUZZ**, which proves a
+  schedule change survives every combination of eight disruptions before an organiser approves it.
 
-**Contents:** [Quick start](#quick-start) · [Screenshots](#screenshots) · [Moments](#moments) · [What it does](#what-it-does-implemented) ·
-[Agent mesh](#agent-mesh) · [Architecture](#architecture) · [Demo walkthrough](#demo-walkthrough-judge-scenario) ·
-[Commands](#commands) · [Status](#status)
+The experience is minimal; the depth is underneath.
+
+> **Status: a working, tested prototype, not a production system.** Everything marked *verified* below has
+> tests and was driven in a real browser. Captions/audio, Nexconn token issuance, the graph-based networking
+> layer and the official-schedule reconciler are not done; the [status table](#status) says exactly what is.
+
+**Contents:** [Quick start](#quick-start) · [Five destinations](#five-destinations) · [Architecture](#architecture) ·
+[Live sessions](#live-sessions) · [Plan B](#plan-b-and-seat-holds) · [CON-FUZZ](#con-fuzz) · [Nexconn](#nexconn) ·
+[Security](#security-and-privacy) · [Setup](#setup) · [Tests](#tests) · [Status](#status)
 
 ## Quick start
 
 ```bash
 npm install
-cp .env.example .env.local
-npm run dev
+cp .env.example .env.local      # HELLO_DEMO_MODE=true
+npm run dev                     # http://localhost:3000
 ```
 
-Open <http://localhost:3000>, choose **Enter the demo**, and pick a demo role. Every person, room and incident
-in the demo is seeded, illustrative data. Full instructions are under [Installation and local run](#installation-and-local-run).
+Open the site and press **Enter HELLO**. That is all: you are a demo attendee. To see another side, choose
+*Speaking* or *On the team* under the button before entering, or open *Someone specific* to pick any of the
+sixteen seeded, fictional people. Every person, room, session and figure in the demo is illustrative data.
 
-## What was added: accounts, community and workflows
+## Five destinations
 
-| Area | What it does | Where |
-|---|---|---|
-| Accounts | Register and sign in with a handle and password; server-side sessions | `/signin`, `src/services/auth.ts` |
-| Durable storage | Everything saved to disk when `HELLO_DATA_DIR` is set | `src/lib/persistence.ts` |
-| Workflow canvas | Live graph of the event; one-click workflows that run with your own permissions | `/events/:id/flow` |
-| Moments | Stories (24 h), memoreels, explore, saves, highlights and a feed ordered by the Open Feed Charter | `/events/:id/feed` |
-| Communities | Open groups with their own feed and group calls | `/events/:id/communities` |
-| Calls | Video, voice and screen sharing for up to 8, browser to browser (WebRTC) | `/events/:id/calls` |
-| Games | Four in a row (two players, live) and a quiz written from the schedule | `/events/:id/games` |
-| Live map | World map by country; live location shared only by choice, with an expiry | `/events/:id/live-map` |
-| MCP | A Model Context Protocol endpoint with personal access tokens | `POST /api/mcp`, Settings |
-
-Security review of all of it: [docs/security-audit.md](docs/security-audit.md).
-End-to-end proof: `BASE_URL=http://localhost:3000 node tests/e2e/product-flow.mjs`.
-
-## Screenshots
-
-All images are captured from the running demo by `npm run screenshots` (see [Commands](#commands)), so they show
-the real interface, not mock-ups.
-
-| | |
+| Destination | What it is for |
 |---|---|
-| ![Home for an attendee: open requests, upcoming sessions and the latest announcement, with the grouped sidebar and the Create button](docs/screenshots/home.jpg) | ![Moments: a row of story rings, the feed with a "Why this" chip on each post, and the Open Feed Charter beside it](docs/screenshots/moments.jpg) |
-| **Home.** What matters to you right now. The sidebar is grouped (home, the event, people, team), with rarely used tools under More; search, notifications and your profile sit in the top bar. | **Moments.** Story rings at the top, then a feed ordered by six announced rules. Every post has a "Why this" chip naming the rules that placed it. |
-| ![A story by Dr Ines on an open-sky backdrop, pinned to Room 3 with a directions link, quick reactions and a private reply](docs/screenshots/story.jpg) | ![MemoReels: one full-height visual post with like, comment, save and share on the right](docs/screenshots/reels.jpg) |
-| **Stories.** Gone after 24 hours unless kept in a highlight. A story can be pinned to a room, with one-tap directions on the venue map. Reactions, private replies, and a "Seen by" list for the author only. | **MemoReels.** One visual moment per screen. Videos play only while on screen, and the order is fixed while you watch. |
-| ![Explore: tag search, trending tags with how many people used them, and a grid of painted backdrop posts](docs/screenshots/explore.jpg) | ![The Open Feed Charter page listing the six ranking rules with their points, what is never used, the story order and the posting rules](docs/screenshots/charter.jpg) |
-| **Explore.** A tag trends only when at least three different people used it in the last day, so one account cannot fake a trend. | **Open Feed Charter.** Rendered from the same constants the ranking code uses: the six rules and their points, what is never used, the story order, the posting rules R1–R5, and the Nexconn message types. |
-| ![A speaker's profile with a meadow header, follow state, counts, a story highlight and their posts](docs/screenshots/profile.jpg) | ![Conversation: one message about Room 3 becomes two incident cards with match confidence and directions](docs/screenshots/conversation.jpg) |
-| **Profile.** Follow and message, the person's highlights (stories kept past 24 hours) and their posts, newest first. | **Ask HELLO.** "The microphone is not working, and there are too many people in Room 3." becomes two concerns, each attached to an existing incident with its match confidence. The room change waits for an organiser. |
-| ![Incident detail with the workflow rail, acknowledgement timer and ranked staff recommendations](docs/screenshots/incident.jpg) | ![Operations view with open incidents, acknowledgement timers, rooms with load bars and the approval queue](docs/screenshots/operations.jpg) |
-| **Incident (staff view).** The workflow rail, the acknowledgement timer, every person's report kept separately, and staff ranked by skill, load, availability and location, with reasons. | **Operations (organiser view).** Live counts, the acknowledgement board (most overdue first), rooms with occupancy and where each figure comes from, approvals and signal review. |
-| ![Venue map in plan view printed on paper, with a route to Room 3](docs/screenshots/venue-map.jpg) | ![Field Atlas: level medallion, XP, the monthly challenge and missions on the venue plan](docs/screenshots/field-atlas.jpg) |
-| **Venue map.** Plan, 3D and live-heat views of one venue model. Directions are computed on the device, with a step-free option. | **Field Atlas.** Missions on the venue plan, XP and levels, and a monthly challenge. Rewards are awarded by the server only after verification. |
-| ![Demo sign-in grouped by role, with an avatar for each seeded person](docs/screenshots/demo-sign-in.jpg) | ![Command palette searching "memoreels" and finding Moments by keyword](docs/screenshots/command-palette.jpg) |
-| **Demo sign-in.** Seeded people grouped by role. Each role sees a different HELLO, and access is decided on the server for every request. | **Search or jump (⌘K).** Matches page names and keywords, so "memoreels" finds Moments. It lists only pages your role can open. |
-| ![Moments on a phone, with story rings and the bottom tab bar with a raised Create button](docs/screenshots/moments-mobile.jpg) | ![Ask HELLO on a phone, with the composer above the tab bar](docs/screenshots/conversation-mobile.jpg) |
-| **Phone: Moments.** A bottom tab bar (Home, Moments, Create, Messages, Menu); Create offers a story, a post or a problem report. | **Phone: Ask HELLO.** The same conversation at 390 px, with the composer kept above the tab bar. |
+| **Today** | What matters now: your next session (or picks to start a plan), a Plan B when it is full, schedule changes, later today, people worth meeting, and quick help: report a problem, I need a break, ask for help, my connections. A door into your **3D Kingdom** sits here and in the sidebar. |
+| **Explore** | One search for sessions, people, rooms, topics and guides; the programme with *Add to plan*; topics; every other tool in HELLO. |
+| **Live** | Rooms running now and next. A session's live room: timeline, questions grouped by similarity, *Can't hear* / *Can't see*, and the room's QR code. |
+| **People** | The directory, follows and profiles. |
+| **Operations** (staff) | Board (incidents and their targets), Venue and AV (seats, Plan B holds, AV signals, *Mark full*), Resilience (CON-FUZZ). |
 
-## Moments
+Nothing was removed: Moments, Ask HELLO, private messages, the schedule, the venue map (2D, 3D, heat, floors),
+announcements, communities, Kingdom and its map, calls, games (now with **Create a game**), Field Atlas, the
+workflow canvas, the privacy filter and more are under **Everything else**, in the command palette (⌘K) and in
+the phone menu. Their details are in [docs/FEATURE_REFERENCE.md](docs/FEATURE_REFERENCE.md).
 
-Instagram-style social features for the people in the same building, built so the ordering is explainable.
-
-- **Stories** (`/feed`): text on six painted backdrops, or a picture or video. Optional place (a room you choose,
-  never your location) and audience (everyone at the event, or your followers). Deleted after 24 hours unless kept in
-  a highlight; views are recorded once and visible only to the author. Six quick reactions and a private reply.
-- **Feed, memoreels, explore, saved** (`/feed`, `/feed/reels`, `/feed/explore`, `/feed/saved`): double-tap to like,
-  comments, shares and private saves. The feed ends with "You are all caught up" instead of scrolling forever.
-- **Open Feed Charter** (`/feed/charter`, `src/domain/moments/charter.ts`): "For you" is the sum of six announced
-  criteria (your fresh post, people you follow, your communities, freshness, distinct commenters, likes by people you
-  follow). The ranking function receives only author, time, community, commenters and likers, so it cannot use
-  anything else; ties break by time, then id. Unit tests check determinism and that every point comes from an
-  announced rule.
-- **Posting rules R1–R5** (`src/domain/moments/rules.ts`): length, at most 10 hashtags, no identical text within
-  10 minutes, at most 10 stories an hour, your own media only. The server enforces them and names the rule in the error.
-- **Built on Nexconn messages** (`src/integrations/nexconn/moments.ts`): stories and posts map to custom message types
-  (`HL:Story`, `HL:Post`) on the event's community channel, likes and reactions to message reactions, a story view to a
-  read receipt, and a story reply to a reference message. The shapes were checked against `@nexconn/chat@26.5.1`. It is
-  a mapping only: Nexconn is not connected in this build.
-- **Privacy:** data export includes your stories, highlights, saves and reactions; erasure deletes them and removes
-  your views and reactions from other people's stories.
-
-## The problem
-
-Physical events run on disconnected channels: informal messages, several inboxes, volunteers who don't know
-what is already being handled, technicians who receive half a description, and attendees who never learn
-whether anyone is acting. HELLO's premise is that every important conversation should be able to become an
-accountable workflow.
-
-## What it does (implemented)
-
-- **One conversation for every role.** Attendees, speakers, volunteers, operations and organisers use the
-  same entry point. What they can see and do depends on their membership.
-- **Incident intelligence.** Messages become incidents. A report matching an open incident (same room,
-  category, within 30 minutes) is attached to it, with its match confidence and signals. Each person's
-  report is kept. Reports are never merged on wording alone.
-- **Lifecycle.** REPORTED → TRIAGED → ASSIGNED → ACKNOWLEDGED → IN_PROGRESS → RESOLVED → CONFIRMED → CLOSED,
-  plus REOPENED, CANCELLED, NEEDS_INFORMATION and ESCALATED. Moves are checked on the server against the
-  state machine and against who is making the move.
-- **Assignment.** Eligible staff are ranked by skill, workload, availability and location. Each score
-  shows its reasons. Claims are version-checked, so two simultaneous claims cannot both succeed.
-- **Capacity-aware alternatives.** Sessions that are full, ended, inaccessible (when required) or clash with
-  the person's schedule are excluded. Remaining sessions are scored with configurable weights and explained.
-- **Approvals.** A consequential change (moving a session to another room) is requested by HELLO only when
-  over-capacity is recorded and two or more independent people report it. An organiser must approve it.
-  Approval and execution are recorded separately, so an approved move can still fail, and the UI says so.
-- **Signal intelligence.** Three or more independent reporters of the same category in one room within ten
-  minutes produce a suggested insight. It is built only from stored reports, counts each person once, and
-  waits for an organiser's review. Review decisions are not overwritten by later recomputation.
-- **People discovery.** Search by declared interest. Only people who opted in appear, the matched interest is shown,
-  and no contact details are exposed.
-- **Operations view.** Rooms with occupancy and its data source, open incidents, the approval queue and signal review.
-- **Honest data labels.** Every occupancy figure states whether it is live verified, administrator entered,
-  attendee reported, or demo data.
-
-## Quick navigation and voice input
-
-- **Command palette.** Press **⌘K** (Ctrl+K on Windows and Linux), or click **Search or jump to…** in the top bar, then
-  type a page name or a keyword ("feed" finds Moments). It lists only the pages your role can open (an attendee never sees the audit trail), and each page still
-  re-checks access on the server. Arrow keys move, Enter opens and Esc closes.
-- **Speak instead of typing.** In browsers with speech recognition (Chrome, Edge, Safari), the composer shows a
-  microphone button. What you say is added to the message box for you to check before sending; nothing is sent
-  automatically. The browser's own speech service does the transcription and may send the audio to its provider. The
-  button says so, and the microphone is allowed for HELLO's own pages only (`Permissions-Policy: microphone=(self)`).
-
-## Why HELLO, and what it solves that other event apps don't
-
-Seven hidden problems sit under the usual "chat, schedule and map" event app: the read-and-act paradox
-of AI plus encryption, encryption claims nobody can check, social graphs that leak, connections that end
-with the event, erasure versus accountability, wayfinding that ignores accessibility, and safety messages
-stuck in a queue. Each one, and what HELLO does about it, is in [docs/vision.md](docs/vision.md).
-
-## People, privacy and private messages
-
-- **Profiles, follow, followers, following.** Follows are global, so connections outlive the event.
-  "Connections only" profiles need a mutual follow. Follower lists are visible only to their owner.
-- **End-to-end encrypted private messages** between mutual connections (`src/lib/e2ee/crypto.ts`):
-  browser-generated ECDH P-256 keys with non-extractable private keys kept in IndexedDB, HKDF-SHA-256
-  bound to both people and both keys, then AES-256-GCM with the direction as associated data. The server
-  validates and relays ciphertext only. "Show what HELLO stores" displays it, and safety numbers let two
-  people check their keys in person.
-- **Encryption at rest** for profile text (`src/lib/vault.ts`, AES-256-GCM with `HELLO_DATA_KEY`, bound to
-  the record). This is not end-to-end, and the UI says so.
-- **Your rights:** download everything (`/api/me/export`) and erase (`/api/me/erase`). Erasure deletes
-  personal data and redacts operational text while keeping the accountable record.
-- **Browser-enforced no-leak policy:** a Content-Security-Policy with `connect-src 'self'`, and a cross-site
-  Origin check on every state-changing API call (`src/proxy.ts`).
-
-## Venue map
-
-One venue model (`src/domain/venue`), three engines: **Plan** (2D floor plan), **3D** (exploded, turnable
-isometric model) and **Live heat** (rooms coloured by recorded occupancy, with open-incident counts for
-staff). Directions are computed on the device with Dijkstra. Step-free mode removes stairs from the graph,
-so it finds a route with no steps or says none exists. It is the default for people whose profile asks for
-it. No third-party map tiles are loaded. Chat replies about a room link to directions.
-
-## Agent mesh
-
-Every message is handled by seven small agents, each with one job and a declared scope (`src/agents/`).
-Agents read, rank and cite. Only the coordinator changes state, and only through the domain services.
-
-| Agent | Job | Scope |
+| Live room | CON-FUZZ approval card | Workflow canvas |
 |---|---|---|
-| Triage | Classifies the message (fault, question, status check, person search, change needing approval) | Read only |
-| Safety sentinel | Detects medical, fire and security emergencies; raises them to critical and puts the event guide's emergency guidance first | Read only |
-| Context | Resolves the room, session and schedule facts from stored records | Read only |
-| Event guide | BM25 retrieval over the organisers' event guide; answers only above a relevance threshold, with citations. Staff-only procedures never reach attendees | Read only |
-| Web research | Only for outside-the-venue questions the guide cannot answer. Redacts personal details, scopes to the venue city, caches for 10 minutes, labels results as unverified | Web, read only |
-| Coordinator | Opens or joins incidents, ranks staff, lists free sessions, requests approvals | Acts via services |
-| Grounding check | Labels each reply: from HELLO records, from the event guide, from the web (unverified), or no reliable source | Read only |
-
-Each reply stores its trace and numbered sources with the message. In the conversation, people see the
-sources under the reply and can expand "How HELLO worked this out". Staff get an **Agent mesh** page with the
-roster, configuration, event-guide pages and recent runs. When nothing answers a question, HELLO says so
-instead of guessing.
-
-Web research is off unless `HELLO_WEB_SEARCH_PROVIDER=tavily` and `HELLO_WEB_SEARCH_API_KEY` are set. Provider
-output is schema-checked, stripped of markup and control characters, limited to http(s) links, and never
-treated as instructions. A hung or failing provider becomes a FAILED step in the trace, never an error.
-
-## Design
-
-The "Jharokha" design system takes its name from the carved, arched window of a haveli, where you lean out to greet
-the street. It sets the materials of Indian craft on a clean lime-washed wall.
-
-- **Colour roles:** neel indigo (blue pottery, indigo dye) for primary actions, peacock blue for links and live state,
-  a kesar saffron highlighter for the current page and selected items, rani pink for Moments, mehendi green for
-  success, sindoor red only for danger. Every text colour passes WCAG AA on both the wall and cards.
-- **Type:** EB Garamond for titles, with its flowing italic for emphasis, Figtree for reading, and the Tiro cuts for
-  Devanagari, Kannada, Tamil, Telugu, Bangla and Gurmukhi, so every script has a serif of the same spirit.
-  All are self-hosted at build time by `next/font`; the script fonts load only when shown.
-- **Motifs:** a woven pixel border opens every page, unseen stories wear a blue-pottery rim, rangoli flowers gather
-  at the foot of the landing window, and the event card shows a ghat at dawn. The landing hero is a jharokha that says
-  hello in seven of India's scripts; it stops turning for people who prefer reduced motion.
-- **Code:** `src/styles/tokens.css`, then `base.css`, `components.css` (primitives), `shell.css`, and one file per area.
-  `tests/unit/style-boundaries.test.ts` fails if two area files define the same class.
-- **Phones:** below 900 px the sidebar becomes a bottom tab bar with a raised Create button and a Menu sheet.
-
-## Workplace features
-
-Everything on these screens is computed from current state when it is requested, and the live screens refresh
-themselves while the tab is visible. Nothing is a stored snapshot.
-
-- **Today**: the event home. Your open requests, next sessions, unread updates and the latest announcement. Staff
-  also see what is waiting on the team and what is assigned to them.
-- **Acknowledgement timers**: every incident has a target from its urgency (critical 5 min, high 10, medium 30, low 60).
-  Timers move from on track, to at risk, to overdue. The reporter sees the same target for their own report.
-- **Escalation check**: unclaimed work past its target is escalated through the normal lifecycle rules, recorded in the
-  timeline and the audit trail, and notified to operations. A second press changes nothing that is already escalated.
-- **Workflow rail**: each incident shows its stages (reported, triaged, assigned, in progress, resolved, confirmed),
-  derived from its status so it cannot disagree with the lifecycle.
-- **Team**: availability, skills, zone and load for each staff member, ordered so available people come first. Staff
-  set their own availability; off-shift people are not recommended for new work.
-- **Profile and privacy**: interests and discoverability are the only things people search uses. Turning discoverability
-  off removes you from search at once.
-- **Announcements**: proposed by a staff member, published only after a different organiser approves, through the same
-  approval and execution records as room changes.
-- **Notifications**: unread counts in the navigation, and mark-as-read.
-- **Audit trail**: organisers see every consequential action, filterable by action. Entries cannot be edited.
-- **Conversation search** and incident search and filters.
+| ![A live room: title, speaker, timeline, add to plan, an honest note that captions are not connected, and grouped questions](docs/screenshots/live-room.jpg) | ![Operations, Resilience tab: incident picker, disruption chips and a proposal awaiting approval](docs/screenshots/resilience.jpg) | ![The workflow canvas with every node connected and each workflow linked to what it reads and writes](docs/screenshots/canvas.jpg) |
 
 ## Architecture
 
 ```
-UI (App Router pages, client components for interaction)
-  → API routes (validate with Zod, resolve viewer, map errors)
-    → Services (permissions, use cases, optimistic concurrency)
-      → Domain (pure rules: lifecycle, classification, duplicates, scoring, approvals, signals)
-      → AI (validated intent routing; deterministic fallback)
-      → Store (HelloStore contract: Postgres or in-memory; every write publishes a live nudge)
+ Browser: Today · Explore · Live · People · Operations      Nexconn Chat SDK · Chat UI · Call SDK
+   (client islands; offline worker caches /care only)          (App Key + server-issued token)
+            │ /api/events/:id/** (Zod)  ▲ SSE nudges                        │
+            ▼                           │                                   ▼
+ ┌─────────────────────────────── Next.js server ───────────────────────────────────────┐
+ │ Routes ─► Services: the only layer that decides (requireCapability on every call)     │
+ │   live-room  plan · AV signals · questions · seat holds · Plan B · care · venue board │
+ │   resilience CON-FUZZ check · approval gate · execution · targeted notifications      │
+ │   incidents · approvals · workflows · games · people · search · moments · …           │
+ │        ▼                                                                              │
+ │ Pure domain (no storage, clock or AI): companion/ · resilience/ · venue/ · incidents/ │
+ │        ▼                                                                              │
+ │ HelloStore ── Postgres (DATABASE_URL) │ memory (+ disk with HELLO_DATA_DIR)           │
+ │ Live layer: every write → content-free nudge, only to the people concerned            │
+ │ Chat gateway: signed webhook bridge + delivery outbox for Nexconn                     │
+ └──────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-Details: [docs/architecture.md](docs/architecture.md).
+Every module uses the event's own ids: CON-FUZZ builds its world from the live rooms and sessions, Plan B ranks
+the same sessions, AV signals file ordinary incidents. Capacity and one-shot decisions are conditional writes
+(a row lock on Postgres), so concurrent requests cannot over-allocate seats or approve twice.
+More: [docs/HELLO_ARCHITECTURE.md](docs/HELLO_ARCHITECTURE.md), [docs/architecture.md](docs/architecture.md).
 
-## Technology
+**Postgres** is the source of truth. **A graph database is not used yet**: the planned FalkorDB/Neo4j projection
+for networking intelligence is designed in [docs/HELLO_EVENT_GRAPH.md](docs/HELLO_EVENT_GRAPH.md) but not built.
 
-- Next.js 16 (App Router), React 19, TypeScript in strict mode
-- Zod 4 for every external input
-- Vitest for unit and integration tests; ESLint with strict type-checked rules
-- PostgreSQL 16 via `pg`: the app's store (`DATABASE_URL`), the whole integration suite runs on it (see [docs/database.md](docs/database.md))
-- Server-Sent Events for live updates, fanned out across instances with Postgres LISTEN/NOTIFY
-- Nexconn: chat gateway with signed webhooks, account linking and a delivery outbox (see [docs/nexconn-integration.md](docs/nexconn-integration.md))
-- GitHub Actions CI: checks, the Postgres suite and every browser journey (`.github/workflows/ci.yml`)
+## Live sessions
 
-## Repository structure
+- **Can't hear / Can't see** count each person once. Three distinct people within 60 seconds raise **one** AV
+  incident through the normal incident pipeline; later reports attach to it. Staff see the counts on the venue
+  board; reporters are asked *Better now?* after the repair.
+- **Questions** are grouped by similarity, voted on, and never show other attendees who asked.
+- **Captions, listen-in audio and slides need a media provider, which is not connected.** The room says so
+  instead of showing anything invented. ([docs/HELLO_LIVE_SESSIONS.md](docs/HELLO_LIVE_SESSIONS.md))
 
-```
-src/
-  app/                   Pages (App Router) and API route handlers
-    api/                 Thin HTTP adapters over services
-    events/[eventId]/    Event pages: conversation, incidents, operations, sessions, people, …
-  components/           Client and server UI components (layout/ shell, moments/ stories and feed)
-  styles/               Jharokha design system: tokens, primitives, shell and one stylesheet per area
-  domain/               Pure business rules (no framework or I/O imports)
-    incidents/          lifecycle, classification, duplicate detection
-    assignments/        explainable assignment scoring
-    sessions/           capacity-aware session recommendation
-    approvals/          trust levels, four-eyes rule, execution rules
-    intelligence/      signal pattern detection
-    notifications/      dedupe keys
-    moments/            Open Feed Charter, story rules, tags, posting rules
-    permissions.ts      capability table and authorize()
-  services/             Use cases; the only layer that writes state
-  store/                HelloStore contract, in-memory implementation, demo seed
-  ai/                   Intent schema, provider boundary, deterministic interpreter
-  integrations/nexconn/ Configuration status and the Moments message mapping (no live connection)
-  lib/                  Runtime, sessions (demo), HTTP envelope, validation, rate limiting, logging
-supabase/
-  migrations/           0001_core_schema.sql
-  seed.sql              Demo event structure (labelled)
-  tests/                Database constraint and RLS checks
-tests/
-  unit/                 Domain and AI boundary tests
-  integration/          Service-level workflow tests (judge demonstration and more)
-docs/                   Architecture, database, Nexconn, AI, security, deployment, testing
-```
+## Plan B and seat holds
 
-## Prerequisites
+When a planned session is full, HELLO ranks the sessions you can still reach: hard filters first (free seats,
+step-free if you asked, no clash with your plan, reachable in time), then topic, start time, seats and walking
+time over the real venue graph, each option with its reasons. **Hold my seat** checks and reserves in one
+conditional write and lasts 10 minutes; in the tests, 10 people racing for 3 seats get exactly 3. Staff can mark
+a room full; its door QR sends each person to their own Plan B. ([docs/HELLO_SCHEDULER.md](docs/HELLO_SCHEDULER.md))
 
-- Node.js 20.9 or later (tested with Node 22)
-- npm (tested with 10)
-- PostgreSQL 15+ only if you want to apply and test the database layer
+## CON-FUZZ
 
-## Installation and local run
+A deterministic simulator `s' = F(s, Δ)` checks a schedule against every subset of eight disruptions (2⁸ = 256):
+demand surge, primary room loss, standby room loss, step-free route closure, AV failure, speaker delay, speaker
+unavailable, longer walks between zones. In Operations → Resilience, a supervisor picks an incident; HELLO
+reproduces it, finds the minimal failing disruption sets, proposes a fix, lets an adversarial **Critic** attack it
+(a claim counts only with a simulator witness), **verifies all 256 subsets** on the exact schedule version, shows
+cheaper rejected fixes with the disruption that breaks each, and **stops at an approval card**. Only an
+organiser can approve; a stale proposal is refused; after approval, only the speakers, attendees with the
+session planned or held, and staff are told. No AI is involved. Benchmark over 41 worlds and every limitation:
+[docs/HELLO_CONFUZZ.md](docs/HELLO_CONFUZZ.md).
+
+## Nexconn
+
+All three packages are installed and share one engine: `@nexconn/chat` (Chat SDK: messages, channels,
+presence), `@nexconn/chatui` (ready-made chat screens) and `@nexconn/call` (voice and video). The Call SDK pins
+its peers to 26.2.0; `package.json` overrides that to the installed 26.5 chat and engine, which needs a runtime
+check once credentials exist. The official Nexconn agent skill is vendored at `.claude/skills/nexconn-chat`.
+
+- `NEXCONN_APP_KEY` (may reach the browser) and `NEXCONN_APP_SECRET` (**server only**) come from the Nexconn Console.
+- `POST /api/nexconn/token` issues a token for the signed-in person; the browser connects with
+  `connectNexconn()` (`src/integrations/nexconn/client.ts`, API verified against the installed type definitions).
+- **Blocked**: the server call that signs and issues the token needs Nexconn's Platform Chat API documentation,
+  which was not reachable from the build environment. Until it is written from the docs, the endpoint answers
+  `503 TOKEN_API_NOT_IMPLEMENTED`. Nothing guesses at a signing scheme. A test fails if any browser file reads
+  the App Secret. Messaging also works today through the tested chat gateway: [docs/nexconn-integration.md](docs/nexconn-integration.md).
+
+## Security and privacy
+
+Authorisation is decided on the server for every request; hiding a control is never the boundary. Plans,
+AV signals and questions are personal and covered by export and erasure. Only organisers approve schedule
+changes, and only through a signed-in session (not an access token or an agent). The offline worker caches only
+the care page. Full table: [docs/HELLO_PRIVACY_SECURITY.md](docs/HELLO_PRIVACY_SECURITY.md); earlier audits:
+[docs/security.md](docs/security.md), [docs/security-audit.md](docs/security-audit.md).
+
+## Setup
+
+Requirements: Node.js 20.9+ (tested with 22), npm 10. PostgreSQL 15+ for durable storage.
+
+| Variable | Purpose |
+|---|---|
+| `HELLO_DEMO_MODE` | `true` seeds the demo event and enables *Enter HELLO* |
+| `DATABASE_URL`, `HELLO_DB_SCHEMA` | Postgres store; the schema is created on first start. Without it, an in-memory store |
+| `HELLO_DATA_DIR` | Saves the in-memory store to disk |
+| `NEXCONN_APP_KEY`, `NEXCONN_APP_SECRET` | Nexconn credentials (secret on the server only) |
+| `HELLO_CHAT_SECRET`, `HELLO_CHAT_OUTBOUND_URL` | Signed chat gateway bridge |
+
+The full list with comments is in [.env.example](.env.example). **Migrations**: the app's tables, including the
+document table that holds every new collection (`plans`, `avSignals`, `liveQuestions`, `seatLedgers`,
+`scheduleProposals`), are created by `src/store/postgres.ts` on start; no manual migration is needed. The separate
+Supabase design is in `supabase/migrations` ([docs/database.md](docs/database.md)).
+
+**Deployment**: `npm run build` then `npm start`, with `DATABASE_URL` set for more than one instance. Rate
+limits are per instance. Demo sign-in is not authentication: do not run a real event in demo mode.
+([docs/deployment.md](docs/deployment.md))
+
+**External services**, none required for the demo: Nexconn (credentials + token API), a caption/audio media
+provider (not chosen), an AI provider (none; every intelligent feature here is deterministic), Tavily for web
+research (optional).
+
+## Tests
 
 ```bash
-npm install
-cp .env.example .env.local          # then set HELLO_DEMO_MODE=true
-npm run dev                         # http://localhost:3000
+npm run check        # typecheck, lint, unit + integration tests, production build
+npm test             # vitest: 63 files, 663 tests
+npm run test:postgres   # the integration suite on Postgres (HELLO_TEST_DATABASE_URL)
+npx vitest run tests/resilience/benchmark.test.ts   # CON-FUZZ benchmark table
+# browser journeys, against a production demo server (HELLO_DEMO_MODE=true npx next start -p 3000):
+node tests/e2e/companion-flow.mjs   # entry, five destinations, canvas, live room, Plan B, CON-FUZZ, offline care, create a game
+npm run test:e2e     # every journey;  npm run test:routes  crawls every page as every role
 ```
 
-Open `/`, choose **Enter the demo event**, pick a demo account, and use the conversation.
-
-## Browser test
-
-```bash
-HELLO_DEMO_MODE=true npm run build && HELLO_DEMO_MODE=true npm start   # terminal 1
-CHROMIUM_PATH=/path/to/chromium BASE_URL=http://localhost:3000 npm run test:e2e   # terminal 2
-```
-
-The suite resets the demo first (`POST /api/demo/reset`), so it is repeatable. With the same server running,
-`npm run test:routes` crawls every page as every demo role, and `npm run screenshots` refreshes the README images.
-
-> **These commands reset the demo.** `test:e2e` and `test:routes` reset it before they run, and `screenshots` resets it
-> before and after capture. Anything you changed in the running demo (messages, claims, approvals) is discarded, because
-> the store is in memory. Run them against a separate server if you want to keep a demo session. `CHROMIUM_PATH` is optional when
-Playwright's own browser is installed.
-
-## Demo walkthrough (judge scenario)
-
-1. Sign in as **Ada (demo attendee)** and send: `The microphone is not working, and there are too many people in Room 3.`
-2. The reply shows two concerns: an AV incident and a capacity concern. Both attach to the existing reports for Room 3,
-   each with its match confidence. Alternative sessions are listed, and a room change is sent to an organiser.
-3. Switch to **Kiri (demo AV technician)**, open *Incidents*, and claim *Microphone crackling in Room 3*.
-   Staff ranking shows Kiri first, with reasons.
-4. Acknowledge, start work, then mark resolved with a description.
-5. Switch back to Ada, and confirm the fix (or reopen it). Confirmation closes the incident.
-6. Switch to **Nadia (demo organiser)**, open *Operations and approvals*, and approve the room move. It executes
-   against the stored schedule and records the result. (A request for a room that is already booked fails and says why.)
-7. Signal intelligence needs three independent reporters inside ten minutes. Have two more demo attendees report an audio
-   fault in Room 3, then press *Recompute from stored reports*. The insight appears for organiser review, not as an action.
-
-Every figure in the demo is seeded, illustrative data and is labelled as such.
-
-## Environment configuration
-
-See [`.env.example`](.env.example). Only `HELLO_DEMO_MODE` and `NEXCONN_APP_KEY` are read by this build.
-Supabase and AI variables are listed for the production wiring but are not read yet.
-
-## Database setup
-
-```bash
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/migrations/0001_core_schema.sql
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/seed.sql
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/0001_constraints_and_rls.sql
-```
-
-That is the separate Supabase Auth design. The app itself runs on Postgres through `src/store/postgres.ts`: set
-`DATABASE_URL` and its schema is created on first start. See [docs/database.md](docs/database.md).
-
-## Nexconn setup
-
-Obtain an app key from the Nexconn developer console and set `NEXCONN_APP_KEY`. This currently only changes the
-status message shown in **Settings**. The SDK is not installed and no connection is made. See
-[docs/nexconn-integration.md](docs/nexconn-integration.md) for the verified SDK surface and the remaining steps.
-
-## AI provider setup
-
-No provider is connected. HELLO uses its deterministic interpreter, and every interpretation says which source
-produced it. To add a provider, implement `IntentProvider` in `src/ai/intent.ts`. Its output must pass the schema,
-and it must never return actions. See [docs/ai-system.md](docs/ai-system.md).
-
-## Commands
-
-```bash
-npm run dev         # development server
-npm test            # unit and integration tests
-npm run test:e2e    # browser checks: judge flow (13), features (10), workflow audit (22), private messages (6); needs a running server
-npm run test:routes # visits every page as every demo role; checks permitted pages load and forbidden ones answer 404
-npm run screenshots # regenerates docs/screenshots/*.jpg from a running demo server
-npm run typecheck   # TypeScript
-npm run lint        # ESLint
-npm run build       # production build
-npm run check       # typecheck, lint, test and build
-npm start           # serve the production build
-```
-
-## Production build and deployment
-
-`npm run build` completes. For Vercel, use the default Next.js build with Node 20.9+, and set the environment
-variables in the dashboard. **Do not deploy a live event on this build**: data is in memory, so each serverless
-instance has its own copy, and demo sign-in is not authentication. See [docs/deployment.md](docs/deployment.md).
+Each browser suite resets the demo first. Evidence for this pass: [docs/TEST_EVIDENCE.md](docs/TEST_EVIDENCE.md).
 
 ## Status
 
-| Area | Status |
+| | Area |
 |---|---|
-| Incident intake, duplicate matching, lifecycle, claims, resolution, confirmation, reopening | Implemented and tested (unit + integration) |
-| Assignment ranking | Implemented and tested |
-| Capacity-aware session alternatives | Implemented and tested |
-| Approvals with separate execution | Implemented and tested (one executor for room moves, one for announcements) |
-| Signal intelligence with human review | Implemented and tested |
-| People discovery with consent | Implemented and tested |
-| Notifications with dedupe | Implemented and tested; in-app, pushed live, and delivered to linked chat accounts through the chat gateway |
-| Role-aware UI, operations view, incident detail | Implemented; checked in a browser (Playwright suites and a route crawl of every page as every role) |
-| Persistence | **Postgres** (`DATABASE_URL`): durable, several instances; integration suite and all browser journeys pass on it. In-memory store otherwise |
-| Live updates, presence, typing | Implemented; Server-Sent Events, across instances via Postgres LISTEN/NOTIFY; tested across two server processes |
-| Search | Implemented; permission-aware, in the command palette |
-| Supabase schema, constraints, RLS | Written; verified on PostgreSQL 16; a separate design for Supabase Auth |
-| Sign-in | **Demo shortcut only**, not authentication |
-| Nexconn messaging | Chat gateway built and tested (linking, signed inbound, delivery outbox); **the Nexconn-side bridge is yours to write** (docs/nexconn-integration.md) |
-| AI provider | **Not connected**; deterministic interpreter in use |
-| Agent mesh (triage, sentinel, context, event guide, web, coordinator, grounding) | Implemented and tested; event guide is seeded demo data |
-| Web research | Implemented behind a provider boundary (Tavily adapter); tested with fake providers, **not exercised against the live API** |
-| Profiles, follows, data export and erasure | Implemented and tested on both stores |
-| Video calls | Implemented; verified with two real browsers exchanging video peer to peer |
-| Offline outbox, opt-in leaderboard, time-zone seasons | Implemented and tested |
-| End-to-end encrypted private messages | Implemented; tested in Node and between two real browser profiles. **No forward secrecy**, one key per device |
-| Venue map (plan, 3D, heat) and step-free routing | Implemented and tested; the venue is hand-drawn demo data |
-| Moments: stories, highlights, memoreels, explore, saves, Open Feed Charter, posting rules | Implemented and tested (unit, integration, browser route crawl); memory store only |
-| Meadow redesign: every page, shell with phone tab bar, landing scene | Implemented; checked by seven Playwright journeys and a crawl of 390 pages as every role |
-| Content-Security-Policy and cross-site Origin check | Implemented (production builds) |
-| Browser end-to-end test of the judge flow (13 checks, Playwright) | Implemented; run against a demo server |
-| Visual regression, accessibility audit, load tests | **Not done** |
-| Equipment/resource management, staff directory, announcement management, admin screens, audit log UI, session seat holds | **Not built** |
-| Personal schedule planner | **Not built**; clash checks use only the current session |
+| **Verified and working** | One-button entry; five-destination navigation and phone tab bar; Today; Explore; Live hub and live room (questions, can't hear/see → one AV incident, Better now?); personal plan; Plan B with atomic seat holds and room-full QR; venue and AV board; CON-FUZZ end to end with approval and targeted notifications; care page offline (production build); Create a game; workflow canvas fully connected and painted; all earlier features listed in [docs/FEATURE_REFERENCE.md](docs/FEATURE_REFERENCE.md) |
+| **Implemented, externally blocked** | Nexconn token issuance (needs credentials and the Platform Chat API docs); Nexconn Call SDK at runtime (peer override untested without credentials); captions, listen-in audio and slides (no media provider) |
+| **Partial** | Schedule reconciliation: approved changes reconcile plans and notify; the two-minute official-feed reconciler (Grace Period) is not built. People worth meeting: declared interests and planned speakers only |
+| **Planned** | Graph database and Kairos (ranking, relationship memory, follow-ups, cross-event recall, contact QR), speed networking, sponsor offers, jargon coach and recap, post-talk report ([docs/HELLO_IMPLEMENTATION_ROADMAP.md](docs/HELLO_IMPLEMENTATION_ROADMAP.md)) |
+| **Demo-only** | Demo sign-in; seeded people, venue, occupancy and incidents; the CON-FUZZ v1 benchmark world and its 40 seeded variations |
 
-## Security
-
-Server-side authorisation on every write, cross-event isolation, attendee privacy, append-only audit,
-four-eyes approvals, and RLS policies are implemented. Known limitations are listed in
-[docs/security.md](docs/security.md) and must be resolved before any real use.
+Known limitations: an approved multi-session change is applied session by session (the approval itself is
+decided once); rate limits are per instance; private messages have no forward secrecy; visual regression,
+accessibility audit and load tests are not done.
 
 ## Licence
 
-No licence has been chosen for this repository yet. Nexconn SDK packages are distributed under their own licences.
+No licence has been chosen for this repository yet. The privacy filter is AGPL-3.0 (see
+[docs/UPSTREAM_INTEGRATION_AUDIT.md](docs/UPSTREAM_INTEGRATION_AUDIT.md)); the vendored Nexconn skill is
+Apache-2.0; Nexconn SDK packages are distributed under their own licences.

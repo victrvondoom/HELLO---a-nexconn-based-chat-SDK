@@ -11,60 +11,44 @@ import { createOptions } from './CreateMenu';
 type Sheet = 'menu' | 'create' | null;
 
 /**
- * Phone navigation: five thumbs-reach tabs (Home, Moments, Create, Messages, Menu), like the apps people
- * already live in. "Menu" opens every section the sidebar offers; "Create" offers story, post or report.
- * Shown only below 900px (see shell.css); the sidebar covers wider screens.
+ * Phone navigation: the same destinations as the sidebar (Today, Explore, Live, People) and a Menu that
+ * holds the Kingdom, Operations for staff, Create, and every other page. Shown only below 900px.
  */
 export function MobileTabBar({
   eventId,
   groups,
+  kingdom,
   more,
   settings,
   canPost,
-  unreadMessages = 0,
 }: {
   eventId: string;
   groups: NavGroup[];
+  kingdom: NavLinkItem;
   more: NavLinkItem[];
   settings: NavLinkItem;
   canPost: boolean;
-  unreadMessages?: number;
 }) {
   const pathname = usePathname();
   const [sheet, setSheet] = useState<Sheet>(null);
   const close = useCallback(() => {
     setSheet(null);
   }, []);
-  const base = `/events/${eventId}`;
 
   useEffect(() => {
     setSheet(null);
   }, [pathname]);
 
-  const tabs: Array<{ item: NavLinkItem; short: string }> = [
-    { item: { href: base, label: 'Home', icon: 'home', exact: true }, short: 'Home' },
-    { item: { href: `${base}/feed`, label: 'Moments', icon: 'camera' }, short: 'Moments' },
-    { item: { href: `${base}/messages`, label: 'Messages', icon: 'lock', count: unreadMessages }, short: 'Messages' },
-  ];
-  const [home, moments, messages] = tabs;
+  const primary = groups.flatMap((g) => g.items);
+  const tabs = primary.slice(0, 4);
+  const rest = primary.slice(4);
 
   return (
     <>
       <nav className="tabbar" aria-label="Quick navigation">
-        {home ? <Tab item={home.item} label={home.short} pathname={pathname} /> : null}
-        {moments ? <Tab item={moments.item} label={moments.short} pathname={pathname} /> : null}
-        <button
-          type="button"
-          className="tabbar__create"
-          aria-label="Create"
-          aria-expanded={sheet === 'create'}
-          onClick={() => {
-            setSheet(sheet === 'create' ? null : 'create');
-          }}
-        >
-          <Icon name="plus" size={24} />
-        </button>
-        {messages ? <Tab item={messages.item} label={messages.short} pathname={pathname} /> : null}
+        {tabs.map((item) => (
+          <Tab key={item.href} item={item} label={item.label} pathname={pathname} />
+        ))}
         <button
           type="button"
           className="tabbar__tab"
@@ -80,16 +64,17 @@ export function MobileTabBar({
 
       {sheet === 'menu' ? (
         <BottomSheet label="Menu" onClose={close}>
-          {groups.map((g) => (
-            <section key={g.id} className="sheet__group">
-              {g.label ? <h2 className="nav-group">{g.label}</h2> : null}
-              <div className="sheet__grid">
-                <NavLinks items={g.items} />
-              </div>
-            </section>
-          ))}
           <section className="sheet__group">
-            <h2 className="nav-group">More</h2>
+            <div className="sheet__grid">
+              <NavLinks items={[kingdom, ...rest]} />
+              <button type="button" className="nav-link" onClick={() => { setSheet('create'); }}>
+                <Icon name="plus" size={18} />
+                <span className="grow">Create</span>
+              </button>
+            </div>
+          </section>
+          <section className="sheet__group">
+            <h2 className="nav-group">Everything else</h2>
             <div className="sheet__grid">
               <NavLinks items={[...more, settings]} />
             </div>

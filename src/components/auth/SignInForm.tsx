@@ -24,7 +24,7 @@ export function SignInForm({ demo }: { demo: boolean }) {
         password: form.get('password'),
         ...(mode === 'register' ? { displayName: form.get('displayName') } : {}),
       });
-      router.push(`/events/${eventId}/flow`);
+      router.push(`/events/${eventId}`);
       router.refresh();
     } catch (e: unknown) {
       setError(errorText(e));

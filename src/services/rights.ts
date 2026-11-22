@@ -1,3 +1,4 @@
+import { exportCompanion, eraseCompanion } from './live-room';
 import { DomainError } from '../domain/errors';
 import { audit, type ServiceContext } from './context';
 import { ownProfileText } from './social';
@@ -94,6 +95,7 @@ export async function exportMyData(ctx: ServiceContext, userId: string) {
     accessTokens: (await ctx.store.docList('apiTokens', { userId })).map((t) => ({ name: t.name, scope: t.scope, createdAt: new Date(t.createdAt).toISOString() })),
     placeMemory: await exportPlaces(ctx, userId),
     customMaps: await exportCustomMaps(ctx, userId),
+    companion: await exportCompanion(ctx, userId),
     privacyFilter: await exportPrivacyFilter(ctx, userId),
     workflowRuns: (await ctx.store.docList('workflowRuns', { actorId: userId })).map((r) => ({ workflow: r.workflowId, status: r.status, at: new Date(r.startedAt).toISOString() })),
     linkedChatAccounts: (await ctx.store.docList('chatLinks', { userId })).map((l) => ({ transport: l.transport, account: l.externalUserId, linkedAt: new Date(l.createdAt).toISOString() })),
@@ -140,6 +142,8 @@ export interface ErasureReport {
   /** Personal places and collections, in every event. */
   placeRecords: number;
   customMapRecords: number;
+  /** Plan, AV signals, live questions and votes, Plan B seat holds. */
+  companionRecords: number;
   /** Own stories (with their files), highlights and saves. */
   momentsRecords: number;
   /** The person's views and reactions removed from other people's stories. */
@@ -233,6 +237,7 @@ export async function eraseMe(ctx: ServiceContext, userId: string): Promise<Eras
     fieldAtlasRecords: await eraseFieldAtlas(ctx, userId, eventIds),
     placeRecords: await erasePlaces(ctx, userId),
     customMapRecords: await eraseCustomMaps(ctx, userId),
+    companionRecords: await eraseCompanion(ctx, userId),
     momentsRecords: moments.records,
     storyInteractions: moments.interactions,
     notifications: await ctx.store.deleteNotificationsFor(userId),

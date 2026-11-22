@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { api, errorText, useLive } from '@/components/live/client';
 import { useFeedback } from '@/components/ui/Feedback';
 import type { GameView } from '@/services/games';
+import { CreateQuiz } from './CreateQuiz';
 
 const KIND = { FOUR: 'Four in a row', QUIZ: 'Schedule quiz' } as const;
 
@@ -46,6 +47,7 @@ export function GameLobby({ eventId, initial, canPlay }: { eventId: string; init
               <button type="button" className="button button--sm" onClick={() => { start('QUIZ'); }}>New quiz</button>
             </div>
           </div>
+          <CreateQuiz eventId={eventId} />
         </div>
       ) : null}
       <section className="panel" aria-labelledby="games-heading">
@@ -59,7 +61,7 @@ export function GameLobby({ eventId, initial, canPlay }: { eventId: string; init
             {data.games.map((g) => (
               <li key={g.id}>
                 <span>
-                  <Link href={`/events/${eventId}/games/${g.id}`}>{KIND[g.kind]}</Link> <span className="muted">· started by {g.host}</span>
+                  <Link href={`/events/${eventId}/games/${g.id}`}>{g.title ?? KIND[g.kind]}</Link> <span className="muted">· started by {g.host}</span>
                 </span>
                 <span className={g.canJoin || (g.status === 'ACTIVE' && g.seat === g.turn && g.kind === 'FOUR') ? 'badge badge--accent' : 'badge'}>{statusText(g)}</span>
               </li>

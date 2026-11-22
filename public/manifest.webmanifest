@@ -1,0 +1,10 @@
+{
+  "name": "HELLO",
+  "short_name": "HELLO",
+  "description": "Your event companion: today, explore, live, people.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2b2f7a",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}

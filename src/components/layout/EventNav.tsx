@@ -1,11 +1,10 @@
 import Link from 'next/link';
 import { NavLinks, NavMore } from './NavLinks';
-import { CreateMenu } from './CreateMenu';
 import { MobileTabBar } from './MobileTabBar';
 import { buildNav, type NavInput } from './nav-model';
 import { HaloMark, Wordmark } from '@/components/brand/Wordmark';
-import { Ghat } from '@/components/brand/Scenery';
 import { Avatar } from '@/components/social/Avatar';
+import { Icon } from '@/components/ui/Icon';
 
 interface EventNavProps extends NavInput {
   eventName: string;
@@ -16,8 +15,9 @@ interface EventNavProps extends NavInput {
 }
 
 /**
- * The sidebar on wide screens and the tab bar on phones. Navigation is role-aware for presentation only:
- * each page re-checks the viewer's capability on the server, so a hidden link is never the security control.
+ * The sidebar on wide screens and the tab bar on phones. Deliberately small: the five destinations, one
+ * invitation into the 3D Kingdom, and everything else folded away. Navigation is role-aware for
+ * presentation only: each page re-checks the viewer's capability on the server.
  */
 export function EventNav(props: EventNavProps) {
   const nav = buildNav(props);
@@ -25,27 +25,14 @@ export function EventNav(props: EventNavProps) {
 
   return (
     <>
-      <aside className="sidebar" aria-label="Event navigation">
+      <aside className="sidebar sidebar--calm" aria-label="Event navigation">
         <Link href={base} className="brand" aria-label="HELLO home">
-          <HaloMark size={36} />
+          <HaloMark size={32} />
           <span className="brand__text">
-            <Wordmark height={24} id="wm-nav" title="HELLO" />
-            <span className="brand__sub">Your event, at home</span>
+            <Wordmark height={22} id="wm-nav" title="HELLO" />
+            <span className="brand__sub">{props.eventName}</span>
           </span>
         </Link>
-
-        <div className="event-card">
-          <Ghat id="ghat-nav" className="event-card__scene" />
-          <span className="event-card__text">
-            <strong>{props.eventName}</strong>
-            <span>
-              <span className="event-card__dot" aria-hidden="true" />
-              {props.isDemo ? 'Demo event · seeded data' : 'Happening now'}
-            </span>
-          </span>
-        </div>
-
-        <CreateMenu eventId={props.eventId} canPost={props.canPost} />
 
         <nav aria-label="Primary" className="nav">
           {nav.groups.map((group) => (
@@ -54,21 +41,30 @@ export function EventNav(props: EventNavProps) {
               <NavLinks items={group.items} />
             </div>
           ))}
+          <Link href={nav.kingdom.href} className="kingdom-door">
+            <span className="kingdom-door__icon" aria-hidden="true">
+              <Icon name="sparkle" size={18} />
+            </span>
+            <span className="grow">
+              <strong>Enter the Kingdom</strong>
+              <span className="xs">Your 3D world</span>
+            </span>
+          </Link>
           <div className="nav-section">
-            <NavMore items={nav.more} />
+            <NavMore items={nav.more} label="Everything else" />
           </div>
         </nav>
 
         <Link href={nav.settings.href} className="nav-foot">
-          <Avatar name={props.displayName} size={36} />
+          <Avatar name={props.displayName} size={32} />
           <span className="nav-foot__text">
             <strong>{props.displayName}</strong>
-            <span className="faint xs">{props.roleLabel} · Profile and settings</span>
+            <span className="faint xs">{props.roleLabel}{props.isDemo ? ' · demo' : ''}</span>
           </span>
         </Link>
       </aside>
 
-      <MobileTabBar eventId={props.eventId} groups={nav.groups} more={nav.more} settings={nav.settings} canPost={props.canPost} />
+      <MobileTabBar eventId={props.eventId} groups={nav.groups} kingdom={nav.kingdom} more={nav.more} settings={nav.settings} canPost={props.canPost} />
     </>
   );
 }
