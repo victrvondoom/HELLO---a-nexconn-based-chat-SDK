@@ -701,6 +701,32 @@ export interface KingdomForge {
   decidedAt: number | null;
 }
 
+/** A pin on a custom map, placed in fractions of the picture (0..1), so it stays put at any size. */
+export interface CustomMapPin {
+  id: string;
+  x: number;
+  y: number;
+  label: string;
+  kind: 'PLACE' | 'EXIT' | 'MEET' | 'HELP';
+}
+
+/**
+ * A map a person made for an event: their own picture, a frame from a video, or a sketch, with labelled pins.
+ * Private to its owner until they share it with the event.
+ */
+export interface CustomMap {
+  id: string;
+  eventId: string;
+  ownerId: string;
+  name: string;
+  mediaId: string;
+  source: 'IMAGE' | 'VIDEO_FRAME' | 'SKETCH';
+  shared: boolean;
+  pins: CustomMapPin[];
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface Collections {
   accounts: AuthAccount;
   authSessions: SessionRecord;
@@ -742,6 +768,7 @@ export interface Collections {
   kingdomCitizens: KingdomCitizen;
   kingdomChronicle: KingdomChronicle;
   kingdomForges: KingdomForge;
+  customMaps: CustomMap;
 }
 
 export type CollectionName = keyof Collections;
@@ -787,4 +814,5 @@ export const COLLECTION_NAMES: readonly CollectionName[] = [
   'kingdomCitizens',
   'kingdomChronicle',
   'kingdomForges',
+  'customMaps',
 ];

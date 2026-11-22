@@ -23,24 +23,24 @@ body {
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  font-feature-settings: 'cv11', 'ss01';
+  font-variation-settings: 'wdth' 96;
 }
 
-/* A soft sky over warm paper, with a faint print grain: lit from above like an afternoon outside.
-   The grain is a background layer, so it textures the paper and never the content on top of it. */
+/* Pure white, with the light of a sunset at the edges of the window: teal from the left, rani and saffron from the
+   bottom corners. The glow is fixed, so glass panels scrolling over it pick up colour like panes in a jharokha. */
 body {
   min-height: 100vh;
   background-color: var(--paper);
   background-image:
-    var(--grain),
-    radial-gradient(1200px 420px at 18% -120px, rgb(166 213 246 / 0.55), transparent 70%),
-    radial-gradient(900px 380px at 88% -160px, rgb(180 223 144 / 0.35), transparent 70%);
-  background-size: 220px 220px, auto, auto;
-  background-repeat: repeat, no-repeat, no-repeat;
+    radial-gradient(40% 50% at -6% 8%, rgb(30 155 183 / 0.16), transparent 70%),
+    radial-gradient(36% 46% at 106% 4%, rgb(131 145 232 / 0.18), transparent 70%),
+    radial-gradient(40% 40% at -4% 104%, rgb(214 51 127 / 0.12), transparent 70%),
+    radial-gradient(44% 44% at 104% 104%, rgb(242 165 22 / 0.16), transparent 70%);
+  background-attachment: fixed;
 }
 
 ::selection {
-  background: var(--sun-300);
+  background: var(--kesar-300);
   color: var(--ink);
 }
 
@@ -87,14 +87,15 @@ h4 {
 h1 {
   font-family: var(--font-serif);
   font-weight: 400;
-  font-size: clamp(30px, 3.4vw, 40px);
-  line-height: 1.08;
-  letter-spacing: -0.015em;
+  font-size: clamp(28px, 3.1vw, 37px);
+  line-height: 1.12;
+  letter-spacing: -0.01em;
 }
 
 h1 em,
 .serif-em {
   font-style: italic;
+  color: var(--neel-700);
 }
 
 h2 {
@@ -180,12 +181,12 @@ code {
 }
 
 .eyebrow {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--grass-800);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  font-variation-settings: 'wdth' 86;
+  letter-spacing: 0.01em;
+  color: var(--kesar-700);
 }
 
 .text-sky {

@@ -5,6 +5,7 @@ import { deletePost } from './feed';
 import { deleteStory } from './moments';
 import { endAllSessions } from './auth';
 import { erasePlaces, exportPlaces } from './places';
+import { eraseCustomMaps, exportCustomMaps } from './custom-maps';
 import { erasePrivacyFilter, exportPrivacyFilter } from './privacy-filter';
 import { disconnectTwitch } from './privacy-twitch';
 import { eraseKingdoms, exportKingdomData } from './kingdoms';
@@ -92,6 +93,7 @@ export async function exportMyData(ctx: ServiceContext, userId: string) {
     liveLocation: (await ctx.store.docList('locations', { userId })).map((l) => ({ audience: l.audience, approximate: l.approximate, until: new Date(l.expiresAt).toISOString() })),
     accessTokens: (await ctx.store.docList('apiTokens', { userId })).map((t) => ({ name: t.name, scope: t.scope, createdAt: new Date(t.createdAt).toISOString() })),
     placeMemory: await exportPlaces(ctx, userId),
+    customMaps: await exportCustomMaps(ctx, userId),
     privacyFilter: await exportPrivacyFilter(ctx, userId),
     workflowRuns: (await ctx.store.docList('workflowRuns', { actorId: userId })).map((r) => ({ workflow: r.workflowId, status: r.status, at: new Date(r.startedAt).toISOString() })),
     linkedChatAccounts: (await ctx.store.docList('chatLinks', { userId })).map((l) => ({ transport: l.transport, account: l.externalUserId, linkedAt: new Date(l.createdAt).toISOString() })),
@@ -137,6 +139,7 @@ export interface ErasureReport {
   fieldAtlasRecords: number;
   /** Personal places and collections, in every event. */
   placeRecords: number;
+  customMapRecords: number;
   /** Own stories (with their files), highlights and saves. */
   momentsRecords: number;
   /** The person's views and reactions removed from other people's stories. */
@@ -229,6 +232,7 @@ export async function eraseMe(ctx: ServiceContext, userId: string): Promise<Eras
     kingdomRecords: await eraseKingdoms(ctx, userId, eventIds),
     fieldAtlasRecords: await eraseFieldAtlas(ctx, userId, eventIds),
     placeRecords: await erasePlaces(ctx, userId),
+    customMapRecords: await eraseCustomMaps(ctx, userId),
     momentsRecords: moments.records,
     storyInteractions: moments.interactions,
     notifications: await ctx.store.deleteNotificationsFor(userId),

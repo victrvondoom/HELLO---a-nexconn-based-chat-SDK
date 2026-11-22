@@ -55,7 +55,7 @@
 .moments-nav__tab[aria-current='page'] {
   background: var(--sun-400);
   color: var(--ink);
-  box-shadow: inset 0 0 0 1px rgb(var(--ink-rgb) / 0.14), 0 6px 14px -10px rgb(122 82 0 / 0.6);
+  box-shadow: inset 0 0 0 1px rgb(var(--ink-rgb) / 0.14), 0 6px 14px -10px rgb(122 74 0 / 0.6);
 }
 
 /* ---------- backdrops: six painted scenes for words ---------- */
@@ -70,38 +70,66 @@
 }
 
 .backdrop--meadow {
+  /* Mehendi: leaf green with a fine henna vine of dots. */
   background:
-    radial-gradient(120% 55% at 22% 112%, #2a7134 0 50%, transparent 51%),
-    radial-gradient(110% 50% at 86% 118%, #47a75a 0 52%, transparent 53%),
-    radial-gradient(150% 46% at 50% 128%, #6dbb5a 0 55%, transparent 56%),
-    radial-gradient(30% 22% at 78% 22%, rgb(255 246 200 / 0.75), transparent 70%),
-    linear-gradient(180deg, #1d5fa6, #4f9bd8 62%, #bfe1f7);
+    radial-gradient(circle, rgb(255 255 255 / 0.22) 1.3px, transparent 1.8px) 0 0 / 14px 14px,
+    radial-gradient(circle, rgb(255 255 255 / 0.12) 4px, transparent 4.6px) 7px 7px / 28px 28px,
+    radial-gradient(80% 60% at 25% 20%, #8cc15a, transparent 70%),
+    linear-gradient(165deg, #6aa83a 0%, #3e7a1e 55%, #24500f 100%);
 }
 
 .backdrop--sky {
+  /* Blue pottery: a white glaze with an indigo rim and a painted centre. */
   background:
-    radial-gradient(40% 14% at 26% 30%, rgb(255 255 255 / 0.75), transparent 70%),
-    radial-gradient(34% 12% at 74% 58%, rgb(255 255 255 / 0.6), transparent 70%),
-    radial-gradient(24% 9% at 60% 18%, rgb(255 255 255 / 0.55), transparent 70%),
-    linear-gradient(180deg, #164a88 0%, #2a72b9 45%, #6fb2e4 80%, #a6d5f6 100%);
+    radial-gradient(circle at 50% 50%, transparent 0 58%, rgb(255 255 255 / 0.9) 58.5% 60%, transparent 60.5%),
+    radial-gradient(circle at 50% 50%, rgb(42 56 150 / 0.12) 0 20%, transparent 20.5%),
+    repeating-conic-gradient(from 0deg at 50% 50%, rgb(255 255 255 / 0.14) 0 5deg, transparent 5deg 15deg),
+    radial-gradient(circle at 50% 46%, #3a4bb8 0%, #2a3896 55%, #18205c 100%);
 }
 
 .backdrop--dusk {
+  /* Ghat at dusk: steps into the river, the sky going from indigo through rani to saffron. */
   background:
-    radial-gradient(120% 50% at 30% 118%, #2b2140 0 50%, transparent 51%),
-    radial-gradient(110% 46% at 85% 122%, #3d2c55 0 52%, transparent 53%),
-    radial-gradient(34% 24% at 50% 74%, rgb(255 214 140 / 0.9), transparent 70%),
-    linear-gradient(180deg, #2c2a6b 0%, #7a4b8f 38%, #e5866a 72%, #f7c27a 100%);
+    repeating-linear-gradient(180deg, rgb(16 21 63 / 0.9) 0 6px, rgb(16 21 63 / 0.75) 6px 9px) 0 100% / 100% 22% no-repeat,
+    radial-gradient(30% 20% at 50% 72%, rgb(249 210 127 / 0.95), transparent 70%),
+    linear-gradient(180deg, #1f2a78 0%, #6a4fb0 32%, #d6337f 62%, #f6bc4a 86%, #fce5b5 100%);
 }
 
 .backdrop--sun {
   color: var(--ink);
+  /* Haldi: a turmeric sunburst. */
   background:
-    repeating-conic-gradient(from 0deg at 50% 50%, rgb(255 255 255 / 0.16) 0 6deg, transparent 6deg 18deg),
-    radial-gradient(circle at 50% 50%, #fffbea 0 18%, #f9df86 38%, #f4c430 62%, #e5a43a 100%);
+    repeating-conic-gradient(from 0deg at 50% 50%, rgb(255 255 255 / 0.18) 0 6deg, transparent 6deg 18deg),
+    radial-gradient(circle at 50% 50%, #fffaf0 0 16%, #f9d27f 36%, #f2a516 62%, #d9861a 100%);
 }
 
 .backdrop--sun .backdrop__text {
+  color: var(--ink);
+  text-shadow: 0 1px 0 rgb(255 255 255 / 0.5);
+}
+
+.backdrop--night {
+  /* Diwali night: diyas along the bottom, small stars above. */
+  background:
+    radial-gradient(1.2px 1.2px at 12% 18%, #fff 50%, transparent 60%),
+    radial-gradient(1px 1px at 32% 42%, #fff 50%, transparent 60%),
+    radial-gradient(1.4px 1.4px at 62% 14%, #fff 50%, transparent 60%),
+    radial-gradient(1px 1px at 82% 34%, #fff 50%, transparent 60%),
+    radial-gradient(1.2px 1.2px at 46% 26%, #fff 50%, transparent 60%),
+    radial-gradient(circle at 50% 50%, #ffe6a3 0 2.5px, rgb(242 165 22 / 0.55) 4px, transparent 12px) 0 92% / 16.66% 18% repeat-x,
+    linear-gradient(180deg, #10153f 0%, #18205c 60%, #3a1f4f 100%);
+}
+
+.backdrop--clover {
+  /* Bandhani: tie-dye dots on rani cloth. */
+  background:
+    radial-gradient(circle, #fce5b5 0 1.6px, transparent 2px) 0 0 / 16px 16px,
+    radial-gradient(circle, rgb(255 255 255 / 0.85) 0 1.6px, transparent 2px) 8px 8px / 16px 16px,
+    radial-gradient(70% 60% at 30% 30%, #e45a95, transparent 70%),
+    linear-gradient(160deg, #d6337f 0%, #a31c5e 55%, #7d1446 100%);
+}
+
+.backdrop__text {
   color: var(--ink);
   text-shadow: 0 1px 0 rgb(255 255 255 / 0.5);
 }
@@ -139,7 +167,7 @@
   text-wrap: balance;
   overflow-wrap: anywhere;
   color: #fff;
-  text-shadow: 0 2px 18px rgb(4 30 60 / 0.45);
+  text-shadow: 0 2px 18px rgb(16 21 63 / 0.45);
 }
 
 .backdrop__text .tag-link {
@@ -246,14 +274,14 @@
   text-overflow: ellipsis;
 }
 
-/* A gradient band (2.5px) with a paper gap (3px) inside it, around the avatar. */
+/* An unseen story wears a blue-pottery rim (2.5px of painted petals) with a white gap inside it, around the avatar. */
 .ring {
-  --ring-angle: 210deg;
+  --ring-angle: 0deg;
   display: inline-flex;
   padding: 5.5px;
   border: 0;
   border-radius: 50%;
-  background: conic-gradient(from var(--ring-angle), var(--grass-500), var(--sky-500), var(--sun-500), var(--clay-500), var(--grass-500));
+  background: repeating-conic-gradient(from var(--ring-angle), var(--neel-700) 0deg 9deg, var(--kesar-400) 9deg 12deg, var(--neel-500) 12deg 21deg, #fff 21deg 24deg);
   cursor: pointer;
   transition: transform var(--t-med) var(--ease-spring);
 }
@@ -332,8 +360,8 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(60% 50% at 50% 40%, rgb(31 111 53 / 0.35), transparent 70%),
-    rgb(6 18 12 / 0.92);
+    radial-gradient(60% 50% at 50% 40%, rgb(42 56 150 / 0.35), transparent 70%),
+    rgb(10 12 36 / 0.92);
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   animation: fade-in var(--t-med) ease;
@@ -346,7 +374,7 @@
   border-radius: 26px;
   overflow: hidden;
   color: #fff;
-  background: #0f2418;
+  background: #10153f;
   box-shadow: 0 40px 100px -30px rgb(0 0 0 / 0.8);
   animation: story-in var(--t-slow) var(--ease-spring);
 }
@@ -633,7 +661,7 @@
 }
 
 .story-emoji.is-on {
-  background: rgb(244 196 48 / 0.4);
+  background: rgb(242 165 22 / 0.4);
   box-shadow: inset 0 0 0 2px var(--sun-400);
 }
 
@@ -666,7 +694,7 @@
 }
 
 .story-pill--danger {
-  border-color: rgb(248 203 194 / 0.6);
+  border-color: rgb(246 198 191 / 0.6);
 }
 
 .story-nexconn {
@@ -783,7 +811,7 @@
 }
 
 .backdrop--sun .story-card__input::placeholder {
-  color: rgb(20 35 26 / 0.55);
+  color: rgb(24 26 53 / 0.55);
 }
 
 .story-card__input--caption {
@@ -1114,7 +1142,7 @@
   line-height: 1.2;
   text-align: center;
   color: #fff;
-  text-shadow: 0 2px 14px rgb(4 30 60 / 0.4);
+  text-shadow: 0 2px 14px rgb(16 21 63 / 0.4);
   resize: none;
 }
 
@@ -1131,7 +1159,7 @@
   position: relative;
   overflow: hidden;
   border-radius: 14px;
-  background: #0f2418;
+  background: #10153f;
 }
 
 .pcomposer__preview img,
@@ -1248,7 +1276,7 @@
 .mpost__visual {
   position: relative;
   overflow: hidden;
-  background: #0f2418;
+  background: #10153f;
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
@@ -1471,7 +1499,7 @@
   height: 54px;
   border-radius: 50%;
   background:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2314231a' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center / 24px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23181a35' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center / 24px no-repeat,
     var(--ring-gradient);
   box-shadow: inset 0 0 0 4px var(--paper), 0 0 0 1px var(--line);
 }
@@ -1493,7 +1521,7 @@
   overflow: hidden;
   border: 0;
   border-radius: 16px;
-  background: #0f2418;
+  background: #10153f;
   cursor: pointer;
   box-shadow: var(--e1);
   transition: transform var(--t-med) var(--ease-out), box-shadow var(--t-med) var(--ease-out);
@@ -1538,7 +1566,7 @@
 
 .mtile__words.backdrop span {
   color: #fff;
-  text-shadow: 0 2px 12px rgb(4 30 60 / 0.45);
+  text-shadow: 0 2px 12px rgb(16 21 63 / 0.45);
 }
 
 .mtile__words.backdrop--sun span {
@@ -1570,7 +1598,7 @@
   gap: 16px;
   font-weight: 700;
   color: #fff;
-  background: rgb(6 18 12 / 0.45);
+  background: rgb(10 12 36 / 0.45);
   opacity: 0;
   transition: opacity var(--t-med) ease;
 }
@@ -1602,7 +1630,7 @@
 .post-layer__backdrop {
   position: absolute;
   inset: 0;
-  background: rgb(6 18 12 / 0.6);
+  background: rgb(10 12 36 / 0.6);
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   animation: fade-in var(--t-med) ease;
@@ -1666,7 +1694,7 @@
   max-width: 100%;
   overflow: hidden;
   border-radius: 24px;
-  background: #0f2418;
+  background: #10153f;
   box-shadow: var(--e3);
   touch-action: manipulation;
   user-select: none;

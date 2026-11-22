@@ -1,8 +1,12 @@
+import { flowerPath, Lotus } from './Motifs';
+
+const LOTUS = flowerPath(8, 11.5, 0.55, 'point');
+
 /**
  * The HELLO wordmark, drawn as rounded strokes rather than set in a font, so it looks the same
- * everywhere. Grass runs into sky through the letters; the O is a sun ring around a small horizon,
- * sky over green hills: the "home" of the Meadow design. `id` keeps gradient ids unique when the
- * mark appears twice on one page.
+ * everywhere. The letters are an indigo thread that slowly takes up rani pink, like cloth in a dye vat;
+ * the O is a saffron ring around a rangoli lotus on an indigo tile: the Jharokha design in one mark.
+ * `id` keeps gradient ids unique when the mark appears twice on one page.
  */
 export function Wordmark({
   height = 32,
@@ -30,22 +34,22 @@ export function Wordmark({
     >
       <defs>
         <linearGradient id={flow} x1="0" y1="0" x2="240" y2="0" gradientUnits="userSpaceOnUse" spreadMethod="reflect">
-          <stop offset="0" stopColor="#1f6f35" />
-          <stop offset="0.35" stopColor="#2d8a43" />
-          <stop offset="0.6" stopColor="#47a75a" />
-          <stop offset="0.85" stopColor="#1f7fc9" />
-          <stop offset="1" stopColor="#1f6f35" />
+          <stop offset="0" stopColor="#2a3896" />
+          <stop offset="0.4" stopColor="#3a4bb8" />
+          <stop offset="0.62" stopColor="#2a3896" />
+          <stop offset="0.86" stopColor="#a31c5e" />
+          <stop offset="1" stopColor="#2a3896" />
           <animateTransform attributeName="gradientTransform" type="translate" values="0 0;240 0;0 0" dur="12s" repeatCount="indefinite" />
         </linearGradient>
         <linearGradient id={ring} x1="168" y1="10" x2="232" y2="64" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#f9df86" />
-          <stop offset="0.45" stopColor="#f4c430" />
-          <stop offset="1" stopColor="#e5866a" />
+          <stop offset="0" stopColor="#f9d27f" />
+          <stop offset="0.45" stopColor="#f2a516" />
+          <stop offset="1" stopColor="#d6337f" />
           <animateTransform attributeName="gradientTransform" type="rotate" values="0 200 37;360 200 37" dur="9s" repeatCount="indefinite" />
         </linearGradient>
         <linearGradient id={gem} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#6db8ee" />
-          <stop offset="1" stopColor="#cfe8fa" />
+          <stop offset="0" stopColor="#3a4bb8" />
+          <stop offset="1" stopColor="#18205c" />
         </linearGradient>
         <clipPath id={`${id}-horizon`}>
           <circle cx="200" cy="37" r="14.5" />
@@ -64,27 +68,26 @@ export function Wordmark({
         <path d="M141 12 V46 Q141 60 155 60 H161" />
       </g>
 
-      {/* O: a sun ring around a small horizon: sky, a low sun, and two green hills. */}
+      {/* O: a saffron ring around a rangoli lotus on indigo. */}
       <g className="wordmark__halo">
         <ellipse cx="200" cy="37" rx="25" ry="24" fill="none" stroke={`url(#${ring})`} strokeWidth="11" />
         <g className="wordmark__gem" clipPath={`url(#${id}-horizon)`}>
           <rect x="184" y="21" width="32" height="32" fill={`url(#${gem})`} />
-          <circle cx="206" cy="31" r="3.2" fill="#f9df86" />
-          <path d="M184 44 Q194 36 204 42 T216 40 V54 H184 Z" fill="#47a75a" />
-          <path d="M184 48 Q196 42 216 47 V54 H184 Z" fill="#1f6f35" />
+          <path d={LOTUS} transform="translate(200 37)" fill="#f9d27f" />
+          <circle cx="200" cy="37" r="2.6" fill="#d6337f" />
         </g>
-        <path className="wordmark__glint" d="M222 8 l1.6 4.4 4.4 1.6 -4.4 1.6 -1.6 4.4 -1.6 -4.4 -4.4 -1.6 4.4 -1.6z" fill="#f4c430" />
+        <path className="wordmark__glint" d="M222 8 l1.6 4.4 4.4 1.6 -4.4 1.6 -1.6 4.4 -1.6 -4.4 -4.4 -1.6 4.4 -1.6z" fill="#f2a516" />
       </g>
     </svg>
   );
 }
 
-/** A compact halo mark (ring and gem) for avatars and small spaces. Pure CSS, so it costs nothing to render. */
+/** A compact mark (saffron ring and lotus tile) for avatars and small spaces. Inline, so it costs no request. */
 export function HaloMark({ size = 32, className }: { size?: number; className?: string }) {
   return (
     <span className={className ? `halo-mark ${className}` : 'halo-mark'} style={{ width: size, height: size }} aria-hidden="true">
       <span className="halo-mark__ring" />
-      <span className="halo-mark__gem" />
+      <Lotus className="halo-mark__gem" />
     </span>
   );
 }

@@ -1,14 +1,17 @@
 import { FEED_CRITERIA, type CriterionId } from '@/domain/moments/charter';
 import type { Backdrop, ReactionId } from '@/domain/product';
 
-/** Names people see for each backdrop swatch. The scenes themselves are drawn in moments.css. */
+/**
+ * Names people see for each backdrop swatch. The scenes themselves are drawn in moments.css. The keys are stored with
+ * posts and stories, so they keep their original names; only what people see follows the Jharokha design.
+ */
 export const BACKDROP_LABEL: Record<Backdrop, string> = {
-  meadow: 'Meadow',
-  sky: 'Open sky',
-  dusk: 'Dusk',
-  sun: 'Sunshine',
-  night: 'Night',
-  clover: 'Clover',
+  meadow: 'Mehendi',
+  sky: 'Blue pottery',
+  dusk: 'Ghat at dusk',
+  sun: 'Haldi',
+  night: 'Diwali night',
+  clover: 'Bandhani',
 };
 
 /** The six quick reactions. Ids are what Nexconn would carry (each is under its 16-character limit). */

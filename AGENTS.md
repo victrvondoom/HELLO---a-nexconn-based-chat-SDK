@@ -101,12 +101,35 @@ The policy is `decideVerification` in `src/domain/field/rules.ts`. AI never reac
 - Export includes the person's own Field Atlas records. Erasure deletes their attempts, ledger entries and badges, and
   unlinks their flags. Other people's records are not changed.
 
-## Design system: Meadow (`src/styles/*`)
+## Design system: Jharokha (`src/styles/*`, `src/components/brand/*`)
 
 - One token file (`tokens.css`), then `base.css`, `components.css` (primitives), `shell.css`, and one file per area
   (`landing`, `ops`, `social`, `venue`, `moments`), imported in that order by `src/app/layout.tsx`.
-- Palette roles: grass = primary/success, sky = links/info/live, sun = selected/current, poppy = danger only.
-  Type: Instrument Serif (display, >= 22px), Inter (reading), JetBrains Mono (labels). Use tokens, not hex.
+- Indian craft on a lime-washed wall. Palette: neel indigo = primary, peacock = links/info/live, kesar saffron =
+  selected/current, rani pink = Moments and decoration, mehendi green = success, sindoor = danger only. The older role
+  names (`--grass-*` = neel, `--sky-*` = peacock, `--sun-*` = kesar, `--poppy-*` = sindoor, `--clay-*` = rani) are kept
+  as aliases so area files did not change; new code may use either. Use tokens, not hex.
+- Type: Tiro Devanagari Hindi (display, >= 22px; Latin and Devanagari), Anek Latin (reading; `wdth` axis, labels at
+  86), JetBrains Mono (figures and code only). Labels are sentence case, never tracked all-caps.
+- Motifs, each with one meaning: `--weave` (woven border: opens and closes a page, top of the top bar), `--rim`
+  (blue-pottery rim: unseen story rings, medallions), `--arch` (jharokha ogee mask: the landing window), rangoli
+  flowers (`Motifs.tsx`, decoration only), the ghat (`Scenery.tsx`, the event postcard). Moments backdrop keys are
+  stored data and keep their names (`meadow`, `clover`...); only `BACKDROP_LABEL` changed.
+- Surfaces are glass on pure white: `.card`/`.panel` use `--glass`, `--glass-edge` and `--glass-blur`; the body carries
+  a fixed sunset glow at its edges. `--frame` is a light edge and `--print` a soft shadow (no offset block print).
+- Landing hero: a cusped Mughal arch (`Jharokha.tsx`, computed path) lit from behind in a carved wall at sunset. It
+  greets in seven scripts (`scripts.ts`, Tiro per script, not preloaded) and stops turning on hover, focus, a pick, or
+  reduced motion.
+- Sidebar: about a dozen everyday items; every other page is under "More" (`nav-model.ts`), and all are in the
+  command palette and the phone menu.
+
+## Custom maps (`src/services/custom-maps.ts`, `src/components/map/CustomMaps.tsx`)
+
+On `/events/[eventId]/map`, anyone can make a map from a picture, a frame of a video (the video stays on the device;
+only the chosen frame is uploaded) or a sketch, then drop labelled pins. API: `/api/events/[eventId]/maps/**`.
+Collection `customMaps`. The picture must be the person's own image upload to this event. Private until shared;
+only the owner can change or delete. Export and erasure include custom maps. Test: `tests/integration/custom-maps.test.ts`.
+Limit: the map picture is served by the media route to any event member who has its id (as post media is).
 - Area files must not define the same class as another area file or as a primitive. `tests/unit/style-boundaries.test.ts`
   enforces this (a `.tile` collision once broke the Games tiles). Compose with scoped selectors instead (`.panel.inline-form`).
 - Navigation model: `src/components/layout/nav-model.ts`. `.nav-count` marks unread notifications only (an e2e test

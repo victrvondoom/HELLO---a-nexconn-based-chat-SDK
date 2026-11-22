@@ -1,56 +1,45 @@
 /**
- * Small meadow scenery: layered hills under a sky, a lone tree and a walker on the path. It is the
- * "home" motif from the design brief, drawn inline so it needs no image request. Decorative only.
+ * A small ghat at dawn: the sky going from indigo through rani to saffron, a low sun, a row of chhatris (domed
+ * pavilions) along the bank, and steps down to the water. Drawn inline so it needs no image request. Decorative only.
  * `id` keeps gradient ids unique when the scene appears twice on one page.
  */
-export function Hills({ id = 'hills', className }: { id?: string; className?: string }) {
+export function Ghat({ id = 'ghat', className }: { id?: string; className?: string }) {
   const sky = `${id}-sky`;
-  const far = `${id}-far`;
-  const mid = `${id}-mid`;
-  const near = `${id}-near`;
+  const water = `${id}-water`;
+  // One chhatri: a plinth, two pillars, a dome and a finial. `x` is its centre, `s` its scale.
+  const chhatri = (x: number, s: number) =>
+    `M${x - 9 * s} 74 h${18 * s} v-3 h${-2 * s} v${-9 * s} h${-2 * s} v${9 * s} h${-10 * s} v${-9 * s} h${-2 * s} v${9 * s} h${-2 * s} Z ` +
+    `M${x - 9 * s} ${74 - 12 * s} h${18 * s} C${x + 9 * s} ${74 - 22 * s} ${x + 2 * s} ${74 - 24 * s} ${x} ${74 - 28 * s} ` +
+    `C${x - 2 * s} ${74 - 24 * s} ${x - 9 * s} ${74 - 22 * s} ${x - 9 * s} ${74 - 12 * s} Z`;
   return (
-    <svg className={className ? `hills ${className}` : 'hills'} viewBox="0 0 240 120" preserveAspectRatio="xMidYMax slice" aria-hidden="true" focusable="false">
+    <svg className={className ? `ghat ${className}` : 'ghat'} viewBox="0 0 240 120" preserveAspectRatio="xMidYMax slice" aria-hidden="true" focusable="false">
       <defs>
         <linearGradient id={sky} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#6fb6ea" />
-          <stop offset="0.55" stopColor="#bfe1f7" />
-          <stop offset="1" stopColor="#eef5ec" />
+          <stop offset="0" stopColor="#2a3896" />
+          <stop offset="0.38" stopColor="#6a4fb0" />
+          <stop offset="0.66" stopColor="#d6337f" />
+          <stop offset="0.9" stopColor="#f6bc4a" />
         </linearGradient>
-        <linearGradient id={far} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#9ccf86" />
-          <stop offset="1" stopColor="#7cb86a" />
-        </linearGradient>
-        <linearGradient id={mid} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#6db658" />
-          <stop offset="1" stopColor="#3f9445" />
-        </linearGradient>
-        <linearGradient id={near} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#3f9445" />
-          <stop offset="1" stopColor="#1f6f35" />
+        <linearGradient id={water} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#3a4bb8" />
+          <stop offset="1" stopColor="#18205c" />
         </linearGradient>
       </defs>
       <rect width="240" height="120" fill={`url(#${sky})`} />
-      <circle className="hills__sun" cx="186" cy="30" r="12" fill="#f9df86" />
-      <g className="hills__clouds" fill="#ffffff" opacity="0.85">
-        <ellipse cx="54" cy="26" rx="18" ry="5" />
-        <ellipse cx="66" cy="22" rx="10" ry="5" />
-        <ellipse cx="140" cy="16" rx="12" ry="3.5" />
+      <circle cx="176" cy="58" r="13" fill="#fce5b5" opacity="0.95" />
+      <g fill="#18205c">
+        <rect x="0" y="74" width="240" height="8" />
+        <path d={chhatri(34, 1)} />
+        <path d={chhatri(70, 0.75)} />
+        <path d={chhatri(212, 1.1)} />
       </g>
-      <path d="M0 74 C40 58 80 60 120 70 C160 80 200 62 240 66 V120 H0 Z" fill={`url(#${far})`} />
-      <path d="M0 88 C30 72 70 70 110 82 C150 94 190 76 240 80 V120 H0 Z" fill={`url(#${mid})`} />
-      <g className="hills__tree">
-        <path d="M168 79 C168 74 167.6 70 167 66" stroke="#4a3a24" strokeWidth="2" strokeLinecap="round" fill="none" />
-        <circle cx="164" cy="62" r="7.5" fill="#2f7d3a" />
-        <circle cx="171" cy="60" r="8" fill="#3a8c41" />
-        <circle cx="168" cy="55" r="7" fill="#4aa04b" />
+      <g fill="#10153f">
+        <rect x="0" y="82" width="240" height="4" opacity="0.9" />
+        <rect x="0" y="88" width="240" height="4" opacity="0.8" />
+        <rect x="0" y="94" width="240" height="4" opacity="0.7" />
       </g>
-      <path d="M0 100 C50 88 100 90 140 98 C180 106 210 96 240 96 V120 H0 Z" fill={`url(#${near})`} />
-      <path d="M96 120 C104 108 120 100 150 96" stroke="#d9c9a3" strokeWidth="3" fill="none" strokeLinecap="round" opacity="0.9" />
-      <g className="hills__walker" transform="translate(126 92)">
-        <circle cx="0" cy="-7" r="1.4" fill="#4a3a24" />
-        <path d="M-1.3 -5.6 h2.6 v4.2 h-2.6z" fill="#ffffff" />
-        <path d="M-1.1 -1.4 l-0.6 3.4 M1.1 -1.4 l0.6 3.4" stroke="#1565a8" strokeWidth="1.2" strokeLinecap="round" />
-      </g>
+      <rect x="0" y="100" width="240" height="20" fill={`url(#${water})`} />
+      <path d="M150 106 h50 M164 112 h26" stroke="#f9d27f" strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
     </svg>
   );
 }

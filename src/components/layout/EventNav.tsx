@@ -4,7 +4,7 @@ import { CreateMenu } from './CreateMenu';
 import { MobileTabBar } from './MobileTabBar';
 import { buildNav, type NavInput } from './nav-model';
 import { HaloMark, Wordmark } from '@/components/brand/Wordmark';
-import { Hills } from '@/components/brand/Scenery';
+import { Ghat } from '@/components/brand/Scenery';
 import { Avatar } from '@/components/social/Avatar';
 
 interface EventNavProps extends NavInput {
@@ -35,7 +35,7 @@ export function EventNav(props: EventNavProps) {
         </Link>
 
         <div className="event-card">
-          <Hills id="hills-nav" className="event-card__scene" />
+          <Ghat id="ghat-nav" className="event-card__scene" />
           <span className="event-card__text">
             <strong>{props.eventName}</strong>
             <span>

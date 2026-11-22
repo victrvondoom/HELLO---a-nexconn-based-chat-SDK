@@ -1,82 +1,140 @@
 /* =============================================================================
-   HELLO design system: "Meadow"
+   HELLO design system: "Jharokha"
 
-   The app should feel like coming home: a sky above, grass underfoot, warm paper in between.
-   - Paper: warm cream surfaces with a faint print grain. Cards are a brighter paper on top.
-   - Grass: the primary family. Deep grass carries filled controls and success; fresh grass is light and decoration.
-   - Sky: links, information and live state. Deep sky carries text; bright sky is glow and decoration.
-   - Sun: the highlighter. Active navigation, the one thing to notice, the editorial accent.
-   - Poppy: danger and overdue work. Used sparingly.
-   - Ink: a deep forest black, never pure black.
+   A jharokha is the carved, arched window of a haveli: the place you lean out to greet the street.
+   The app is built from the materials of Indian craft, set on a clean lime-washed wall.
+   - Chuna: lime-wash white surfaces with a faint woven grid, like graph paper for a weave.
+   - Neel: indigo, the primary family. The blue of Jaipur pottery and indigo dye. Filled controls, current work.
+   - Peacock (mor-pankh): links, information and live state.
+   - Kesar: saffron and turmeric. The highlighter: selected navigation, the one thing to notice.
+   - Rani: the deep pink of festival cloth. Moments, stories and decoration.
+   - Mehendi: leaf green. Success and "done".
+   - Sindoor: danger and overdue work only.
+   - Ink: an indigo black, never pure black.
+   Motifs: the woven pixel band (--weave), blue-pottery rims (--rim), the ogee arch (--arch), rangoli flowers
+   (components/brand/Motifs.tsx). Each is used where it carries meaning, never as wallpaper.
    Contrast: every text token below passes WCAG AA (4.5:1) on both --paper and --surface.
-   Type: Instrument Serif for display, Inter for reading, JetBrains Mono for labels and figures.
+   Type: Tiro Devanagari Hindi for display (a Latin serif drawn alongside Devanagari), Anek Latin for reading,
+   JetBrains Mono for figures and code only.
+
+   Compatibility: the older family names (grass, sky, sun, poppy, clay) are kept as the role names every area file
+   uses. They now hold the Jharokha values: grass = neel, sky = peacock, sun = kesar, poppy = sindoor, clay = rani.
    ============================================================================= */
 
 :root {
   color-scheme: light;
 
   /* ---- type ---- */
-  --font-sans: var(--font-inter, 'Inter'), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
-  --font-serif: var(--font-instrument, 'Instrument Serif'), 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  --font-sans: var(--font-anek, 'Anek Latin'), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  --font-serif: var(--font-tiro, 'Tiro Devanagari Hindi'), 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
   --font-mono: var(--font-jetbrains, 'JetBrains Mono'), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   /* Kept for components that asked for "display": it is the serif now. */
   --font-display: var(--font-serif);
 
-  /* ---- palette: grass ---- */
-  --grass-950: #0b2e17;
-  --grass-900: #0f3d1e;
-  --grass-800: #165a2b;
-  --grass-700: #1f6f35;
-  --grass-600: #2d8a43;
-  --grass-500: #47a75a;
-  --grass-400: #7cc56b;
-  --grass-300: #b4df90;
-  --grass-200: #d6efc0;
-  --grass-100: #eaf6de;
-  --grass-50: #f4faee;
+  /* ---- palette: neel (indigo) ---- */
+  --neel-950: #10153f;
+  --neel-900: #18205c;
+  --neel-800: #1f2a78;
+  --neel-700: #2a3896;
+  --neel-600: #3a4bb8;
+  --neel-500: #5466d6;
+  --neel-400: #8391e8;
+  --neel-300: #b4bdf3;
+  --neel-200: #d6dbf9;
+  --neel-100: #ebeefc;
+  --neel-50: #f5f6fe;
 
-  /* ---- palette: sky ---- */
-  --sky-900: #0b3a63;
-  --sky-800: #0d4f86;
-  --sky-700: #1565a8;
-  --sky-600: #1f7fc9;
-  --sky-500: #3c9be0;
-  --sky-400: #6db8ee;
-  --sky-300: #a6d5f6;
-  --sky-200: #cfe8fa;
-  --sky-100: #e6f3fc;
-  --sky-50: #f2f9fe;
+  /* ---- palette: peacock (mor-pankh) ---- */
+  --peacock-900: #073a47;
+  --peacock-800: #094f5f;
+  --peacock-700: #0b6478;
+  --peacock-600: #10809a;
+  --peacock-500: #1e9bb7;
+  --peacock-400: #57bed4;
+  --peacock-300: #9ad9e6;
+  --peacock-200: #caedf3;
+  --peacock-100: #e4f6f9;
+  --peacock-50: #f2fbfc;
 
-  /* ---- palette: sun, poppy, clay ---- */
-  --sun-700: #7a5200;
-  --sun-600: #a87400;
-  --sun-500: #f4c430;
-  --sun-400: #f7d35e;
-  --sun-300: #f9df86;
-  --sun-200: #fcecb8;
-  --sun-100: #fdf5d8;
-  --poppy-800: #8f1d16;
-  --poppy-700: #b3261e;
-  --poppy-500: #e0452e;
-  --poppy-200: #f8cbc2;
-  --poppy-100: #fdebe7;
-  --clay-500: #e5866a;
-  --clay-300: #f2b89a;
+  /* ---- palette: kesar, rani, mehendi, sindoor ---- */
+  --kesar-700: #7a4a00;
+  --kesar-600: #a56300;
+  --kesar-500: #f2a516;
+  --kesar-400: #f6bc4a;
+  --kesar-300: #f9d27f;
+  --kesar-200: #fce5b5;
+  --kesar-100: #fef4de;
+  --rani-800: #7d1446;
+  --rani-700: #a31c5e;
+  --rani-500: #d6337f;
+  --rani-300: #f0a3c6;
+  --rani-100: #fce8f1;
+  --mehendi-700: #3e7a1e;
+  --mehendi-500: #6aa83a;
+  --mehendi-100: #eaf4df;
+  --sindoor-800: #8c1a12;
+  --sindoor-700: #b0261c;
+  --sindoor-500: #de3b2a;
+  --sindoor-200: #f6c6bf;
+  --sindoor-100: #fceae7;
 
-  /* ---- paper and ink ---- */
-  --paper: #f6f2e6;
-  --paper-2: #ede7d7;
-  --paper-3: #e4dcc7;
-  --surface: #fffdf7;
-  --surface-2: #faf7ee;
-  --surface-3: #f2eee1;
-  --ink: #14231a;
-  --ink-2: #3f5045;
-  --ink-3: #5f6e64;
-  --ink-rgb: 20 35 26;
-  --line: rgb(var(--ink-rgb) / 0.12);
-  --line-strong: rgb(var(--ink-rgb) / 0.22);
-  --frame: #14231a;
+  /* ---- role names used by the area files (see "Compatibility" above) ---- */
+  --grass-950: var(--neel-950);
+  --grass-900: var(--neel-900);
+  --grass-800: var(--neel-800);
+  --grass-700: var(--neel-700);
+  --grass-600: var(--neel-600);
+  --grass-500: var(--neel-500);
+  --grass-400: var(--neel-400);
+  --grass-300: var(--neel-300);
+  --grass-200: var(--neel-200);
+  --grass-100: var(--neel-100);
+  --grass-50: var(--neel-50);
+
+  --sky-900: var(--peacock-900);
+  --sky-800: var(--peacock-800);
+  --sky-700: var(--peacock-700);
+  --sky-600: var(--peacock-600);
+  --sky-500: var(--peacock-500);
+  --sky-400: var(--peacock-400);
+  --sky-300: var(--peacock-300);
+  --sky-200: var(--peacock-200);
+  --sky-100: var(--peacock-100);
+  --sky-50: var(--peacock-50);
+
+  --sun-700: var(--kesar-700);
+  --sun-600: var(--kesar-600);
+  --sun-500: var(--kesar-500);
+  --sun-400: var(--kesar-400);
+  --sun-300: var(--kesar-300);
+  --sun-200: var(--kesar-200);
+  --sun-100: var(--kesar-100);
+  --poppy-800: var(--sindoor-800);
+  --poppy-700: var(--sindoor-700);
+  --poppy-500: var(--sindoor-500);
+  --poppy-200: var(--sindoor-200);
+  --poppy-100: var(--sindoor-100);
+  --clay-500: var(--rani-500);
+  --clay-300: var(--rani-300);
+
+  /* ---- chuna (lime-wash) and ink ---- */
+  --paper: #ffffff;
+  --paper-2: #f4f4f7;
+  --paper-3: #e9e9ef;
+  --surface: #ffffff;
+  --surface-2: #f7f7fa;
+  --surface-3: #efeff4;
+  --ink: #181a35;
+  --ink-2: #3e4166;
+  --ink-3: #5d6084;
+  --ink-rgb: 24 26 53;
+  --neel-rgb: 42 56 150;
+  --kesar-rgb: 242 165 22;
+  --rani-rgb: 214 51 127;
+  --line: rgb(var(--ink-rgb) / 0.11);
+  --line-strong: rgb(var(--ink-rgb) / 0.2);
+  /* Edges are light glass, not printed ink. */
+  --frame: rgb(var(--ink-rgb) / 0.12);
 
   /* ---- semantic roles ---- */
   --bg: var(--paper);
@@ -88,50 +146,66 @@
   --hair: var(--line);
   --hair-strong: var(--line-strong);
   --well: var(--surface-2);
-  --dot: rgb(var(--ink-rgb) / 0.10);
+  --dot: rgb(var(--ink-rgb) / 0.1);
 
-  --accent: var(--grass-700);
-  --accent-hover: var(--grass-800);
-  --accent-soft: var(--grass-100);
-  --accent-ink: var(--grass-800);
-  --accent-bright: var(--grass-400);
-  --accent-grad: linear-gradient(135deg, var(--grass-600) 0%, var(--grass-700) 55%, var(--grass-800) 100%);
+  --accent: var(--neel-700);
+  --accent-hover: var(--neel-800);
+  --accent-soft: var(--neel-100);
+  --accent-ink: var(--neel-800);
+  --accent-bright: var(--neel-400);
+  --accent-grad: linear-gradient(135deg, var(--neel-600) 0%, var(--neel-700) 55%, var(--neel-800) 100%);
 
-  --link: var(--sky-700);
-  --link-hover: var(--sky-800);
-  --info: var(--sky-700);
-  --info-soft: var(--sky-100);
+  --link: var(--peacock-700);
+  --link-hover: var(--peacock-800);
+  --info: var(--peacock-700);
+  --info-soft: var(--peacock-100);
 
-  --highlight: var(--sun-500);
-  --highlight-soft: var(--sun-100);
+  --highlight: var(--kesar-500);
+  --highlight-soft: var(--kesar-100);
 
-  --danger: var(--poppy-700);
-  --danger-soft: var(--poppy-100);
-  --warning: var(--sun-700);
-  --warning-soft: var(--sun-100);
-  --success: var(--grass-700);
-  --success-soft: var(--grass-100);
-  --focus: var(--sky-600);
-  --demo-bg: var(--sun-100);
-  --demo-border: var(--sun-400);
+  --danger: var(--sindoor-700);
+  --danger-soft: var(--sindoor-100);
+  --warning: var(--kesar-700);
+  --warning-soft: var(--kesar-100);
+  --success: var(--mehendi-700);
+  --success-soft: var(--mehendi-100);
+  --focus: var(--neel-600);
+  --demo-bg: var(--kesar-100);
+  --demo-border: var(--kesar-400);
 
-  /* ---- scenery: the sky-to-grass gradients used for heroes, story rings and backdrops ---- */
-  --sky-gradient: linear-gradient(180deg, #8ec9f2 0%, #bfe1f7 38%, #e6f2f4 70%, #f5f1e6 100%);
-  --meadow-gradient: linear-gradient(180deg, #8fd07a 0%, #4fa548 55%, #2b7a36 100%);
-  --ring-gradient: conic-gradient(from 210deg, var(--grass-500), var(--sky-500), var(--sun-500), var(--clay-500), var(--grass-500));
-  --halftone: radial-gradient(circle, rgb(var(--ink-rgb) / 0.22) 0.9px, transparent 1.3px);
-  /* Print grain: SVG fractal noise, tiled. Static, so it costs one decode. */
-  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.08 0 0 0 0 0.14 0 0 0 0 0.10 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  /* ---- scenery: dawn over a ghat, for heroes, backdrops and story art ---- */
+  --sky-gradient: linear-gradient(180deg, #2a3896 0%, #6a4fb0 34%, #d6337f 62%, #f6bc4a 88%, #fce5b5 100%);
+  --meadow-gradient: linear-gradient(180deg, #5466d6 0%, #2a3896 55%, #18205c 100%);
+  --dawn-gradient: var(--sky-gradient);
+  /* Story rings: four dyes around the circle, as on a festival thali. */
+  --ring-gradient: conic-gradient(from 210deg, var(--kesar-500), var(--rani-500), var(--neel-600), var(--peacock-500), var(--kesar-500));
+  /* A blue-pottery rim: fine indigo petals on white, read as a hand-painted border at any size. */
+  --rim: repeating-conic-gradient(from 0deg, var(--neel-700) 0deg 7deg, var(--neel-300) 7deg 9deg, #fff 9deg 11deg, var(--neel-500) 11deg 15deg);
+  --halftone: radial-gradient(circle, rgb(var(--ink-rgb) / 0.2) 0.9px, transparent 1.3px);
+  /* The woven grid on the wall: a 28px warp and weft in faint indigo. */
+  --weft: linear-gradient(rgb(var(--neel-rgb) / 0.045) 1px, transparent 1px), linear-gradient(90deg, rgb(var(--neel-rgb) / 0.045) 1px, transparent 1px);
+  /* The woven band: pixel motifs of kesar and rani on indigo, like the border of a block-printed sari. Tiles at 48 x 12. */
+  --weave: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='12' shape-rendering='crispEdges'%3E%3Crect width='48' height='12' fill='%232a3896'/%3E%3Cpath fill='%23f2a516' d='M12 0h3v3h-3zM9 3h9v6H9zM12 9h3v3h-3z'/%3E%3Cpath fill='%23d6337f' d='M12 3h3v6h-3zM36 0h3v12h-3zM33 3h9v6h-9z'/%3E%3Cpath fill='%23f9d27f' d='M36 3h3v6h-3z'/%3E%3Cpath fill='%23fbfaf7' d='M0 4h3v4H0zM24 4h3v4h-3zM45 4h3v4h-3z' opacity='.85'/%3E%3C/svg%3E");
+  /* The jharokha's ogee arch as a mask, stretched to any box. */
+  --arch: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 520' preserveAspectRatio='none'%3E%3Cpath d='M0 520V214C0 128 108 104 162 52C180 34 193 16 200 0C207 16 220 34 238 52C292 104 400 128 400 214V520Z'/%3E%3C/svg%3E");
+  /* The lantern (fanoos) silhouette, for small windows that keep their proportions. */
+  --lantern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 120'%3E%3Cpath d='M50 0C54 12 62 18 74 18V30C88 36 100 46 100 60S88 84 74 90V102C62 102 54 108 50 120C46 108 38 102 26 102V90C12 84 0 74 0 60S12 36 26 30V18C38 18 46 12 50 0Z'/%3E%3C/svg%3E");
+  /* Paper grain, kept faint: lime wash is never perfectly flat. */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.09 0 0 0 0 0.10 0 0 0 0 0.21 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 
-  /* ---- depth: shadows tinted with forest ink so they read as shade on grass, not dirt ---- */
+  /* ---- depth: shadows tinted with indigo ink, soft as shade under a verandah ---- */
   --hl: rgb(255 255 255 / 0.75);
-  --e1: 0 1px 0 var(--hl) inset, 0 1px 2px rgb(var(--ink-rgb) / 0.06), 0 2px 6px -3px rgb(var(--ink-rgb) / 0.08);
-  --e2: 0 1px 0 var(--hl) inset, 0 1px 2px rgb(var(--ink-rgb) / 0.05), 0 10px 24px -12px rgb(var(--ink-rgb) / 0.22);
-  --e3: 0 1px 0 var(--hl) inset, 0 2px 4px rgb(var(--ink-rgb) / 0.05), 0 22px 44px -18px rgb(var(--ink-rgb) / 0.30);
-  --e4: 0 0 0 1px rgb(var(--ink-rgb) / 0.06), 0 18px 40px -12px rgb(var(--ink-rgb) / 0.22), 0 50px 100px -30px rgb(var(--ink-rgb) / 0.40);
-  --print: 3px 3px 0 var(--frame);
-  --print-sm: 2px 2px 0 var(--frame);
-  --glow: 0 0 0 3px rgb(60 155 224 / 0.22);
+  --e1: 0 1px 0 var(--hl) inset, 0 1px 2px rgb(var(--ink-rgb) / 0.05), 0 2px 6px -3px rgb(var(--ink-rgb) / 0.07);
+  --e2: 0 1px 0 var(--hl) inset, 0 1px 2px rgb(var(--ink-rgb) / 0.05), 0 10px 24px -12px rgb(var(--ink-rgb) / 0.2);
+  --e3: 0 1px 0 var(--hl) inset, 0 2px 4px rgb(var(--ink-rgb) / 0.05), 0 22px 44px -18px rgb(var(--ink-rgb) / 0.28);
+  --e4: 0 0 0 1px rgb(var(--ink-rgb) / 0.06), 0 18px 40px -12px rgb(var(--ink-rgb) / 0.2), 0 50px 100px -30px rgb(var(--ink-rgb) / 0.38);
+  --print: var(--e3);
+  --print-sm: var(--e2);
+  /* Glass: a translucent white pane with a lit top edge, used by cards, panels and bars. */
+  --glass: rgb(255 255 255 / 0.68);
+  --glass-edge: 0 0 0 1px rgb(255 255 255 / 0.7) inset, 0 1px 0 rgb(255 255 255 / 1) inset;
+  --glass-blur: blur(20px) saturate(1.6);
+  --glow: 0 0 0 3px rgb(var(--neel-rgb) / 0.2);
   --shadow-1: var(--e1);
   --shadow-2: var(--e2);
 

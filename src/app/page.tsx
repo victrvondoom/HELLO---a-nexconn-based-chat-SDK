@@ -4,7 +4,7 @@ import { getRuntime } from '@/lib/runtime';
 import { DEMO_EVENT_ID } from '@/store/seed';
 import { slaFor } from '@/domain/incidents/sla';
 import { Wordmark } from '@/components/brand/Wordmark';
-import { MeadowScene } from '@/components/brand/MeadowScene';
+import { Jharokha } from '@/components/brand/Jharokha';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { AGENT_ROSTER, type AgentScope } from '@/agents/types';
 
@@ -75,95 +75,64 @@ export default async function LandingPage() {
   const live = demo ? await liveFigures() : null;
   return (
     <div className="landing">
-      <header className="landing__nav">
-        <Link href="/" className="landing__brand" aria-label="HELLO home">
-          <Wordmark height={30} id="wm-top" />
-        </Link>
-        <nav className="landing__links" aria-label="Page">
-          <a href="#how">How it works</a>
-          <a href="#moments">Moments</a>
-          <a href="#agents">Agent mesh</a>
-          <a href="#features">Features</a>
-          <Link href="/guide">Guide</Link>
-          {demo ? (
-            <Link className="button button--sun button--sm" href="/demo">
-              Open the demo
-            </Link>
-          ) : null}
-        </nav>
-      </header>
-
       <section className="hero" aria-labelledby="hero-title">
-        <MeadowScene>
-          <div className="hero__copy">
-            <p className="hero__eyebrow">Event coordination that feels like home</p>
-            <h1 id="hero-title">
-              One conversation.
-              <br /> <em>Everyone</em> connected.
-            </h1>
-            <p className="hero__lead">
-              Attendees describe a problem in ordinary words. A team of HELLO agents works out the room, the session and the people
-              concerned, coordinates the response, and tells the person who asked when it is fixed. In between, the event shares its
-              moments.
-            </p>
-            <div className="hero__actions">
-              {demo ? (
-                <Link className="button button--sun button--lg" href="/demo">
-                  Enter the demo <Icon name="arrow" />
-                </Link>
-              ) : null}
-              <a className="button button--glass button--lg" href="#agents">
-                Meet the agents
-              </a>
-            </div>
-            {live ? (
-              <p className="live-strip hero__live" aria-label="Live figures from the demo event">
-                <span className="live">
-                  <span className="live__dot" aria-hidden="true" />
-                  Live demo · {live.clock} UTC
-                </span>
-                <span>
-                  <strong>{live.open}</strong> open
-                </span>
-                <span>
-                  <strong>{live.overdue}</strong> past target
-                </span>
-                <span>
-                  <strong>{live.running}</strong> sessions running
-                </span>
-              </p>
+        <header className="landing__nav">
+          <Link href="/" className="landing__brand" aria-label="HELLO home">
+            <Wordmark height={28} id="wm-top" />
+          </Link>
+          <nav className="landing__links" aria-label="Page">
+            <a href="#how">How it works</a>
+            <a href="#moments">Moments</a>
+            <a href="#agents">Agents</a>
+            <Link href="/guide">Guide</Link>
+            {demo ? (
+              <Link className="button button--sm" href="/demo">
+                Open the demo
+              </Link>
             ) : null}
+          </nav>
+        </header>
+        <Jharokha>
+          <h1 id="hero-title">
+            One conversation. <em>Everyone</em> connected.
+          </h1>
+          <p className="hero__lead">
+            Attendees describe a problem in their own words. HELLO finds the room, the session and the right people, and tells the
+            person who asked when it is fixed.
+          </p>
+          <div className="hero__actions">
+            {demo ? (
+              <Link className="button button--lg" href="/demo">
+                Enter the demo
+              </Link>
+            ) : null}
+            <a className="button button--ghost button--lg" href="#agents">
+              Meet the agents
+            </a>
           </div>
-          <div className="hero__floats" aria-hidden="true">
-            <div className="float-chip float-chip--1">
-              <span className="float-chip__num">1</span>
-              <span>
-                Triage
-                <small>Microphone fault · Room 3</small>
-              </span>
-            </div>
-            <div className="float-chip float-chip--2">
-              <span className="float-chip__num">2</span>
-              <span>
-                Event guide
-                <small>AV procedure cited</small>
-              </span>
-            </div>
-            <div className="float-chip float-chip--3">
-              <span className="float-chip__num">3</span>
-              <span>
-                Coordinator
-                <small>Kiri recommended · claimed</small>
-              </span>
-            </div>
-          </div>
-        </MeadowScene>
+        </Jharokha>
+        {live ? (
+          <p className="live-strip hero__live" aria-label="Live figures from the demo event">
+            <span className="live">
+              <span className="live__dot" aria-hidden="true" />
+              Live demo, {live.clock} UTC
+            </span>
+            <span>
+              <strong>{live.open}</strong> open
+            </span>
+            <span>
+              <strong>{live.overdue}</strong> past target
+            </span>
+            <span>
+              <strong>{live.running}</strong> sessions running
+            </span>
+          </p>
+        ) : null}
       </section>
 
       <section className="section" id="how" aria-labelledby="how-title">
         <div className="how">
           <div className="section__head">
-            <p className="eyebrow">How it works</p>
             <h2 id="how-title">
               A message becomes an <em>accountable</em> workflow.
             </h2>
@@ -246,7 +215,6 @@ export default async function LandingPage() {
             </div>
           </div>
           <div className="moments-intro__copy">
-            <p className="eyebrow">Moments</p>
             <h2 id="moments-title">
               The event, as it <em>happens</em>.
             </h2>
@@ -274,7 +242,6 @@ export default async function LandingPage() {
 
       <section className="section" id="agents" aria-labelledby="agents-title">
         <div className="section__head">
-          <p className="eyebrow">The agent mesh</p>
           <h2 id="agents-title">
             Seven small agents. <em>One</em> accountable answer.
           </h2>
@@ -304,7 +271,6 @@ export default async function LandingPage() {
 
       <section className="section" id="features" aria-labelledby="features-title">
         <div className="section__head">
-          <p className="eyebrow">What HELLO does</p>
           <h2 id="features-title">
             Calm, <em>careful</em> coordination.
           </h2>
@@ -327,12 +293,12 @@ export default async function LandingPage() {
           <div className="cta-band">
             <div className="cta-band__copy">
               <h2>
-                Come <em>home</em> to a live demo event.
+                Step into a live demo event.
               </h2>
               <p>Seeded, fictional data for the HELLO Global Technology Summit. Switch roles to see what each person can do.</p>
             </div>
             <Link className="button button--sun button--lg" href="/demo">
-              Enter the demo <Icon name="arrow" />
+              Enter the demo
             </Link>
           </div>
         </section>

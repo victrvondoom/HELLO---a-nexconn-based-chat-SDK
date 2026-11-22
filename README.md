@@ -191,16 +191,18 @@ treated as instructions. A hung or failing provider becomes a FAILED step in the
 
 ## Design
 
-The "Meadow" design system is meant to feel like home: sky above, grass underfoot, warm paper in between.
+The "Jharokha" design system takes its name from the carved, arched window of a haveli, where you lean out to greet
+the street. It sets the materials of Indian craft on a clean lime-washed wall.
 
-- **Colour roles:** grass green for primary actions and success, sky blue for links and live state, a sun-yellow
-  highlighter for the current page and selected items, poppy red only for danger. Every text colour passes WCAG AA on
-  both paper and cards.
-- **Type:** Instrument Serif for titles and large figures, Inter for reading, JetBrains Mono for labels. All three are
-  self-hosted at build time by `next/font`.
-- **Depth:** layered shadows, cards that lift on hover, and a landing page whose hills, clouds and sun move at
-  different speeds with the pointer and the scroll. People who prefer reduced motion get a still scene (the story timer
-  is the one animation kept, because it is a clock).
+- **Colour roles:** neel indigo (blue pottery, indigo dye) for primary actions, peacock blue for links and live state,
+  a kesar saffron highlighter for the current page and selected items, rani pink for Moments, mehendi green for
+  success, sindoor red only for danger. Every text colour passes WCAG AA on both the wall and cards.
+- **Type:** Tiro Devanagari Hindi for titles (a Latin serif drawn alongside Devanagari), Anek Latin for reading, and
+  the Tiro cuts for Kannada, Tamil, Telugu, Bangla and Gurmukhi on the landing page, so every script shares one voice.
+  All are self-hosted at build time by `next/font`; the script fonts load only when shown.
+- **Motifs:** a woven pixel border opens every page, unseen stories wear a blue-pottery rim, rangoli flowers gather
+  at the foot of the landing window, and the event card shows a ghat at dawn. The landing hero is a jharokha that says
+  hello in seven of India's scripts; it stops turning for people who prefer reduced motion.
 - **Code:** `src/styles/tokens.css`, then `base.css`, `components.css` (primitives), `shell.css`, and one file per area.
   `tests/unit/style-boundaries.test.ts` fails if two area files define the same class.
 - **Phones:** below 900 px the sidebar becomes a bottom tab bar with a raised Create button and a Menu sheet.
@@ -259,7 +261,7 @@ src/
     api/                 Thin HTTP adapters over services
     events/[eventId]/    Event pages: conversation, incidents, operations, sessions, people, …
   components/           Client and server UI components (layout/ shell, moments/ stories and feed)
-  styles/               Meadow design system: tokens, primitives, shell and one stylesheet per area
+  styles/               Jharokha design system: tokens, primitives, shell and one stylesheet per area
   domain/               Pure business rules (no framework or I/O imports)
     incidents/          lifecycle, classification, duplicate detection
     assignments/        explainable assignment scoring

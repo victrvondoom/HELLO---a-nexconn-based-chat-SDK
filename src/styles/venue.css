@@ -1,11 +1,11 @@
 /* =============================================================================
    Venue: the venue map (plan, 3D and heat engines), the live world map, and Field Atlas.
 
-   The plan is a printed park map: cream paper with a grain, spaces washed in grass and sky by kind,
-   crisp ink outlines, small round signage badges, and the route as a deep-sky trail that ends at a
-   sun pin. The 3D engine stacks the floors with real shade: lit tops, darker walls, cast shadows.
-   Field Atlas is a game in a meadow: a level medallion, a grass progress bar, a sun challenge card,
-   round mission pins and a cabinet of medallions.
+   The plan is a printed map: lime-wash paper with a grain, spaces washed in neel and peacock by kind,
+   crisp ink outlines, small round signage badges, and the route as a peacock trail that ends at a
+   saffron pin. The 3D engine stacks the floors with real shade: lit tops, darker walls, cast shadows.
+   Field Atlas is a journey across India's crafts: a level medallion, an indigo progress bar, a saffron
+   challenge card, round mission pins and a cabinet of medallions.
 
    SVG geometry is in metres (user units), so font sizes and offsets inside the maps are user units.
    Outlines that must stay crisp at any size use vector-effect: non-scaling-stroke (screen pixels).
@@ -56,10 +56,11 @@
 }
 
 .map__turn > span {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-family: var(--font-sans);
+  font-variation-settings: 'wdth' 86;
+  font-size: 13px;
+  letter-spacing: 0.01em;
+  font-weight: 600;
 }
 
 .map__turn input {
@@ -98,17 +99,17 @@
   right: 16px;
   width: 30px;
   height: 38px;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 46'%3E%3Cpath d='M13.5 10V2l9 8V2' fill='none' stroke='%2314231a' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='18' cy='29' r='13' fill='%23fffdf7' fill-opacity='.85' stroke='%2314231a' stroke-width='1.2'/%3E%3Cpath d='M18 18l4.5 11h-9z' fill='%2314231a'/%3E%3Cpath d='M18 40l4.5-11h-9z' fill='none' stroke='%2314231a' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat center / contain;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 46'%3E%3Cpath d='M13.5 10V2l9 8V2' fill='none' stroke='%23181a35' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='18' cy='29' r='13' fill='%23ffffff' fill-opacity='.85' stroke='%23181a35' stroke-width='1.2'/%3E%3Cpath d='M18 18l4.5 11h-9z' fill='%23181a35'/%3E%3Cpath d='M18 40l4.5-11h-9z' fill='none' stroke='%23181a35' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat center / contain;
   pointer-events: none;
 }
 
-/* The 3D model floats in an afternoon sky over a soft meadow horizon. */
+/* The 3D model floats in a pale dawn: indigo light above, a saffron glow along the horizon. */
 .map__canvas:has(> .iso) {
-  background-color: var(--sky-100);
+  background-color: var(--neel-50);
   background-image:
     var(--grain),
-    radial-gradient(120% 34% at 50% 108%, color-mix(in srgb, var(--grass-300) 70%, transparent), transparent 72%),
-    var(--sky-gradient);
+    radial-gradient(120% 34% at 50% 108%, color-mix(in srgb, var(--kesar-200) 80%, transparent), transparent 72%),
+    linear-gradient(180deg, var(--neel-100) 0%, var(--neel-50) 55%, var(--kesar-100) 100%);
   background-size: 220px 220px, auto, auto;
 }
 
@@ -298,11 +299,11 @@
 
 /* Path names hug the top edge, like street names on a park map, clear of the signage below them. */
 .plan .space--circulation .space__label {
-  font-family: var(--font-mono);
-  font-size: 1.3px;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-family: var(--font-sans);
+  font-variation-settings: 'wdth' 86;
+  font-size: 3.3px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   fill: var(--ink-2);
   transform: translateY(-1.3px);
 }
@@ -649,11 +650,11 @@
 }
 
 .iso__floor-label {
-  font-family: var(--font-mono);
-  font-size: 2.5px;
+  font-family: var(--font-sans);
+  font-variation-settings: 'wdth' 86;
+  font-size: 4.5px;
   font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
   fill: var(--grass-800);
   paint-order: stroke;
   stroke: var(--surface);
@@ -1661,11 +1662,11 @@ section.atlas-panel dd {
 section.atlas-panel dt {
   padding-top: 13px;
   padding-right: var(--s-4);
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-family: var(--font-sans);
+  font-variation-settings: 'wdth' 86;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   color: var(--text-3);
 }
 
@@ -2252,4 +2253,135 @@ section[aria-labelledby='missions-heading'] .atlas-table td:nth-child(n + 3):nth
   .iso__space.is-selected {
     transform: none;
   }
+}
+
+/* ---------- custom maps: made from a picture, a video frame or a sketch ---------- */
+
+.custom-maps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  margin-top: var(--s-6);
+  padding: var(--s-6);
+}
+
+.custom-maps__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s-4);
+}
+
+.custom-maps__head h2 {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  font-weight: 400;
+}
+
+.custom-maps__sources,
+.custom-maps__list,
+.custom-maps__tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.custom-maps__maker {
+  display: grid;
+  gap: var(--s-3);
+  max-width: 760px;
+}
+
+.custom-maps__video,
+.custom-maps__sketch {
+  width: 100%;
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  background: #fff;
+}
+
+.custom-maps__sketch {
+  aspect-ratio: 3 / 2;
+  height: auto;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.custom-maps__share {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.custom-maps__canvas {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line);
+  background: #fff;
+  box-shadow: var(--e2);
+}
+
+.custom-maps__canvas.is-editable {
+  cursor: crosshair;
+}
+
+.custom-maps__canvas img {
+  width: 100%;
+  height: auto;
+  user-select: none;
+}
+
+.custom-pin {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px 3px 6px;
+  translate: -12px -50%;
+  border-radius: var(--r-pill);
+  background: rgb(255 255 255 / 0.9);
+  border: 1px solid var(--line-strong);
+  box-shadow: var(--e2);
+  font-size: 12.5px;
+  font-weight: 600;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+.custom-pin::before {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--neel-600);
+  box-shadow: 0 0 0 3px rgb(var(--neel-rgb) / 0.2);
+}
+
+.custom-pin--MEET::before {
+  background: var(--kesar-500);
+}
+
+.custom-pin--EXIT::before {
+  background: var(--mehendi-500);
+}
+
+.custom-pin--HELP::before {
+  background: var(--sindoor-500);
+}
+
+.custom-pin__remove {
+  border: 0;
+  background: none;
+  padding: 0 2px;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--text-3);
+  cursor: pointer;
 }

@@ -162,11 +162,11 @@
 
 .chat .msg__meta {
   padding: 0 6px;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-family: var(--font-sans);
+  font-variation-settings: 'wdth' 86;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   color: var(--text-3);
   overflow-wrap: anywhere;
 }
@@ -417,11 +417,11 @@ a.ocard__title {
 }
 
 .sources__head > span:first-child {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-family: var(--font-sans);
+  font-variation-settings: 'wdth' 86;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   color: var(--text-3);
 }
 
@@ -876,11 +876,11 @@ a.source__title {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-family: var(--font-sans);
+  font-variation-settings: 'wdth' 86;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   color: var(--text-3);
 }
 
@@ -1302,11 +1302,11 @@ section[aria-labelledby='signals-heading'] article.card {
 }
 
 .config-tile > .xs:first-child {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-family: var(--font-sans);
+  font-variation-settings: 'wdth' 86;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   color: var(--text-3);
 }
 
@@ -1426,7 +1426,7 @@ section[aria-labelledby='profile-heading'] .toggle input {
   user-select: all;
 }
 
-/* ---------- sign in: a card on a sky over a little meadow ---------- */
+/* ---------- sign in: a card at dawn above the steps of a ghat ---------- */
 
 .auth {
   position: relative;
@@ -1440,10 +1440,10 @@ section[aria-labelledby='profile-heading'] .toggle input {
   padding: var(--s-12) var(--s-4) 168px;
   overflow: hidden;
   text-align: center;
-  background: var(--sky-gradient);
+  background: linear-gradient(180deg, var(--neel-100) 0%, var(--paper) 42%, var(--kesar-100) 78%, var(--kesar-200) 100%);
 }
 
-/* Two rolling hills along the bottom edge: the meadow the whole app stands on. */
+/* Steps of a ghat along the bottom edge, with a woven border at the waterline. */
 .auth::before {
   content: '';
   position: absolute;
@@ -1451,11 +1451,10 @@ section[aria-labelledby='profile-heading'] .toggle input {
   left: -12%;
   right: -12%;
   bottom: 0;
-  height: 220px;
+  height: 132px;
   background:
-    radial-gradient(62% 100% at 24% 100%, var(--grass-600) 0 62%, transparent 62.5%),
-    radial-gradient(70% 115% at 76% 100%, var(--grass-500) 0 60%, transparent 60.5%),
-    radial-gradient(58% 140% at 50% 100%, var(--grass-300) 0 58%, transparent 58.5%);
+    var(--weave) 0 0 / auto 10px repeat-x,
+    repeating-linear-gradient(180deg, var(--neel-800) 10px 22px, var(--neel-900) 22px 28px);
 }
 
 /* A faint halftone sun behind the card. */
@@ -1560,30 +1559,6 @@ section[aria-labelledby='profile-heading'] .toggle input {
   margin: var(--s-3) 0 var(--s-4);
 }
 
-.signin-hero .halo {
-  position: relative;
-  flex-shrink: 0;
-  width: 112px;
-  height: 112px;
-  max-width: none;
-  margin: 0;
-}
-
-.signin-hero .halo__glow {
-  position: absolute;
-  inset: 12%;
-  border-radius: 50%;
-  background: radial-gradient(circle, color-mix(in srgb, var(--sky-300) 70%, transparent), transparent 70%);
-  filter: blur(10px);
-}
-
-.signin-hero .halo__canvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
 .role-groups {
   display: flex;
   flex-direction: column;
@@ -1662,12 +1637,13 @@ section[aria-labelledby='profile-heading'] .toggle input {
 
 .role-group__count {
   margin-left: auto;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-family: var(--font-sans);
+  font-variation-settings: 'wdth' 86;
+  font-size: 12.5px;
+  letter-spacing: 0.01em;
   color: var(--text-3);
   white-space: nowrap;
+  font-weight: 600;
 }
 
 .role-grid {
@@ -1783,9 +1759,9 @@ section[aria-labelledby='profile-heading'] .toggle input {
     gap: var(--s-3);
   }
 
-  .signin-hero .halo {
-    width: 76px;
-    height: 76px;
+  .signin-hero .medallion {
+    width: 76px !important;
+    height: 76px !important;
   }
 
   .signin-hero .wordmark {

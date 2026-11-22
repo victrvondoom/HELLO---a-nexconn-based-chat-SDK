@@ -18,8 +18,8 @@ export interface NavGroup {
 
 /**
  * The event navigation, grouped the way people think about an event: where you live (home, moments,
- * messages), the event itself, the people in it, and, for staff, the team's tools. Rarely used tools
- * sit under "More" so the everyday list stays short.
+ * messages), the event itself, the people in it, and, for staff, the team's tools. The everyday list is kept to
+ * a dozen items; every other page sits under "More", so the sidebar stays calm while nothing is removed.
  *
  * This decides presentation only. Every page re-checks the viewer's capability on the server, so a
  * hidden link is never the security control.
@@ -43,9 +43,6 @@ export function buildNav(input: NavInput): { groups: NavGroup[]; more: NavLinkIt
       items: [
         { href: `${base}/sessions`, label: 'Schedule', icon: 'sessions', keywords: 'sessions rooms agenda talks' },
         { href: `${base}/map`, label: 'Venue map', icon: 'map', keywords: 'directions route floor plan' },
-        { href: `${base}/live`, label: 'Live', icon: 'pin', keywords: 'live reports places happening now safety holds' },
-        { href: `${base}/places`, label: 'My places', icon: 'heart', keywords: 'places saved favourites collections notes map wishlist' },
-        { href: `${base}/atlas`, label: 'Field Atlas', icon: 'sparkle', keywords: 'missions xp badges levels quests' },
         { href: `${base}/announcements`, label: 'Announcements', icon: 'megaphone', keywords: 'news updates' },
         { href: `${base}/incidents`, label: input.operational ? 'Incidents' : 'My requests', icon: 'incidents', keywords: 'issues problems reports requests' },
       ],
@@ -56,11 +53,8 @@ export function buildNav(input: NavInput): { groups: NavGroup[]; more: NavLinkIt
       items: [
         { href: `${base}/people`, label: 'People', icon: 'people', keywords: 'profiles follow network attendees' },
         { href: `${base}/communities`, label: 'Communities', icon: 'groups', keywords: 'groups clubs' },
-        { href: `${base}/kingdom/world`, label: 'Kingdom 3D', icon: 'sparkle', keywords: 'voxel 3d houses town world render' },
-        { href: `${base}/kingdom/map`, label: 'Kingdom map', icon: 'map', keywords: 'atlas continents languages channels doors islands' },
         { href: `${base}/kingdom`, label: 'Kingdom', icon: 'home', keywords: 'world realm citizens home monarch forge voxel map caravan chatdom' },
         { href: `${base}/calls`, label: 'Calls', icon: 'video', keywords: 'video voice meet' },
-        { href: `${base}/privacy-filter`, label: 'Privacy filter', icon: 'shield', keywords: 'blur faces qr codes phone numbers camera stream twitch privacy' },
         { href: `${base}/games`, label: 'Games', icon: 'game', keywords: 'play quiz four in a row' },
       ],
     },
@@ -80,7 +74,14 @@ export function buildNav(input: NavInput): { groups: NavGroup[]; more: NavLinkIt
   } else if (input.canAudit) {
     groups.push({ id: 'team', label: 'Governance', items: [{ href: `${base}/audit`, label: 'Audit trail', icon: 'shield', keywords: 'log history governance' }] });
   }
+  // Everything else is one tap away under "More", and in the command palette and the phone menu.
   const more: NavLinkItem[] = [
+    { href: `${base}/live`, label: 'Live', icon: 'pin', keywords: 'live reports places happening now safety holds' },
+    { href: `${base}/places`, label: 'My places', icon: 'heart', keywords: 'places saved favourites collections notes map wishlist' },
+    { href: `${base}/atlas`, label: 'Field Atlas', icon: 'sparkle', keywords: 'missions xp badges levels quests' },
+    { href: `${base}/kingdom/world`, label: 'Kingdom 3D', icon: 'sparkle', keywords: 'voxel 3d houses town world render' },
+    { href: `${base}/kingdom/map`, label: 'Kingdom map', icon: 'map', keywords: 'atlas continents languages channels doors islands' },
+    { href: `${base}/privacy-filter`, label: 'Privacy filter', icon: 'shield', keywords: 'blur faces qr codes phone numbers camera stream twitch privacy' },
     { href: `${base}/flow`, label: 'Workflow canvas', icon: 'flow', keywords: 'automation nodes run workflows' },
     { href: `${base}/live-map`, label: 'Live map', icon: 'pin', keywords: 'world location countries share' },
   ];
