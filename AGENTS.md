@@ -109,8 +109,11 @@ The policy is `decideVerification` in `src/domain/field/rules.ts`. AI never reac
   selected/current, rani pink = Moments and decoration, mehendi green = success, sindoor = danger only. The older role
   names (`--grass-*` = neel, `--sky-*` = peacock, `--sun-*` = kesar, `--poppy-*` = sindoor, `--clay-*` = rani) are kept
   as aliases so area files did not change; new code may use either. Use tokens, not hex.
-- Type: Tiro Devanagari Hindi (display, >= 22px; Latin and Devanagari), Anek Latin (reading; `wdth` axis, labels at
-  86), JetBrains Mono (figures and code only). Labels are sentence case, never tracked all-caps.
+- Type: EB Garamond (display, >= 22px, with its italic for emphasis), Tiro Devanagari Hindi (Devanagari fallback in
+  `--font-serif`), Figtree (reading), JetBrains Mono (figures and code only). Labels are sentence case, never tracked
+  all-caps.
+- Sidebar: deep red (`--sidebar-red`) with a knitted star border (`--knit`) down its right edge; cream text, saffron
+  thread for the current page. Cards on it (`.event-card`, `.nav-foot`) keep dark ink.
 - Motifs, each with one meaning: `--weave` (woven border: opens and closes a page, top of the top bar), `--rim`
   (blue-pottery rim: unseen story rings, medallions), `--arch` (jharokha ogee mask: the landing window), rangoli
   flowers (`Motifs.tsx`, decoration only), the ghat (`Scenery.tsx`, the event postcard). Moments backdrop keys are

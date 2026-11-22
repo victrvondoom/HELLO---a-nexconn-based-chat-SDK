@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
-import { Anek_Latin, Tiro_Devanagari_Hindi, JetBrains_Mono } from 'next/font/google';
+import { EB_Garamond, Figtree, Tiro_Devanagari_Hindi, JetBrains_Mono } from 'next/font/google';
 // The Jharokha design system, in cascade order: tokens, then primitives, then the shell, then each area.
 import '@/styles/tokens.css';
 import '@/styles/base.css';
@@ -16,11 +16,12 @@ import '@/styles/privacy.css';
 import { FeedbackProvider } from '@/components/ui/Feedback';
 
 // Self-hosted at build time by next/font: no request reaches Google from a visitor's browser.
-// Anek Latin (Ek Type) for reading; Tiro Devanagari Hindi (Tiro Typeworks) for display, a Latin serif drawn to sit
-// beside Devanagari, so Hindi names and greetings share the headline's voice.
-const anek = Anek_Latin({ subsets: ['latin', 'latin-ext'], variable: '--font-anek', display: 'swap', axes: ['wdth'] });
+// Figtree for reading; EB Garamond for display, with a flowing italic for emphasis; Tiro Devanagari Hindi fills in
+// for Devanagari, so Hindi names and greetings stay in a serif of the same spirit.
+const figtree = Figtree({ subsets: ['latin', 'latin-ext'], variable: '--font-figtree', display: 'swap' });
+const garamond = EB_Garamond({ subsets: ['latin', 'latin-ext'], style: ['normal', 'italic'], variable: '--font-garamond', display: 'swap' });
 const tiro = Tiro_Devanagari_Hindi({
-  subsets: ['latin', 'devanagari'],
+  subsets: ['devanagari'],
   weight: '400',
   style: ['normal', 'italic'],
   variable: '--font-tiro',
@@ -44,7 +45,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={`${anek.variable} ${tiro.variable} ${jetbrains.variable}`}>
+    <html lang="en" className={`${figtree.variable} ${garamond.variable} ${tiro.variable} ${jetbrains.variable}`}>
       <body>
         <FeedbackProvider>{children}</FeedbackProvider>
       </body>

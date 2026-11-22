@@ -14,8 +14,8 @@
    Motifs: the woven pixel band (--weave), blue-pottery rims (--rim), the ogee arch (--arch), rangoli flowers
    (components/brand/Motifs.tsx). Each is used where it carries meaning, never as wallpaper.
    Contrast: every text token below passes WCAG AA (4.5:1) on both --paper and --surface.
-   Type: Tiro Devanagari Hindi for display (a Latin serif drawn alongside Devanagari), Anek Latin for reading,
-   JetBrains Mono for figures and code only.
+   Type: EB Garamond for display, with its italic for emphasis; Tiro Devanagari Hindi for Devanagari; Figtree for
+   reading; JetBrains Mono for figures and code only.
 
    Compatibility: the older family names (grass, sky, sun, poppy, clay) are kept as the role names every area file
    uses. They now hold the Jharokha values: grass = neel, sky = peacock, sun = kesar, poppy = sindoor, clay = rani.
@@ -25,8 +25,9 @@
   color-scheme: light;
 
   /* ---- type ---- */
-  --font-sans: var(--font-anek, 'Anek Latin'), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
-  --font-serif: var(--font-tiro, 'Tiro Devanagari Hindi'), 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  --font-sans: var(--font-figtree, 'Figtree'), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  /* EB Garamond for Latin display, with its flowing italic; Tiro Devanagari Hindi fills in for Devanagari. */
+  --font-serif: var(--font-garamond, 'EB Garamond'), var(--font-tiro, 'Tiro Devanagari Hindi'), 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
   --font-mono: var(--font-jetbrains, 'JetBrains Mono'), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   /* Kept for components that asked for "display": it is the serif now. */
   --font-display: var(--font-serif);
@@ -186,6 +187,10 @@
   --weft: linear-gradient(rgb(var(--neel-rgb) / 0.045) 1px, transparent 1px), linear-gradient(90deg, rgb(var(--neel-rgb) / 0.045) 1px, transparent 1px);
   /* The woven band: pixel motifs of kesar and rani on indigo, like the border of a block-printed sari. Tiles at 48 x 12. */
   --weave: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='12' shape-rendering='crispEdges'%3E%3Crect width='48' height='12' fill='%232a3896'/%3E%3Cpath fill='%23f2a516' d='M12 0h3v3h-3zM9 3h9v6H9zM12 9h3v3h-3z'/%3E%3Cpath fill='%23d6337f' d='M12 3h3v6h-3zM36 0h3v12h-3zM33 3h9v6h-9z'/%3E%3Cpath fill='%23f9d27f' d='M36 3h3v6h-3z'/%3E%3Cpath fill='%23fbfaf7' d='M0 4h3v4H0zM24 4h3v4h-3zM45 4h3v4h-3z' opacity='.85'/%3E%3C/svg%3E");
+  /* Knitted border: a red eight-point star on maroon, then plain red, like the edge of a winter shawl. 38 x 76. */
+  --knit: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='38' height='76' shape-rendering='crispEdges'%3E%3Crect width='38' height='76' fill='%23c8213a'/%3E%3Crect width='38' height='38' fill='%235a0b18'/%3E%3Cg fill='%23d93a52'%3E%3Crect x='17' y='5' width='4' height='4'/%3E%3Crect x='5' y='9' width='4' height='4'/%3E%3Crect x='17' y='9' width='4' height='4'/%3E%3Crect x='29' y='9' width='4' height='4'/%3E%3Crect x='9' y='13' width='4' height='4'/%3E%3Crect x='17' y='13' width='4' height='4'/%3E%3Crect x='25' y='13' width='4' height='4'/%3E%3Crect x='5' y='17' width='4' height='4'/%3E%3Crect x='9' y='17' width='4' height='4'/%3E%3Crect x='13' y='17' width='4' height='4'/%3E%3Crect x='21' y='17' width='4' height='4'/%3E%3Crect x='25' y='17' width='4' height='4'/%3E%3Crect x='29' y='17' width='4' height='4'/%3E%3Crect x='9' y='21' width='4' height='4'/%3E%3Crect x='17' y='21' width='4' height='4'/%3E%3Crect x='25' y='21' width='4' height='4'/%3E%3Crect x='5' y='25' width='4' height='4'/%3E%3Crect x='17' y='25' width='4' height='4'/%3E%3Crect x='29' y='25' width='4' height='4'/%3E%3Crect x='17' y='29' width='4' height='4'/%3E%3C/g%3E%3C/svg%3E");
+  --sidebar-red: #b3172f;
+  --sidebar-red-deep: #8e1126;
   /* The jharokha's ogee arch as a mask, stretched to any box. */
   --arch: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 520' preserveAspectRatio='none'%3E%3Cpath d='M0 520V214C0 128 108 104 162 52C180 34 193 16 200 0C207 16 220 34 238 52C292 104 400 128 400 214V520Z'/%3E%3C/svg%3E");
   /* The lantern (fanoos) silhouette, for small windows that keep their proportions. */
